@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Quản lý & Báo cáo giảng viên</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; transition: background 0.2s ease; min-height: 100vh; }
+        body.light-mode { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); color: #1f2937; }
+        body.dark-mode { background: transparent; color: #f3f4f6; }
+        
+        #star-canvas-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        body.light-mode #star-canvas-background { display: none; }
+        .content-wrapper { position: relative; z-index: 10; width: 100%; }
+        
+        body.dark-mode .bg-white, body.dark-mode .bg-gray-50, body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important; border-color: #334155 !important;
+        }
+        body.dark-mode .text-gray-600, body.dark-mode .text-gray-700, body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+        
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+        body.dark-mode .left-sidebar-dark { background: #030712; }
+        
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 16px; margin: 4px 12px;
+            border-radius: 10px; transition: all 0.2s ease; color: #9ca3af; cursor: pointer;
+        }
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+            width: auto;
+        }
+        
+        .collapsible-group { margin-bottom: 4px; }
+        .nav-group-toggle {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+        .group-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+        .collapsible-group.collapsed .group-icon { transform: rotate(-90deg); }
+        .collapsible-group.collapsed .nav-group-items { display: none; }
+        
+        .sidebar-menu-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+        }
+        .sidebar-menu-btn:hover { background: rgba(0,0,0,0.05); }
+        body.dark-mode .sidebar-menu-btn:hover { background: rgba(255,255,255,0.1); }
+        
+        .sidebar-close-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+            color: #9ca3af;
+        }
+        .sidebar-close-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn { display: block !important; }
+            .sidebar-close-btn { display: block !important; }
+            .left-sidebar-dark { transform: translateX(-100%); }
+            .left-sidebar-dark.open { transform: translateX(0) !important; }
+            .main-container { margin-left: 0; width: 100%; }
+        }
+        
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn { display: none !important; }
+            .sidebar-close-btn { display: none !important; }
+            .left-sidebar-dark { transform: translateX(0) !important; }
+            .main-container { margin-left: 280px; }
+        }
+        
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; border-radius: 16px; width: 100%; max-width: 500px; padding: 24px; margin: 16px;
+        }
+        body.dark-mode .modal-content { background: #1e293b; }
+        
+        .stat-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            left: auto;
+            top: 100%;
+            margin-top: 0.5rem;
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+        body.dark-mode .notification-dropdown { background: #1e293b; border: 1px solid #334155; }
+        
+        .notification-item {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .notification-item:hover { background: #f3f4f6; }
+        body.dark-mode .notification-item:hover { background: #334155; }
+        .notification-unread { background: #faf5ff; }
+        body.dark-mode .notification-unread { background: #4c1d95; }
+        
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto !important;
+                width: 65vw !important;
+                max-width: 320px;
+                min-width: 200px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto !important;
+                width: 65vw !important;
+                min-width: 180px;
+                max-width: 280px;
+            }
+        }
+        
+        .export-btn { transition: all 0.2s ease; }
+        .export-btn:hover { transform: translateY(-2px); }
+        
+        .pagination-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .pagination-btn:hover:not(:disabled) { background: #e5e7eb; }
+        body.dark-mode .pagination-btn:hover:not(:disabled) { background: #334155; }
+        .pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination-active { background: #8b5cf6; color: white; }
+        /* DARK MODE - HOVER vào bảng chuyển chữ đen */
+body.dark-mode table tbody tr:hover {
+    background-color: #e5e7eb !important;
+}
+
+body.dark-mode table tbody tr:hover td,
+body.dark-mode table tbody tr:hover td * {
+    color: #1f2937 !important;
+}
+
+/* Đảm bảo badge vẫn giữ màu khi hover */
+body.dark-mode table tbody tr:hover .px-2.py-1.rounded-full,
+body.dark-mode table tbody tr:hover .badge {
+    color: inherit !important;
+}
+
+/* Hover cho chuyên ngành cụ thể */
+body.dark-mode table tbody tr:hover td:has(.bg-blue-100),
+body.dark-mode table tbody tr:hover .bg-blue-100 {
+    background-color: #bfdbfe !important;
+    color: #1e3a8a !important;
+}
+
+body.dark-mode table tbody tr:hover .bg-purple-100 {
+    background-color: #e9d5ff !important;
+    color: #4c1d95 !important;
+}
+
+body.dark-mode table tbody tr:hover .bg-green-100 {
+    background-color: #bbf7d0 !important;
+    color: #166534 !important;
+}
+
+body.dark-mode table tbody tr:hover .bg-yellow-100 {
+    background-color: #fef08a !important;
+    color: #854d0e !important;
+}
+
+body.dark-mode table tbody tr:hover .bg-gray-100 {
+    background-color: #d1d5db !important;
+    color: #111827 !important;
+}
+
+/* Dark mode - dropdown select chữ đen */
+body.dark-mode select,
+body.dark-mode select option {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+/* Dark mode - input tìm kiếm chữ đen */
+body.dark-mode input::placeholder {
+    color: #9ca3af !important;
+}
+
+/* Dark mode - nút phân trang hover */
+body.dark-mode .pagination-btn:hover:not(:disabled) {
+    background-color: #e5e7eb !important;
+    color: #1f2937 !important;
+}
+
+/* Dark mode - header dropdown */
+body.dark-mode .notification-dropdown {
+    background-color: #ffffff !important;
+}
+
+body.dark-mode .notification-item {
+    color: #1f2937 !important;
+    border-bottom-color: #e5e7eb !important;
+}
+
+body.dark-mode .notification-item:hover {
+    background-color: #f3f4f6 !important;
+}
+/* DARK MODE - Modal nền trắng chữ đen */
+body.dark-mode .modal-content {
+    background-color: #ffffff !important;
+}
+
+body.dark-mode .modal-content * {
+    color: #1f2937 !important;
+}
+
+body.dark-mode .modal-content input,
+body.dark-mode .modal-content select,
+body.dark-mode .modal-content textarea {
+    background-color: #f9fafb !important;
+    color: #1f2937 !important;
+    border-color: #d1d5db !important;
+}
+
+body.dark-mode .modal-content input:focus,
+body.dark-mode .modal-content select:focus {
+    border-color: #8b5cf6 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+}
+
+body.dark-mode .modal-content .text-red-500 {
+    color: #ef4444 !important;
+}
+
+body.dark-mode .modal-content .text-gray-500 {
+    color: #6b7280 !important;
+}
+
+body.dark-mode .modal-content .bg-gray-300 {
+    background-color: #e5e7eb !important;
+    color: #1f2937 !important;
+}
+
+body.dark-mode .modal-content .bg-purple-600 {
+    background-color: #8b5cf6 !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .modal-content .bg-purple-600:hover {
+    background-color: #7c3aed !important;
+}
+    </style>
+</head>
+<body class="light-mode">
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                        <p class="text-gray-400 text-[10px]">Quản trị viên</p>
+                    </div>
+                </div>
+                <div class="sidebar-close-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-times text-gray-400 hover:text-white text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="overview">
+                <span>📊 TỔNG QUAN</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="overview">
+                <div class="nav-item" onclick="window.location.href='/'"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+    <div class="nav-group-title nav-group-toggle" data-group="users">
+        <span>👥 QUẢN LÝ & BÁO CÁO NGƯỜI DÙNG</span><i class="fas fa-chevron-down group-icon"></i>
+    </div>
+    <div class="nav-group-items" data-group="users">
+        <div class="nav-item" onclick="window.location.href='/admin/users'">
+            <i class="fas fa-users-cog"></i><span>Quản lý người dùng</span>
+        </div>
+        <div class="nav-item active" onclick="window.location.href='/admin/teachers'">
+            <i class="fas fa-chalkboard-user"></i><span>Quản lý giảng viên</span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='/admin/students'">
+            <i class="fas fa-user-graduate"></i><span>Quản lý sinh viên</span>
+        </div>
+    </div>
+</div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="content">
+                <span>📚 QUẢN LÝ NỘI DUNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="content">
+                <div class="nav-item" onclick="window.location.href='/admin/documents'">
+                    <i class="fas fa-folder-open"></i><span>Kho tài liệu</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/admin/document-approvals'">
+            <i class="fas fa-file-signature"></i><span>Phê duyệt tài liệu</span>
+        </div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="learning">
+                <span>🏫 QUẢN LÝ HỌC TẬP</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="learning">
+                <div class="nav-item" onclick="window.location.href='/admin/classes'"><i class="fas fa-chalkboard"></i><span>Lớp học</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="system">
+                <span>⚙️ CÀI ĐẶT HỆ THỐNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="system">
+<div class="nav-item" onclick="window.location.href='/admin/settings'">
+    <i class="fas fa-cog"></i><span>Cài đặt chung</span>
+</div>
+                <div class="nav-item" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon-sidebar"></i><span id="theme-text-sidebar">Chế độ tối</span></div>
+                <div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                👨‍🏫 Quản lý & Báo cáo giảng viên
+                            </h1>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y"><div class="p-4 text-center">Đang tải...</div></div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <!-- Bộ lọc thời gian và xuất file -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <div class="flex gap-2">
+                            <select id="filterPeriod" class="px-3 py-1.5 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600">
+                                <option value="today">📅 Hôm nay</option>
+                                <option value="week" selected>📅 Tuần này</option>
+                                <option value="month">📅 Tháng này</option>
+                                <option value="year">📅 Năm nay</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="exportData('excel')" class="export-btn bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-green-700">
+                                <i class="fas fa-file-excel mr-1"></i> Xuất Excel
+                            </button>
+                           
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thống kê nhanh -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="stat-card bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+                        <p class="text-sm opacity-90">Tổng giảng viên</p>
+                        <p id="totalTeachers" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="stat-card bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-4 text-white">
+                        <p class="text-sm opacity-90">Đã phân công</p>
+                        <p id="assignedCount" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="stat-card bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-4 text-white">
+                        <p class="text-sm opacity-90">Chưa phân công</p>
+                        <p id="unassignedCount" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="stat-card bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-4 text-white">
+                        <p class="text-sm opacity-90">Chờ duyệt</p>
+                        <p id="pendingCount" class="text-2xl font-bold">0</p>
+                    </div>
+                </div>
+
+                <!-- Biểu đồ thống kê -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                        <h3 class="font-semibold text-gray-800 dark:text-white mb-4">📊 Giáo viên theo chuyên ngành</h3>
+                        <canvas id="majorChart" height="200"></canvas>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                        <h3 class="font-semibold text-gray-800 dark:text-white mb-4">📈 Xu hướng tuyển dụng</h3>
+                        <canvas id="trendChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Bộ lọc tìm kiếm -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1 relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                            <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm theo tên, email, mã số..." 
+                                   class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600 text-sm">
+                        </div>
+                        <select id="majorFilter" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600 text-sm">
+                            <option value="all">📁 Tất cả chuyên ngành</option>
+                            <option value="Công nghệ thông tin">💻 Công nghệ thông tin</option>
+                            <option value="Toán học">📐 Toán học</option>
+                            <option value="Kinh tế">📊 Kinh tế</option>
+                            <option value="Ngoại ngữ">🌍 Ngoại ngữ</option>
+                            <option value="Kỹ thuật phần mềm">⚙️ Kỹ thuật phần mềm</option>
+                        </select>
+                        <button onclick="resetFilters()" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition text-sm">
+                            <i class="fas fa-undo-alt mr-1"></i> Làm mới
+                        </button>
+                        <button onclick="openAddModal()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition text-sm">
+                            <i class="fas fa-plus mr-1"></i> Thêm giảng viên
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách giảng viên -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-700 border-b">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Họ tên</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã số</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Chuyên ngành</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teachers-table">
+                                <tr><td colspan="7" class="text-center py-8 text-gray-400">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Phân trang -->
+                    <div class="flex justify-between items-center px-6 py-3 border-t dark:border-gray-700">
+                        <p id="paginationInfo" class="text-sm text-gray-500">Hiển thị 0/0 giảng viên</p>
+                        <div class="flex gap-2">
+                            <button id="prevPage" onclick="changePage(-1)" class="pagination-btn" disabled>
+                                <i class="fas fa-chevron-left"></i> Trước
+                            </button>
+                            <span id="pageNumbers" class="flex gap-1"></span>
+                            <button id="nextPage" onclick="changePage(1)" class="pagination-btn" disabled>
+                                Sau <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thêm/Sửa -->
+    <div id="teacherModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modalTitle" class="text-xl font-bold mb-4 dark:text-white">Thêm giảng viên</h3>
+            <input type="hidden" id="teacherId">
+            <div class="space-y-3">
+                <div><label class="block text-sm font-medium mb-1">Họ tên <span class="text-red-500">*</span></label>
+                <input type="text" id="fullname" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"></div>
+                <div><label class="block text-sm font-medium mb-1">Email <span class="text-red-500">*</span></label>
+                <input type="email" id="email" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"></div>
+                <div><label class="block text-sm font-medium mb-1">Mã số GV</label>
+                <input type="text" id="teacherCode" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"></div>
+                <div><label class="block text-sm font-medium mb-1">Chuyên ngành</label>
+                <select id="major" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                    <option value="">-- Chọn --</option>
+                    <option value="Công nghệ thông tin">💻 Công nghệ thông tin</option>
+                    <option value="Toán học">📐 Toán học</option>
+                    <option value="Kinh tế">📊 Kinh tế</option>
+                    <option value="Ngoại ngữ">🌍 Ngoại ngữ</option>
+                    <option value="Kỹ thuật phần mềm">⚙️ Kỹ thuật phần mềm</option>
+                </select></div>
+                <div id="passwordField"><label class="block text-sm font-medium mb-1">Mật khẩu</label>
+                <input type="password" id="password" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600" value="123456">
+                <p class="text-xs text-gray-500 mt-1">Mặc định: 123456</p></div>
+            </div>
+            <div class="flex gap-3 justify-end mt-6">
+                <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 rounded-lg">Hủy</button>
+                <button onclick="saveTeacher()" class="px-4 py-2 bg-purple-600 text-white rounded-lg">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xóa -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4 dark:text-white">Xác nhận xóa</h3>
+            <p>Bạn có chắc muốn xóa giảng viên <strong id="deleteTeacherName"></strong>?</p>
+            <p class="text-sm text-red-500 mt-2">⚠️ Hành động này không thể hoàn tác!</p>
+            <input type="hidden" id="deleteTeacherId">
+            <div class="flex gap-3 justify-end mt-6">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-300 rounded-lg">Hủy</button>
+                <button onclick="confirmDelete()" class="px-4 py-2 bg-red-600 text-white rounded-lg">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== KHỞI TẠO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; starCtx.lineWidth = 2; 
+                    starCtx.beginPath(); starCtx.moveTo(m.x, m.y); starCtx.lineTo(m.x - m.len, m.y - m.len); starCtx.stroke(); 
+                    m.x += m.speed; m.y += m.speed; 
+                    if (m.x > starCanvas.width || m.y > starCanvas.height) meteorsArray.splice(i,1);
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { if (starCanvas && isStarSystemActive) { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; initStarsPro(); } }); 
+            setInterval(() => { if (isStarSystemActive) { let c = Math.floor(Math.random() * 2) + 3; for (let i = 0; i < c; i++) createMeteorPro(); } }, 1500); 
+            initStarsPro(); drawStarsPro(); 
+        }
+
+        let isDarkModeActive = false;
+        
+        function toggleTheme() { 
+            const body = document.body, starCanvasElem = document.getElementById('star-canvas-background'),
+                  themeIconSidebar = document.getElementById('theme-icon-sidebar'), themeTextSidebar = document.getElementById('theme-text-sidebar');
+            isDarkModeActive = !isDarkModeActive; 
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); body.classList.add('dark-mode'); 
+                if (themeIconSidebar) { themeIconSidebar.classList.remove('fa-moon'); themeIconSidebar.classList.add('fa-sun'); }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (starCanvasElem) { starCanvasElem.style.display = 'block'; if (!starCtx) { isStarSystemActive = true; initStarfieldPro(); } else { isStarSystemActive = true; if (!starAnimationId) { function restartDraw() { if (starCtx && starCanvas && isStarSystemActive) drawStarsPro(); } restartDraw(); } } } 
+            } else { 
+                body.classList.remove('dark-mode'); body.classList.add('light-mode'); 
+                if (themeIconSidebar) { themeIconSidebar.classList.remove('fa-sun'); themeIconSidebar.classList.add('fa-moon'); }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; isStarSystemActive = false; if (starAnimationId) { cancelAnimationFrame(starAnimationId); starAnimationId = null; } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { setTimeout(() => { toggleTheme(); }, 20); } 
+        else { const canvasBg = document.getElementById('star-canvas-background'); if (canvasBg) canvasBg.style.display = 'none'; }
+
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') group.classList.add('collapsed');
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() { document.getElementById('leftSidebar').classList.toggle('open'); }
+        async function logout() { if (confirm('Đăng xuất?')) { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; } }
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        function formatTime(timestamp) { if (!timestamp) return ''; const date = new Date(timestamp); const now = new Date(); const diff = Math.floor((now - date) / 1000); if (diff < 60) return 'Vừa xong'; if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`; if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`; if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`; return date.toLocaleDateString('vi-VN'); }
+        function showToast(message, type = 'success') { const toast = document.createElement('div'); toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`; toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>${message}`; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
+
+        // ==================== EXPORT DATA (ĐÃ SỬA) ====================
+        async function exportData(type) {
+            const search = document.getElementById('searchInput')?.value || '';
+            const major = document.getElementById('majorFilter')?.value || 'all';
+            const period = document.getElementById('filterPeriod')?.value || 'week';
+            
+            let url = '';
+            if (type === 'excel') {
+                url = `/api/admin/export/teachers-excel?search=${encodeURIComponent(search)}&major=${encodeURIComponent(major)}&period=${period}`;
+            } else {
+                url = `/api/admin/export/teachers-pdf?search=${encodeURIComponent(search)}&major=${encodeURIComponent(major)}&period=${period}`;
+            }
+            
+            try {
+                // Mở tab mới để tải file
+                window.open(url, '_blank');
+                showToast(`Đang xuất file ${type.toUpperCase()}...`, 'success');
+            } catch (error) {
+                showToast(`Lỗi xuất file: ${error.message}`, 'error');
+            }
+        }
+
+        // ==================== DỮ LIỆU ====================
+        let allTeachers = [];
+        let filteredTeachers = [];
+        let currentPage = 1;
+        const rowsPerPage = 10;
+        let majorChart = null;
+        let trendChart = null;
+
+        async function loadTeachers() {
+            try {
+                const res = await fetch('/api/admin/teachers');
+                const data = await res.json();
+                if (data.success) {
+                    allTeachers = data.teachers;
+                    filteredTeachers = [...allTeachers];
+                    updateStats();
+                    updateCharts();
+                    renderTable();
+                    updatePagination();
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function updateStats() {
+            document.getElementById('totalTeachers').textContent = allTeachers.length;
+            const assigned = allTeachers.filter(t => t.major && t.major !== '').length;
+            const unassigned = allTeachers.filter(t => !t.major || t.major === '').length;
+            const pending = allTeachers.filter(t => t.is_approved !== 1).length;
+            document.getElementById('assignedCount').textContent = assigned;
+            document.getElementById('unassignedCount').textContent = unassigned;
+            document.getElementById('pendingCount').textContent = pending;
+        }
+
+        function updateCharts() {
+            const majorCount = {};
+            allTeachers.forEach(t => { const m = t.major || 'Chưa phân công'; majorCount[m] = (majorCount[m] || 0) + 1; });
+            const majors = Object.keys(majorCount);
+            const counts = majors.map(m => majorCount[m]);
+            
+            if (majorChart) majorChart.destroy();
+            const ctx1 = document.getElementById('majorChart').getContext('2d');
+            majorChart = new Chart(ctx1, {
+                type: 'bar',
+                data: { labels: majors, datasets: [{ label: 'Số lượng', data: counts, backgroundColor: '#8b5cf6', borderRadius: 8 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+            });
+            
+            const months = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+            const monthlyData = Array(12).fill(0);
+            allTeachers.forEach(t => { if (t.created_at) { const month = new Date(t.created_at).getMonth(); monthlyData[month]++; } });
+            if (trendChart) trendChart.destroy();
+            const ctx2 = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(ctx2, {
+                type: 'line',
+                data: { labels: months, datasets: [{ label: 'Giáo viên mới', data: monthlyData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
+            });
+        }
+
+        function filterTeachers() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const major = document.getElementById('majorFilter').value;
+            filteredTeachers = allTeachers.filter(t => {
+                const matchSearch = !search || t.fullname.toLowerCase().includes(search) || t.email.toLowerCase().includes(search) || (t.student_id && t.student_id.toLowerCase().includes(search));
+                const matchMajor = major === 'all' || t.major === major;
+                return matchSearch && matchMajor;
+            });
+            currentPage = 1;
+            renderTable();
+            updatePagination();
+        }
+
+        function renderTable() {
+            const start = (currentPage - 1) * rowsPerPage;
+            const pageTeachers = filteredTeachers.slice(start, start + rowsPerPage);
+            const tbody = document.getElementById('teachers-table');
+            if (pageTeachers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Không có giảng viên nào</td></tr>';
+            } else {
+                tbody.innerHTML = pageTeachers.map(t => `
+                    <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-6 py-3 text-sm">${t.id}</td>
+                        <td class="px-6 py-3 font-medium">${escapeHtml(t.fullname)}</td>
+                        <td class="px-6 py-3 text-sm">${escapeHtml(t.email)}</td>
+                        <td class="px-6 py-3 text-sm">${t.student_id || '---'}</td>
+                        <td class="px-6 py-3"><span class="px-2 py-1 rounded-full text-xs ${t.major === 'Công nghệ thông tin' ? 'bg-blue-100 text-blue-700' : t.major === 'Toán học' ? 'bg-purple-100 text-purple-700' : t.major === 'Kinh tế' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}">${t.major || 'Chưa phân công'}</span></td>
+                        <td class="px-6 py-3"><span class="px-2 py-1 rounded-full text-xs ${t.is_approved === 1 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${t.is_approved === 1 ? '✅ Đã duyệt' : '⏳ Chờ duyệt'}</span></td>
+                        <td class="px-6 py-3"><div class="flex gap-2">
+                            <button onclick="openEditModal(${t.id})" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
+                            <button onclick="openDeleteModal(${t.id}, '${escapeHtml(t.fullname)}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                            ${t.is_approved !== 1 ? `<button onclick="approveTeacher(${t.id})" class="text-green-500 hover:text-green-700"><i class="fas fa-check-circle"></i></button>` : ''}
+                        </div></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredTeachers.length / rowsPerPage);
+            document.getElementById('paginationInfo').textContent = `Hiển thị ${filteredTeachers.length > 0 ? (currentPage-1)*rowsPerPage+1 : 0}-${Math.min(currentPage*rowsPerPage, filteredTeachers.length)}/${filteredTeachers.length} giảng viên`;
+            document.getElementById('prevPage').disabled = currentPage <= 1;
+            document.getElementById('nextPage').disabled = currentPage >= totalPages;
+            let pageHtml = '';
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+            for (let i = startPage; i <= endPage; i++) {
+                pageHtml += `<button onclick="goToPage(${i})" class="pagination-btn ${i === currentPage ? 'pagination-active' : ''}">${i}</button>`;
+            }
+            document.getElementById('pageNumbers').innerHTML = pageHtml;
+        }
+
+        function goToPage(page) { currentPage = page; renderTable(); }
+        function changePage(delta) { goToPage(currentPage + delta); }
+        function resetFilters() { document.getElementById('searchInput').value = ''; document.getElementById('majorFilter').value = 'all'; filterTeachers(); }
+
+        // ==================== CRUD ====================
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Thêm giảng viên';
+            document.getElementById('teacherId').value = '';
+            document.getElementById('fullname').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('teacherCode').value = '';
+            document.getElementById('major').value = '';
+            document.getElementById('password').value = '123456';
+            document.getElementById('passwordField').style.display = 'block';
+            document.getElementById('teacherModal').style.display = 'flex';
+        }
+
+        async function openEditModal(id) {
+            try {
+                const res = await fetch(`/api/admin/teachers/${id}`);
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('modalTitle').textContent = 'Sửa giảng viên';
+                    document.getElementById('teacherId').value = data.teacher.id;
+                    document.getElementById('fullname').value = data.teacher.fullname;
+                    document.getElementById('email').value = data.teacher.email;
+                    document.getElementById('teacherCode').value = data.teacher.student_id || '';
+                    document.getElementById('major').value = data.teacher.major || '';
+                    document.getElementById('passwordField').style.display = 'none';
+                    document.getElementById('teacherModal').style.display = 'flex';
+                }
+            } catch(e) { alert('Lỗi tải thông tin'); }
+        }
+
+        function closeModal() { document.getElementById('teacherModal').style.display = 'none'; }
+
+        async function saveTeacher() {
+            const id = document.getElementById('teacherId').value;
+            const fullname = document.getElementById('fullname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const teacherCode = document.getElementById('teacherCode').value.trim();
+            const major = document.getElementById('major').value;
+            const password = document.getElementById('password').value;
+            if (!fullname || !email || !teacherCode) { alert('Vui lòng điền đầy đủ thông tin'); return; }
+            const formData = new FormData();
+            formData.append('fullname', fullname);
+            formData.append('email', email);
+            formData.append('teacher_code', teacherCode);
+            formData.append('major', major);
+            let url, method;
+            if (id) { url = `/api/admin/teachers/${id}`; method = 'PUT'; formData.append('teacher_id', id); }
+            else { url = '/api/admin/teachers/add'; method = 'POST'; formData.append('password', password || '123456'); }
+            try {
+                const res = await fetch(url, { method, body: formData });
+                const data = await res.json();
+                if (data.success) { showToast(id ? 'Cập nhật thành công' : 'Thêm giảng viên thành công'); closeModal(); loadTeachers(); }
+                else { alert(data.message || 'Lỗi'); }
+            } catch(e) { alert('Lỗi kết nối'); }
+        }
+
+        async function approveTeacher(id) {
+            if (!confirm('Duyệt giảng viên này?')) return;
+            try {
+                const res = await fetch(`/api/admin/approve-teacher/${id}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) { showToast('Đã duyệt giảng viên'); loadTeachers(); }
+                else { alert(data.message); }
+            } catch(e) { alert('Lỗi'); }
+        }
+
+        let deleteId = null;
+        function openDeleteModal(id, name) { deleteId = id; document.getElementById('deleteTeacherName').textContent = name; document.getElementById('deleteModal').style.display = 'flex'; }
+        function closeDeleteModal() { document.getElementById('deleteModal').style.display = 'none'; deleteId = null; }
+        async function confirmDelete() {
+            if (!deleteId) return;
+            try {
+                const res = await fetch(`/api/admin/teachers/${deleteId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) { showToast('Đã xóa giảng viên'); closeDeleteModal(); loadTeachers(); }
+                else { alert(data.message); }
+            } catch(e) { alert('Lỗi'); }
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    const container = document.getElementById('notifications-list');
+                    if (!data.notifications?.length) container.innerHTML = '<div class="p-4 text-center text-gray-500">Chưa có thông báo</div>';
+                    else container.innerHTML = data.notifications.map(n => `<div class="notification-item ${n.is_read ? '' : 'notification-unread'} p-3 transition" onclick="viewNotification(${n.id}, '${n.link || ''}')"><div class="flex gap-3"><div><i class="fas fa-bell text-purple-500"></i></div><div><p class="text-sm font-medium">${escapeHtml(n.title)}</p><p class="text-xs text-gray-500">${escapeHtml(n.content.substring(0, 80))}</p><p class="text-xs text-gray-400 mt-1">${formatTime(n.created_at)}</p></div></div></div>`).join('');
+                    document.getElementById('notification-badge').textContent = data.unread_count || '';
+                    document.getElementById('notification-badge').classList.toggle('hidden', !data.unread_count);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function toggleNotificationDropdown() { const d = document.getElementById('notification-dropdown'); d.classList.toggle('hidden'); if (!d.classList.contains('hidden')) loadNotifications(); }
+        async function viewNotification(id, link) { await fetch(`/api/notifications/mark-read/${id}`, { method: 'POST' }); loadNotifications(); if (link) window.location.href = link; }
+        async function markAllNotificationsRead() { await fetch('/api/notifications/mark-all-read', { method: 'POST' }); loadNotifications(); showToast('Đã đánh dấu tất cả thông báo', 'success'); }
+
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.add('hidden');
+        });
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar'); const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuBtn.contains(event.target)) sidebar.classList.remove('open');
+        });
+        document.getElementById('searchInput').addEventListener('input', filterTeachers);
+        document.getElementById('majorFilter').addEventListener('change', filterTeachers);
+
+        document.addEventListener('DOMContentLoaded', function() { initCollapsibleGroups(); loadTeachers(); loadNotifications(); setInterval(loadNotifications, 30000); });
+        
+        window.toggleSidebar = toggleSidebar; window.toggleTheme = toggleTheme; window.logout = logout;
+        window.openAddModal = openAddModal; window.openEditModal = openEditModal; window.closeModal = closeModal;
+        window.saveTeacher = saveTeacher; window.approveTeacher = approveTeacher; window.openDeleteModal = openDeleteModal;
+        window.closeDeleteModal = closeDeleteModal; window.confirmDelete = confirmDelete; window.goToPage = goToPage;
+        window.changePage = changePage; window.resetFilters = resetFilters; window.exportData = exportData;
+        window.toggleNotificationDropdown = toggleNotificationDropdown; window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+    </script>
+</body>
+</html>

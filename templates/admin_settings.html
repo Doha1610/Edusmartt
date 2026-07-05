@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Admin | Cài đặt hệ thống</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; transition: background 0.2s ease; min-height: 100vh; }
+        body.light-mode { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); color: #1f2937; }
+        body.dark-mode { background: transparent; color: #f3f4f6; }
+        
+        #star-canvas-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        body.light-mode #star-canvas-background { display: none; }
+        .content-wrapper { position: relative; z-index: 10; width: 100%; }
+
+        body.dark-mode .bg-white, body.dark-mode .bg-gray-50, body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important; border-color: #334155 !important;
+        }
+        body.dark-mode .text-gray-600, body.dark-mode .text-gray-700, body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        .left-sidebar-dark {
+            background: #0a0c10; width: 280px; position: fixed; left: 0; top: 0; bottom: 0;
+            z-index: 1000; transition: transform 0.3s ease; border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+        body.dark-mode .left-sidebar-dark { background: #030712; }
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 16px; margin: 4px 12px;
+            border-radius: 10px; transition: all 0.2s ease; color: #9ca3af; cursor: pointer;
+        }
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px; font-size: 0.7rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px; color: #6b7280;
+        }
+        .main-container { margin-left: 280px; transition: margin 0.3s ease; width: auto; }
+
+        .collapsible-group { margin-bottom: 4px; }
+        .nav-group-toggle { display: flex !important; justify-content: space-between !important; align-items: center !important; cursor: pointer; }
+        .group-icon { font-size: 0.75rem; transition: transform 0.2s ease; }
+        .collapsible-group.collapsed .group-icon { transform: rotate(-90deg); }
+        .collapsible-group.collapsed .nav-group-items { display: none; }
+
+        .sidebar-menu-btn { cursor: pointer; padding: 8px; border-radius: 8px; transition: all 0.2s; display: none; }
+        .sidebar-menu-btn:hover { background: rgba(0,0,0,0.05); }
+        body.dark-mode .sidebar-menu-btn:hover { background: rgba(255,255,255,0.1); }
+
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn { display: block !important; }
+            .left-sidebar-dark { transform: translateX(-100%); }
+            .left-sidebar-dark.open { transform: translateX(0) !important; }
+            .main-container { margin-left: 0; width: 100%; }
+        }
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn { display: none !important; }
+            .left-sidebar-dark { transform: translateX(0) !important; }
+            .main-container { margin-left: 280px; }
+        }
+
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .setting-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #8b5cf6;
+        }
+        .setting-card:hover { transform: translateX(5px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: 0.3s; border-radius: 34px;
+        }
+        .toggle-slider:before {
+            position: absolute; content: ""; height: 22px; width: 22px;
+            left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%;
+        }
+        input:checked + .toggle-slider { background-color: #8b5cf6; }
+        input:checked + .toggle-slider:before { transform: translateX(24px); }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+        .tab-btn:hover:not(.active) {
+            background: #e2e8f0;
+        }
+        body.dark-mode .tab-btn:hover:not(.active) {
+            background: #334155;
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 380px;
+            background: white; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000; max-height: 400px; overflow-y: auto; font-size: 13px;
+        }
+        body.dark-mode .notification-dropdown { background: #1e293b; border: 1px solid #334155; }
+        .notification-item { transition: all 0.2s; cursor: pointer; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+        .notification-item:hover { background: #f3f4f6; }
+        body.dark-mode .notification-item:hover { background: #334155; }
+        .notification-unread { background: #faf5ff; }
+        body.dark-mode .notification-unread { background: #4c1d95; }
+
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                position: fixed; top: 55px; right: 12px; left: auto !important;
+                width: 65vw !important; max-width: 320px;
+            }
+            .tab-btn { padding: 8px 12px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Quản trị viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="overview">
+                <span>📊 TỔNG QUAN</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="overview">
+                <div class="nav-item" onclick="window.location.href='/'"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="users">
+                <span>👥 QUẢN LÝ & BÁO CÁO NGƯỜI DÙNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="users">
+                <div class="nav-item" onclick="window.location.href='/admin/users'"><i class="fas fa-users-cog"></i><span>Quản lý người dùng</span></div>
+                <div class="nav-item" onclick="window.location.href='/admin/teachers'"><i class="fas fa-chalkboard-user"></i><span>Quản lý giáo viên</span></div>
+                <div class="nav-item" onclick="window.location.href='/admin/students'"><i class="fas fa-user-graduate"></i><span>Quản lý sinh viên</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="content">
+                <span>📚 QUẢN LÝ NỘI DUNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="content">
+                <div class="nav-item" onclick="window.location.href='/admin/documents'"><i class="fas fa-folder-open"></i><span>Kho tài liệu</span></div>
+                <div class="nav-item" onclick="window.location.href='/admin/document-approvals'"><i class="fas fa-file-signature"></i><span>Phê duyệt tài liệu</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="learning">
+                <span>🏫 QUẢN LÝ HỌC TẬP</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="learning">
+                <div class="nav-item" onclick="window.location.href='/admin/classes'"><i class="fas fa-chalkboard"></i><span>Lớp học</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="system">
+                <span>⚙️ CÀI ĐẶT HỆ THỐNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="system">
+                <div class="nav-item active" onclick="window.location.href='/admin/settings'">
+                    <i class="fas fa-cog"></i><span>Cài đặt chung</span>
+                </div>
+                <div class="nav-item" id="theme-nav-item" onclick="toggleTheme()">
+                    <i class="fas" id="theme-icon-sidebar"></i>
+                    <span id="theme-text-sidebar"></span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-cog text-white text-lg"></i>
+                            </div>
+                            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                Cài đặt hệ thống
+                            </h1>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y"><div class="p-4 text-center">Đang tải...</div></div>
+                                </div>
+                            </div>
+                            <button id="header-theme-btn" onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-4xl mx-auto px-4 py-6">
+                
+                <!-- 3 Tabs -->
+                <div class="flex gap-2 mb-6 border-b pb-2 flex-wrap">
+                    <button onclick="showTab('profile')" id="tab-profile" class="tab-btn active px-4 py-2 text-sm">
+                        <i class="fas fa-user mr-1"></i> 👤 Cá nhân
+                    </button>
+                    <button onclick="showTab('system')" id="tab-system" class="tab-btn px-4 py-2 text-sm">
+                        <i class="fas fa-server mr-1"></i> ⚙️ Hệ thống
+                    </button>
+                    <button onclick="showTab('backup')" id="tab-backup" class="tab-btn px-4 py-2 text-sm">
+                        <i class="fas fa-database mr-1"></i> 💾 Sao lưu
+                    </button>
+                </div>
+
+                <!-- Tab 1: Cá nhân (Đổi mật khẩu admin) -->
+                <div id="profile-tab" class="tab-content">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 setting-card">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-lock text-purple-500"></i> Đổi mật khẩu
+                        </h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Mật khẩu hiện tại</label>
+                                <input type="password" id="current-password" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="Nhập mật khẩu hiện tại">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Mật khẩu mới</label>
+                                <input type="password" id="new-password" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Xác nhận mật khẩu mới</label>
+                                <input type="password" id="confirm-password" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="Nhập lại mật khẩu mới">
+                            </div>
+                            <button onclick="changeAdminPassword()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm">
+                                <i class="fas fa-key mr-1"></i> Đổi mật khẩu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Hệ thống -->
+                <div id="system-tab" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 setting-card">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-sliders-h text-purple-500"></i> Cài đặt hệ thống
+                        </h2>
+                        <div class="space-y-4">
+                            
+                            <!-- 1. Tự động duyệt tài liệu khi không có giáo viên -->
+                            <div class="flex justify-between items-center py-3 border-b dark:border-gray-700">
+                                <div>
+                                    <p class="font-medium">🤖 Tự động duyệt tài liệu</p>
+                                    <p class="text-xs text-gray-500">Khi không có giáo viên phụ trách chuyên ngành, tài liệu sẽ được tự động duyệt</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="auto-approve-docs" onchange="saveSystemSetting('auto_approve_docs', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <!-- 2. Cho phép giáo viên tự đăng ký -->
+                            <div class="flex justify-between items-center py-3 border-b dark:border-gray-700">
+                                <div>
+                                    <p class="font-medium">👨‍🏫 Giáo viên tự đăng ký</p>
+                                    <p class="text-xs text-gray-500">Cho phép giáo viên tự đăng ký tài khoản, không cần admin phê duyệt</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="allow-teacher-registration" onchange="saveSystemSetting('allow_teacher_registration', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Sao lưu -->
+                <div id="backup-tab" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 setting-card">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-database text-purple-500"></i> Sao lưu dữ liệu
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Sao lưu -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-center">
+                                <i class="fas fa-download text-4xl text-green-500 mb-3"></i>
+                                <h3 class="font-semibold mb-2">Sao lưu dữ liệu</h3>
+                                <p class="text-xs text-gray-500 mb-3">Tạo bản sao lưu toàn bộ hệ thống</p>
+                                <button onclick="backupDatabase()" class="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm">
+                                    <i class="fas fa-download mr-1"></i> Sao lưu ngay
+                                </button>
+                            </div>
+                            
+                            <!-- Phục hồi -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-center">
+                                <i class="fas fa-upload text-4xl text-blue-500 mb-3"></i>
+                                <h3 class="font-semibold mb-2">Phục hồi dữ liệu</h3>
+                                <p class="text-xs text-gray-500 mb-3">Khôi phục từ bản sao lưu</p>
+                                <input type="file" id="restore-file" accept=".sql,.zip,.json" class="hidden" onchange="restoreDatabase(this)">
+                                <button onclick="document.getElementById('restore-file').click()" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+                                    <i class="fas fa-upload mr-1"></i> Chọn file phục hồi
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Thông tin -->
+                        <div class="mt-6 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                            <p class="text-xs text-yellow-700 dark:text-yellow-300 flex items-center gap-2">
+                                <i class="fas fa-info-circle"></i> 
+                                Bản sao lưu bao gồm: người dùng, tài liệu, bài tập, tin nhắn và tất cả dữ liệu hệ thống.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; starCtx.lineWidth = 2; 
+                    starCtx.beginPath(); starCtx.moveTo(m.x, m.y); starCtx.lineTo(m.x - m.len, m.y - m.len); starCtx.stroke(); 
+                    m.x += m.speed; m.y += m.speed; 
+                    if (m.x > starCanvas.width || m.y > starCanvas.height) meteorsArray.splice(i,1);
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { if (starCanvas && isStarSystemActive) { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; initStarsPro(); } }); 
+            setInterval(() => { if (isStarSystemActive) { let c = Math.floor(Math.random() * 2) + 3; for (let i = 0; i < c; i++) createMeteorPro(); } }, 1500); 
+            initStarsPro(); drawStarsPro(); 
+        }
+
+        // ==================== DARK MODE ====================
+        let isDarkModeActive = false;
+        
+        function updateThemeUI() {
+            const themeIconSidebar = document.getElementById('theme-icon-sidebar');
+            const themeTextSidebar = document.getElementById('theme-text-sidebar');
+            const headerThemeBtn = document.getElementById('header-theme-btn');
+            const headerIcon = headerThemeBtn ? headerThemeBtn.querySelector('i') : null;
+            
+            if (isDarkModeActive) {
+                // Đang ở DARK MODE - hiển thị "Chế độ sáng" và icon mặt trời
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-moon');
+                    themeIconSidebar.classList.add('fa-sun');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (headerIcon) {
+                    headerIcon.classList.remove('fa-moon');
+                    headerIcon.classList.add('fa-sun');
+                }
+            } else {
+                // Đang ở LIGHT MODE - hiển thị "Chế độ tối" và icon mặt trăng
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-sun');
+                    themeIconSidebar.classList.add('fa-moon');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (headerIcon) {
+                    headerIcon.classList.remove('fa-sun');
+                    headerIcon.classList.add('fa-moon');
+                }
+            }
+        }
+        
+        function toggleTheme() { 
+            const body = document.body, 
+                  starCanvasElem = document.getElementById('star-canvas-background');
+            
+            isDarkModeActive = !isDarkModeActive; 
+            
+            if (isDarkModeActive) { 
+                // Chuyển sang DARK MODE
+                body.classList.remove('light-mode'); 
+                body.classList.add('dark-mode'); 
+                
+                // Bật nền sao
+                if (starCanvasElem) { 
+                    starCanvasElem.style.display = 'block'; 
+                    if (!starCtx) { 
+                        isStarSystemActive = true; 
+                        initStarfieldPro(); 
+                    } else { 
+                        isStarSystemActive = true; 
+                        if (!starAnimationId) { 
+                            function restartDraw() { 
+                                if (starCtx && starCanvas && isStarSystemActive) drawStarsPro(); 
+                            } 
+                            restartDraw(); 
+                        } 
+                    } 
+                } 
+            } else { 
+                // Chuyển sang LIGHT MODE
+                body.classList.remove('dark-mode'); 
+                body.classList.add('light-mode'); 
+                
+                // Tắt nền sao
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; 
+                isStarSystemActive = false; 
+                if (starAnimationId) { 
+                    cancelAnimationFrame(starAnimationId); 
+                    starAnimationId = null; 
+                } 
+            } 
+            
+            // Cập nhật giao diện các nút theme
+            updateThemeUI();
+            
+            // Lưu trạng thái
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        // Khôi phục theme từ localStorage khi load trang
+        function loadThemeFromStorage() {
+            const savedTheme = localStorage.getItem('star_theme_mode');
+            const body = document.body;
+            const starCanvasElem = document.getElementById('star-canvas-background');
+            
+            if (savedTheme === 'dark') {
+                // Đang ở DARK MODE
+                isDarkModeActive = true;
+                body.classList.remove('light-mode');
+                body.classList.add('dark-mode');
+                
+                // Bật nền sao
+                if (starCanvasElem) {
+                    starCanvasElem.style.display = 'block';
+                    if (!starCtx) {
+                        isStarSystemActive = true;
+                        initStarfieldPro();
+                    } else {
+                        isStarSystemActive = true;
+                    }
+                }
+            } else {
+                // Đang ở LIGHT MODE
+                isDarkModeActive = false;
+                body.classList.remove('dark-mode');
+                body.classList.add('light-mode');
+                
+                // Tắt nền sao
+                if (starCanvasElem) starCanvasElem.style.display = 'none';
+                isStarSystemActive = false;
+                if (starAnimationId) {
+                    cancelAnimationFrame(starAnimationId);
+                    starAnimationId = null;
+                }
+            }
+            
+            // Cập nhật giao diện các nút theme
+            updateThemeUI();
+        }
+
+        // ==================== COLLAPSIBLE SIDEBAR ====================
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') group.classList.add('collapsed');
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() { document.getElementById('leftSidebar').classList.toggle('open'); }
+        
+        async function logout() { 
+            if (confirm('Đăng xuất?')) { 
+                await fetch('/api/logout', { method: 'POST' }); 
+                window.location.href = '/login'; 
+            } 
+        }
+        
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN');
+        }
+
+        // ==================== TAB ====================
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        // ==================== ĐỔI MẬT KHẨU ADMIN ====================
+        async function changeAdminPassword() {
+            const currentPwd = document.getElementById('current-password').value;
+            const newPwd = document.getElementById('new-password').value;
+            const confirmPwd = document.getElementById('confirm-password').value;
+            
+            if (!currentPwd || !newPwd) {
+                showToast('Vui lòng nhập đầy đủ thông tin!', 'warning');
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                showToast('Mật khẩu mới không khớp!', 'warning');
+                return;
+            }
+            if (newPwd.length < 6) {
+                showToast('Mật khẩu mới phải có ít nhất 6 ký tự!', 'warning');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/admin/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: currentPwd, new_password: newPwd })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('✅ Đổi mật khẩu thành công!', 'success');
+                    document.getElementById('current-password').value = '';
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-password').value = '';
+                } else {
+                    showToast(data.message || 'Đổi mật khẩu thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối server!', 'error');
+            }
+        }
+
+        // ==================== CÀI ĐẶT HỆ THỐNG ====================
+        async function saveSystemSetting(key, value) {
+            try {
+                const res = await fetch('/api/admin/system-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key, value })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`Đã lưu cài đặt`, 'success');
+                }
+            } catch (error) {
+                showToast('Lỗi lưu cài đặt', 'error');
+            }
+        }
+
+        async function loadSystemSettings() {
+            try {
+                const res = await fetch('/api/admin/system-settings');
+                const data = await res.json();
+                if (data.success) {
+                    if (data.settings.auto_approve_docs) document.getElementById('auto-approve-docs').checked = true;
+                    if (data.settings.allow_teacher_registration) document.getElementById('allow-teacher-registration').checked = true;
+                }
+            } catch (error) {
+                console.error('Lỗi tải cài đặt:', error);
+            }
+        }
+
+        // ==================== SAO LƯU DATABASE ====================
+        async function backupDatabase() {
+            showToast('Đang tạo bản sao lưu...', 'warning');
+            try {
+                window.open('/api/admin/backup-database', '_blank');
+                showToast('Đã tạo bản sao lưu!', 'success');
+            } catch (error) {
+                showToast('Lỗi tạo sao lưu', 'error');
+            }
+        }
+
+        async function restoreDatabase(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('backup_file', file);
+            
+            showToast('Đang phục hồi dữ liệu...', 'warning');
+            
+            try {
+                const res = await fetch('/api/admin/restore-database', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('✅ Phục hồi dữ liệu thành công!', 'success');
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showToast(data.message || 'Phục hồi thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối server!', 'error');
+            }
+            input.value = '';
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    const container = document.getElementById('notifications-list');
+                    if (!data.notifications?.length) container.innerHTML = '<div class="p-4 text-center text-gray-500">Chưa có thông báo</div>';
+                    else container.innerHTML = data.notifications.map(n => `<div class="notification-item ${n.is_read ? '' : 'notification-unread'} p-3" onclick="viewNotification(${n.id}, '${n.link || ''}')"><div class="flex gap-3"><div><i class="fas fa-bell text-purple-500"></i></div><div><p class="text-sm font-medium">${escapeHtml(n.title)}</p><p class="text-xs text-gray-500">${escapeHtml(n.content.substring(0, 80))}</p><p class="text-xs text-gray-400 mt-1">${formatTime(n.created_at)}</p></div></div></div>`).join('');
+                    document.getElementById('notification-badge').textContent = data.unread_count || '';
+                    document.getElementById('notification-badge').classList.toggle('hidden', !data.unread_count);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function toggleNotificationDropdown() { const d = document.getElementById('notification-dropdown'); d.classList.toggle('hidden'); if (!d.classList.contains('hidden')) loadNotifications(); }
+        async function viewNotification(id, link) { await fetch(`/api/notifications/mark-read/${id}`, { method: 'POST' }); loadNotifications(); if (link) window.location.href = link; }
+        async function markAllNotificationsRead() { await fetch('/api/notifications/mark-all-read', { method: 'POST' }); loadNotifications(); showToast('Đã đánh dấu tất cả thông báo'); }
+
+        // ==================== SỰ KIỆN ====================
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.add('hidden');
+        });
+        
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        // ==================== KHỞI TẠO ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleGroups();
+            loadSystemSettings();
+            loadNotifications();
+            loadThemeFromStorage();  // Khôi phục theme từ localStorage
+            setInterval(loadNotifications, 30000);
+        });
+
+        // Export functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.showTab = showTab;
+        window.changeAdminPassword = changeAdminPassword;
+        window.saveSystemSetting = saveSystemSetting;
+        window.backupDatabase = backupDatabase;
+        window.restoreDatabase = restoreDatabase;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+    </script>
+</body>
+</html>

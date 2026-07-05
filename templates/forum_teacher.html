@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Diễn đàn giảng viên</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.2s ease;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        body.light-mode {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1f2937;
+        }
+
+        body.dark-mode {
+            background: transparent;
+            color: #f3f4f6;
+        }
+
+        #star-canvas-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+
+        body.light-mode #star-canvas-background {
+            display: none;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        body.dark-mode .bg-white,
+        body.dark-mode .bg-gray-50,
+        body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        /* Sidebar */
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+
+        body.dark-mode .left-sidebar-dark {
+            background: #030712;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 4px 12px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .nav-item i {
+            width: 22px;
+            font-size: 1rem;
+        }
+
+        .nav-item span {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.08);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+        }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+            width: auto;
+        }
+
+        .collapsible-group {
+            margin-bottom: 4px;
+        }
+
+        .nav-group-toggle {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+
+        .group-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible-group.collapsed .group-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-group.collapsed .nav-group-items {
+            display: none;
+        }
+
+        .sidebar-menu-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .sidebar-menu-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn {
+                display: block !important;
+            }
+            .left-sidebar-dark {
+                transform: translateX(-100%);
+            }
+            .left-sidebar-dark.open {
+                transform: translateX(0) !important;
+            }
+            .main-container {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn {
+                display: none !important;
+            }
+            .left-sidebar-dark {
+                transform: translateX(0) !important;
+            }
+            .main-container {
+                margin-left: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .p-4, .p-6 {
+                padding: 12px !important;
+            }
+            .flex.gap-6 {
+                flex-direction: column;
+                gap: 16px !important;
+            }
+            .w-64, .w-80 {
+                width: 100% !important;
+            }
+            .chat-container {
+                height: 400px !important;
+            }
+            h1.text-2xl {
+                font-size: 1.1rem !important;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-container {
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .message-bubble {
+            transition: all 0.2s;
+        }
+
+        .message-bubble:hover {
+            transform: translateX(3px);
+        }
+
+        .reaction-btn {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .reaction-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .room-item {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .room-item:hover {
+            background: #f3f4f6;
+            transform: translateX(3px);
+        }
+
+        body.dark-mode .room-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .room-item.active {
+            background: #e9d5ff;
+            border-left: 3px solid #8b5cf6;
+        }
+
+        body.dark-mode .room-item.active {
+            background: rgba(139, 92, 246, 0.3);
+            border-left-color: #8b5cf6;
+        }
+
+        .group-card {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .group-card:hover {
+            transform: translateX(3px);
+            background: #f3f4f6;
+        }
+
+        body.dark-mode .group-card:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .avatar-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .avatar-emoji {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            left: auto;
+            top: 100%;
+            margin-top: 0.5rem;
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        body.dark-mode .notification-dropdown {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+
+        .notification-item {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
+
+        body.dark-mode .notification-item:hover {
+            background: #334155;
+        }
+
+        .notification-unread {
+            background: #faf5ff;
+        }
+
+        body.dark-mode .notification-unread {
+            background: #4c1d95;
+        }
+
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto !important;
+                width: 65vw !important;
+                max-width: 320px;
+                min-width: 200px;
+            }
+        }
+
+        .groups-container {
+            max-height: 300px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+        }
+
+        .groups-container.expanded {
+            max-height: none;
+        }
+
+        .leave-btn {
+            transition: all 0.2s;
+        }
+
+        .leave-btn:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        /* File attachment style */
+        .file-attachment {
+            background: #e0e7ff;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        body.dark-mode .file-attachment {
+            background: #334155;
+        }
+
+        .file-attachment a {
+            color: #1e40af;
+            text-decoration: none;
+        }
+
+        body.dark-mode .file-attachment a {
+            color: #a5b4fc;
+        }
+
+        .file-attachment a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars text-gray-400 hover:text-white text-xl"></i>
+                </div>
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Giáo viên</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="manage">
+                <span>📋 QUẢN LÝ CHÍNH</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="manage">
+                <div class="nav-item" onclick="window.location.href='/'">
+                    <i class="fas fa-tachometer-alt"></i><span>Trang chủ</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/classroom'">
+                    <i class="fas fa-chalkboard"></i><span>Lớp học</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/assignments'">
+                    <i class="fas fa-tasks"></i><span>Bài tập & Giao bài</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/documents'">
+                    <i class="fas fa-folder-open"></i><span>Kho tài liệu</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="users">
+                <span>👥 QUẢN LÝ NGƯỜI DÙNG</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="users">
+                <div class="nav-item" onclick="window.location.href='/students'">
+                    <i class="fas fa-user-graduate"></i><span>Danh sách sinh viên</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/attendance'">
+                    <i class="fas fa-calendar-check"></i><span>Điểm danh & Chuyên cần</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="evaluate">
+                <span>📊 ĐÁNH GIÁ & THEO DÕI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="evaluate">
+                <div class="nav-item" onclick="window.location.href='/teacher/approvals'">
+                    <i class="fas fa-check-double"></i><span>Phê duyệt tài liệu</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/grades'">
+                    <i class="fas fa-chart-line"></i><span>Bảng điểm & Xếp loại</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/analytics'">
+                    <i class="fas fa-chart-pie"></i><span>Phân tích tiến độ</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="interact">
+                <span>🤖 TƯƠNG TÁC & AI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="interact">
+                <div class="nav-item active" onclick="window.location.href='/forum'">
+                    <i class="fas fa-comments"></i><span>Diễn đàn thảo luận</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/teacher/quiz'">
+                    <i class="fas fa-gamepad"></i><span>Quiz & Trò chơi học tập</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/suggest-documents'">
+                    <i class="fas fa-lightbulb"></i><span>Gợi ý & Tải tài liệu</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="settings">
+                <span>⚙️ CÀI ĐẶT</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="settings">
+                <div class="nav-item" onclick="window.location.href='/settings'">
+                    <i class="fas fa-cog"></i><span>Cài đặt chung</span>
+                </div>
+                <div class="nav-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                    <span id="theme-text-sidebar">Chế độ tối</span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-comments text-white text-lg"></i>
+                            </div>
+                            <h1 class="text-base sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                💬 Diễn đàn giảng viên
+                            </h1>
+                        </div>
+                        <div class="flex items-center space-x-2 sm:space-x-3">
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300 text-base sm:text-lg"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm text-gray-800 dark:text-white">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500 hover:text-purple-600">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y dark:divide-gray-700">
+                                        <div class="p-4 text-center text-gray-500 text-sm">Đang tải...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300 text-base sm:text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                <div class="flex flex-col lg:flex-row gap-6">
+
+                    <!-- CỘT TRÁI: Danh sách phòng chat -->
+                    <div class="w-full lg:w-64 flex-shrink-0">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+                            <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-3">
+                                <h3 class="text-white font-semibold text-sm">
+                                    <i class="fas fa-comments mr-2"></i>Phòng chat
+                                </h3>
+                            </div>
+                            <div id="rooms-list" class="divide-y divide-gray-100 dark:divide-gray-700 max-h-[calc(100vh-150px)] overflow-y-auto">
+                                <div class="p-4 text-center text-gray-400 text-sm">
+                                    <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CỘT GIỮA: Chat Container -->
+                    <div class="flex-1">
+                        <div class="bg-white dark:bg-gray-800 rounded-t-xl shadow-md px-4 py-3 border-b dark:border-gray-700 flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-comment-dots text-purple-500"></i>
+                                <span class="font-medium text-gray-700 dark:text-gray-300" id="chat-header-title">Trò chuyện cùng cộng đồng</span>
+                            </div>
+                            <button id="member-list-btn" onclick="showGroupMembers()" class="text-purple-500 hover:text-purple-700 text-sm hidden">
+                                <i class="fas fa-users"></i> Thành viên
+                            </button>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-b-xl shadow-md overflow-hidden">
+                            <!-- Khung hiển thị tin nhắn -->
+                            <div id="messages-container" class="chat-container p-4 space-y-3">
+                                <div class="text-center text-gray-500 py-8 text-sm">
+                                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                    <p>Đang tải tin nhắn...</p>
+                                </div>
+                            </div>
+
+                            <!-- Khung nhập tin nhắn - CÓ NÚT FILE -->
+                            <div class="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900">
+                                <div class="flex gap-3">
+                                    <div class="flex-1 flex gap-2">
+                                        <input type="text" id="message-input" placeholder="Nhập tin nhắn..."
+                                               class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 dark:text-white">
+
+                                        <!-- Nút đính kèm file -->
+                                        <label for="file-input" class="cursor-pointer bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg px-3 flex items-center transition">
+                                            <i class="fas fa-paperclip text-gray-600 dark:text-gray-300"></i>
+                                        </label>
+                                        <input type="file" id="file-input" class="hidden" accept="image/*,application/pdf,.txt,.doc,.docx">
+
+                                        <button onclick="sendMessage()"
+                                                class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-5 rounded-lg transition text-sm">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Hiển thị tên file đã chọn -->
+                                <div id="selected-file-name" class="mt-1 text-xs text-purple-500 hidden"></div>
+                                <div class="mt-2 text-xs text-gray-400 flex items-center gap-2">
+                                    <div id="current-user-avatar" class="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs">👤</div>
+                                    <span id="current-user-name">Đang tải...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CỘT PHẢI: Nhóm học tập -->
+                    <div class="w-full lg:w-80 flex-shrink-0 space-y-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                                <h3 class="font-semibold text-gray-800 dark:text-white text-sm">
+                                    <i class="fas fa-users text-purple-500 mr-2"></i>
+                                    Nhóm học tập
+                                    <span id="groups-count" class="text-xs text-gray-400 ml-1">(0)</span>
+                                </h3>
+                                <button onclick="showCreateGroupModal()"
+                                        class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-2 py-1 rounded-lg text-xs">
+                                    <i class="fas fa-plus-circle mr-1"></i> Tạo nhóm
+                                </button>
+                            </div>
+
+                            <div class="flex gap-2 mb-4">
+                                <input type="text" id="join-code-input" placeholder="Nhập mã mời"
+                                       class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-sm bg-white dark:bg-gray-700 dark:text-white">
+                                <button onclick="joinGroupByCode()"
+                                        class="bg-blue-500 text-white px-2 py-1 rounded-lg text-sm hover:bg-blue-600">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                </button>
+                            </div>
+
+                            <div id="my-groups-container" class="groups-container max-h-48 overflow-y-auto">
+                                <div id="my-groups-list" class="space-y-2">
+                                    <div class="text-center text-gray-400 py-4 text-sm">
+                                        <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="show-more-btn" class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 text-center hidden">
+                                <button onclick="toggleGroupsExpand()" class="text-xs text-purple-500 hover:text-purple-600 flex items-center justify-center gap-1 w-full py-1">
+                                    <i class="fas fa-chevron-down" id="toggle-icon"></i>
+                                    <span id="toggle-text">Xem tất cả</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== NỀN SAO ====================
+        let starAnimationId = null;
+        let starCtx = null;
+        let starCanvas = null;
+        let starsArray = [];
+        let meteorsArray = [];
+        let isStarSystemActive = false;
+
+        function initStarfieldPro() {
+            starCanvas = document.getElementById('star-canvas-background');
+            if (!starCanvas) return;
+            starCtx = starCanvas.getContext('2d');
+
+            function initStarsPro() {
+                starsArray = [];
+                for (let i = 0; i < 1500; i++) {
+                    starsArray.push({
+                        x: Math.random() * starCanvas.width,
+                        y: Math.random() * starCanvas.height,
+                        r: Math.random() * 0.8,
+                        alpha: Math.random() * 0.5 + 0.5,
+                        speed: Math.random() * 0.3
+                    });
+                }
+            }
+
+            function createMeteorPro() {
+                meteorsArray.push({
+                    x: Math.random() * starCanvas.width,
+                    y: Math.random() * starCanvas.height / 2,
+                    len: Math.random() * 300 + 100,
+                    speed: Math.random() * 8 + 4,
+                    alpha: 1
+                });
+            }
+
+            function drawStarsPro() {
+                if (!starCtx || !starCanvas) return;
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+
+                for (let s of starsArray) {
+                    starCtx.beginPath();
+                    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")";
+                    starCtx.fill();
+                    s.alpha += (Math.random() - 0.5) * 0.05;
+                    s.alpha = Math.max(0, Math.min(1, s.alpha));
+                    s.y += s.speed;
+                    if (s.y > starCanvas.height) {
+                        s.y = 0;
+                        s.x = Math.random() * starCanvas.width;
+                    }
+                }
+
+                for (let i = meteorsArray.length - 1; i >= 0; i--) {
+                    let m = meteorsArray[i];
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len);
+                    g.addColorStop(0, "rgba(255,255,255,1)");
+                    g.addColorStop(1, "rgba(255,255,255,0)");
+                    starCtx.strokeStyle = g;
+                    starCtx.lineWidth = 2;
+                    starCtx.beginPath();
+                    starCtx.moveTo(m.x, m.y);
+                    starCtx.lineTo(m.x - m.len, m.y - m.len);
+                    starCtx.stroke();
+                    m.x += m.speed;
+                    m.y += m.speed;
+                }
+                starAnimationId = requestAnimationFrame(drawStarsPro);
+            }
+
+            window.addEventListener('resize', () => {
+                if (starCanvas && isStarSystemActive) {
+                    starCanvas.width = window.innerWidth;
+                    starCanvas.height = window.innerHeight;
+                    initStarsPro();
+                }
+            });
+
+            setInterval(() => {
+                if (isStarSystemActive) {
+                    let c = Math.floor(Math.random() * 2) + 3;
+                    for (let i = 0; i < c; i++) createMeteorPro();
+                }
+            }, 1500);
+
+            initStarsPro();
+            drawStarsPro();
+        }
+
+        let isDarkModeActive = false;
+
+        function toggleTheme() {
+            const body = document.body;
+            const starCanvasElem = document.getElementById('star-canvas-background');
+            const themeIconSidebar = document.getElementById('theme-icon-sidebar');
+            const themeTextSidebar = document.getElementById('theme-text-sidebar');
+
+            isDarkModeActive = !isDarkModeActive;
+
+            if (isDarkModeActive) {
+                body.classList.remove('light-mode');
+                body.classList.add('dark-mode');
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-moon');
+                    themeIconSidebar.classList.add('fa-sun');
+                }
+                if (themeTextSidebar) {
+                    themeTextSidebar.textContent = 'Chế độ sáng';
+                }
+                if (starCanvasElem) {
+                    starCanvasElem.style.display = 'block';
+                    if (!starCtx) {
+                        isStarSystemActive = true;
+                        initStarfieldPro();
+                    } else {
+                        isStarSystemActive = true;
+                        if (!starAnimationId) {
+                            function restartDraw() {
+                                if (starCtx && starCanvas && isStarSystemActive) drawStarsPro();
+                            }
+                            restartDraw();
+                        }
+                    }
+                }
+            } else {
+                body.classList.remove('dark-mode');
+                body.classList.add('light-mode');
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-sun');
+                    themeIconSidebar.classList.add('fa-moon');
+                }
+                if (themeTextSidebar) {
+                    themeTextSidebar.textContent = 'Chế độ tối';
+                }
+                if (starCanvasElem) {
+                    starCanvasElem.style.display = 'none';
+                }
+                isStarSystemActive = false;
+                if (starAnimationId) {
+                    cancelAnimationFrame(starAnimationId);
+                    starAnimationId = null;
+                }
+            }
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light');
+        }
+
+        const savedStarTheme = localStorage.getItem('star_theme_mode');
+        if (savedStarTheme === 'dark') {
+            setTimeout(() => {
+                toggleTheme();
+            }, 20);
+        } else {
+            const canvasBg = document.getElementById('star-canvas-background');
+            if (canvasBg) canvasBg.style.display = 'none';
+        }
+
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') group.classList.add('collapsed');
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`,
+                        group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('leftSidebar');
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                sidebar.style.transform = '';
+            } else {
+                sidebar.classList.add('open');
+                sidebar.style.transform = 'translateX(0)';
+            }
+        }
+
+        async function logout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                const res = await fetch('/api/logout', {
+                    method: 'POST'
+                });
+                if (res.ok) window.location.href = '/login';
+                else alert('Đăng xuất thất bại');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            if (days === 0) return date.toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            if (days === 1) return 'Hôm qua ' + date.toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            if (days < 7) return `${days} ngày trước`;
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ==================== THÔNG TIN NGƯỜI DÙNG ====================
+        let currentUser = null;
+        let currentUsername = "";
+        let currentUserAvatar = "";
+        let currentGroupId = null;
+        let currentGroupOwnerId = null;
+        let allGroups = [];
+        let isGroupsExpanded = false;
+        let pendingFile = null;  // ⭐ Biến lưu file đính kèm
+
+        async function loadCurrentUser() {
+            try {
+                const res = await fetch('/api/current-user');
+                const data = await res.json();
+                if (data.logged_in) {
+                    currentUser = data;
+                    currentUsername = data.fullname || data.username || data.email;
+                    currentUserAvatar = data.avatar_url || "";
+
+                    const avatarContainer = document.getElementById('current-user-avatar');
+                    if (currentUserAvatar && currentUserAvatar !== '/static/default-avatar.png') {
+                        avatarContainer.innerHTML = `<img src="${currentUserAvatar}?t=${Date.now()}" class="w-5 h-5 rounded-full object-cover">`;
+                    } else {
+                        const firstLetter = currentUsername ? currentUsername.charAt(0).toUpperCase() : '?';
+                        avatarContainer.innerHTML = `<div class="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs">${firstLetter}</div>`;
+                    }
+                    document.getElementById('current-user-name').innerHTML = `<i class="fas fa-user-circle mr-1"></i>Đang chat với tư cách: <strong>${escapeHtml(currentUsername)}</strong>`;
+                } else {
+                    document.getElementById('current-user-name').innerHTML = `<i class="fas fa-user-circle mr-1"></i>Đang chat với tư cách: <strong>Khách</strong>`;
+                    currentUsername = "Khách";
+                }
+            } catch (error) {
+                console.error('Lỗi tải thông tin user:', error);
+                currentUsername = "Khách";
+            }
+        }
+
+        function getUserAvatarHtml(avatarUrl, username) {
+            if (avatarUrl && avatarUrl !== '/static/default-avatar.png') {
+                return `<img src="${avatarUrl}" class="avatar-img" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'avatar-emoji\'>${username ? username.charAt(0).toUpperCase() : '?'}</div>'">`;
+            } else {
+                const firstLetter = username ? username.charAt(0).toUpperCase() : '?';
+                return `<div class="avatar-emoji">${firstLetter}</div>`;
+            }
+        }
+
+        // ==================== XỬ LÝ FILE ĐÍNH KÈM ====================
+        const fileInput = document.getElementById('file-input');
+        const selectedFileName = document.getElementById('selected-file-name');
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    pendingFile = e.target.files[0];
+                    const fileName = pendingFile.name;
+                    const fileSize = (pendingFile.size / 1024).toFixed(1);
+                    selectedFileName.innerHTML = `<i class="fas fa-paperclip"></i> Đã chọn: ${fileName.substring(0, 30)} (${fileSize} KB)`;
+                    selectedFileName.classList.remove('hidden');
+
+                    setTimeout(() => {
+                        if (selectedFileName) selectedFileName.classList.add('hidden');
+                    }, 5000);
+                } else {
+                    pendingFile = null;
+                    selectedFileName.classList.add('hidden');
+                }
+            });
+        }
+
+        // ==================== PHÒNG CHAT ====================
+        let currentRoomId = null;
+        let messageInterval = null;
+        let usersCache = {};
+
+        async function loadRooms() {
+            try {
+                const res = await fetch('/api/forum/rooms');
+                const data = await res.json();
+                if (data.success) {
+                    renderRooms(data.rooms);
+                    if (data.rooms.length > 0 && !currentRoomId) {
+                        const firstRoom = data.rooms[0];
+                        switchRoom(firstRoom.id, firstRoom.name, firstRoom.type, firstRoom.group_id);
+                    }
+                }
+            } catch (err) {
+                console.error('Lỗi tải phòng:', err);
+            }
+        }
+
+        function renderRooms(rooms) {
+            const container = document.getElementById('rooms-list');
+            if (!rooms || rooms.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-gray-400 text-sm">Không có phòng chat</div>';
+                return;
+            }
+            container.innerHTML = rooms.map(room => `
+                <div class="room-item p-3 flex items-center gap-3 ${currentRoomId == room.id ? 'active' : ''}"
+                     data-room-id="${room.id}" data-group-id="${room.group_id || ''}"
+                     onclick="switchRoom(${room.id}, '${escapeHtml(room.name)}', '${room.type}', ${room.group_id || 'null'})">
+                    <i class="fas ${room.type === 'public' ? 'fa-globe text-blue-500' : 'fa-users text-purple-500'} text-sm"></i>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-800 dark:text-white truncate">${escapeHtml(room.name)}</p>
+                        <p class="text-xs text-gray-400">${room.type === 'public' ? '💬 Công cộng' : '👥 Nhóm học tập'}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchRoom(roomId, roomName, roomType, groupId) {
+            currentRoomId = roomId;
+            currentGroupId = groupId;
+            document.getElementById('chat-header-title').textContent = roomName;
+
+            const memberBtn = document.getElementById('member-list-btn');
+            if (roomType === 'group' && groupId) {
+                memberBtn.classList.remove('hidden');
+                loadGroupInfo(groupId);
+            } else {
+                memberBtn.classList.add('hidden');
+            }
+
+            document.querySelectorAll('.room-item').forEach(el => {
+                if (el.getAttribute('data-room-id') == roomId) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+            loadMessages();
+        }
+
+        async function loadGroupInfo(groupId) {
+            try {
+                const res = await fetch(`/api/groups/${groupId}/info`);
+                const data = await res.json();
+                if (data.success) currentGroupOwnerId = data.owner_id;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadMessages() {
+            if (!currentRoomId) return;
+            try {
+                const res = await fetch(`/api/forum/messages?room_id=${currentRoomId}&limit=200`);
+                const data = await res.json();
+                if (data.success) renderMessages(data.messages);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function fetchUserAvatar(username) {
+            if (usersCache[username]) return usersCache[username];
+            try {
+                const res = await fetch(`/api/user/avatar-by-username?username=${encodeURIComponent(username)}`);
+                const data = await res.json();
+                usersCache[username] = data.avatar_url || "";
+                return usersCache[username];
+            } catch (error) {
+                return "";
+            }
+        }
+
+        async function renderMessages(messages) {
+    const container = document.getElementById('messages-container');
+    if (!messages || messages.length === 0) {
+        container.innerHTML = `<div class="text-center text-gray-500 py-8 text-sm"><i class="fas fa-comments text-4xl mb-3 opacity-50"></i><p>Chưa có tin nhắn nào</p><p class="text-xs">Hãy là người đầu tiên gửi tin nhắn!</p></div>`;
+        return;
+    }
+
+    // Lấy avatar cho từng username
+    for (const msg of messages) {
+        if (!usersCache[msg.username]) {
+            await fetchUserAvatar(msg.username);
+        }
+    }
+
+    // ⭐ KHÔNG ĐẢO NGƯỢC MẢNG - giữ nguyên thứ tự từ API (cũ lên đầu, mới xuống cuối)
+    // Nếu API trả về cũ lên đầu, mới xuống cuối thì hiển thị thẳng
+    container.innerHTML = messages.map(msg => {
+        const reactions = msg.reactions || [];
+        const reactionCounts = {};
+        reactions.forEach(r => {
+            reactionCounts[r.reaction] = (reactionCounts[r.reaction] || 0) + 1;
+        });
+        const isCurrentUser = (msg.username === currentUsername);
+        const avatarHtml = getUserAvatarHtml(usersCache[msg.username] || "", msg.username);
+
+        // Hiển thị file đính kèm
+        let fileHtml = '';
+        if (msg.file_url && msg.file_url !== 'null') {
+            const fileName = decodeURIComponent(msg.file_url.split('/').pop() || 'file');
+            fileHtml = `
+                <div class="file-attachment mt-2">
+                    <i class="fas fa-paperclip"></i>
+                    <a href="${msg.file_url}" target="_blank">📎 ${fileName}</a>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="message-bubble fade-in ${isCurrentUser ? 'ml-auto bg-purple-100 dark:bg-purple-900' : 'bg-gray-50 dark:bg-gray-800'} rounded-lg p-3 hover:shadow-sm transition" style="max-width: 85%;">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0">${avatarHtml}</div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-semibold text-gray-800 dark:text-white text-sm">${escapeHtml(msg.username)}</span>
+                            ${isCurrentUser ? '<span class="text-xs text-purple-500">(Bạn)</span>' : ''}
+                            <span class="text-xs text-gray-400">${formatTime(msg.created_at)}</span>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300 mt-1 text-sm whitespace-pre-wrap">${escapeHtml(msg.message)}</p>
+                        ${fileHtml}
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="addReaction(${msg.id}, '👍')" class="reaction-btn text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300">👍 ${reactionCounts['👍'] || ''}</button>
+                            <button onclick="addReaction(${msg.id}, '❤️')" class="reaction-btn text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300">❤️ ${reactionCounts['❤️'] || ''}</button>
+                            <button onclick="addReaction(${msg.id}, '😂')" class="reaction-btn text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300">😂 ${reactionCounts['😂'] || ''}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // ⭐ CUỘN XUỐNG CUỐI (HIỂN THỊ TIN NHẮN MỚI NHẤT)
+    container.scrollTop = container.scrollHeight;
+}
+
+        async function sendMessage() {
+            const message = document.getElementById('message-input').value.trim();
+
+            if (!message && !pendingFile) {
+                showToast('Vui lòng nhập nội dung tin nhắn hoặc chọn file', 'error');
+                return;
+            }
+            if (!currentRoomId) {
+                showToast('Không có phòng chat', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('username', currentUsername);
+            formData.append('message', message || '');
+            formData.append('avatar', currentUserAvatar ? 'avatar' : '👤');
+            formData.append('room_id', currentRoomId);
+
+            if (pendingFile) {
+                formData.append('file', pendingFile);
+                console.log('✅ Đã thêm file:', pendingFile.name);
+            }
+
+            try {
+                const res = await fetch('/api/forum/messages', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('message-input').value = '';
+                    pendingFile = null;
+                    if (fileInput) fileInput.value = '';
+                    if (selectedFileName) selectedFileName.classList.add('hidden');
+                    loadMessages();
+                } else {
+                    showToast(data.detail || 'Gửi thất bại', 'error');
+                }
+            } catch (err) {
+                console.error('Lỗi:', err);
+                showToast('Không thể gửi tin nhắn', 'error');
+            }
+        }
+
+        async function addReaction(messageId, reaction) {
+            const formData = new FormData();
+            formData.append('message_id', messageId);
+            formData.append('username', currentUsername);
+            formData.append('reaction', reaction);
+            try {
+                await fetch('/api/forum/reactions', {
+                    method: 'POST',
+                    body: formData
+                });
+                loadMessages();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // ==================== RỜI NHÓM ====================
+        async function leaveGroup(groupId) {
+            if (!confirm('⚠️ Bạn có chắc muốn rời khỏi nhóm này?\nBạn sẽ không còn xem được tin nhắn trong nhóm!')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/groups/${groupId}/leave`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('✅ Đã rời khỏi nhóm');
+                    const modal = document.querySelector('.fixed');
+                    if (modal) modal.remove();
+                    loadMyGroups();
+                    loadRooms();
+                    if (currentGroupId === groupId) {
+                        switchRoom(1, 'Công cộng', 'public', null);
+                    }
+                } else {
+                    showToast(data.message || 'Rời nhóm thất bại', 'error');
+                }
+            } catch (err) {
+                console.error('Lỗi:', err);
+                showToast('Lỗi kết nối server', 'error');
+            }
+        }
+
+        async function leaveGroupFromCard(groupId, groupName) {
+            if (!confirm(`⚠️ Bạn có chắc muốn rời khỏi nhóm "${groupName}"?\nBạn sẽ không còn xem được tin nhắn trong nhóm!`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/groups/${groupId}/leave`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast(`✅ Đã rời khỏi nhóm "${groupName}"`);
+                    loadMyGroups();
+                    loadRooms();
+                    if (currentGroupId === groupId) {
+                        switchRoom(1, 'Công cộng', 'public', null);
+                    }
+                } else {
+                    showToast(data.message || 'Rời nhóm thất bại', 'error');
+                }
+            } catch (err) {
+                console.error('Lỗi:', err);
+                showToast('Lỗi kết nối server', 'error');
+            }
+        }
+
+        // ==================== NHÓM HỌC TẬP ====================
+        async function showGroupMembers() {
+            if (!currentGroupId) return;
+            try {
+                const res = await fetch(`/api/groups/${currentGroupId}/members`);
+                const data = await res.json();
+                if (data.success) {
+                    showMembersModal(data.members, currentGroupId, data.is_owner || false);
+                }
+            } catch (err) {
+                showToast('Lỗi tải danh sách thành viên', 'error');
+            }
+        }
+
+        async function showGroupMembersById(groupId) {
+            if (!groupId) {
+                showToast("Không có ID nhóm", 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/groups/${groupId}/members`);
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.members.length === 0) {
+                        showToast("Nhóm chưa có thành viên nào", 'info');
+                    } else {
+                        showMembersModal(data.members, groupId, data.is_owner || false);
+                    }
+                } else {
+                    showToast("Lỗi: " + (data.detail || "Không thể tải danh sách thành viên"), 'error');
+                }
+            } catch (err) {
+                console.error("Lỗi chi tiết:", err);
+                showToast("Lỗi kết nối server: " + err.message, 'error');
+            }
+        }
+
+        function showMembersModal(members, groupId, isOwner) {
+            const totalMembers = members.length;
+            const currentMember = members.find(m => m.user_id === currentUser?.id);
+            const isCurrentUserMember = !!currentMember;
+            const isCurrentUserOwner = currentMember?.role === 'owner';
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white">
+                            👥 Thành viên nhóm 
+                            <span class="text-sm font-normal text-gray-500">(${totalMembers} thành viên)</span>
+                        </h2>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+                    </div>
+
+                    ${!isOwner && isCurrentUserMember && !isCurrentUserOwner ? `
+                    <div class="mb-4">
+                        <button onclick="leaveGroup(${groupId})" 
+                                class="w-full bg-orange-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-orange-600 transition">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Rời nhóm
+                        </button>
+                    </div>
+                    ` : ''}
+
+                    ${isOwner ? `
+                    <div class="mb-4 p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                        <div class="flex gap-2">
+                            <input type="text" id="new-member-identifier" placeholder="Email hoặc mã sinh viên" 
+                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
+                            <button onclick="addMemberToGroup(${groupId})" 
+                                    class="bg-purple-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-purple-600">
+                                <i class="fas fa-user-plus"></i> Thêm
+                            </button>
+                        </div>
+                        <div class="mt-3 flex gap-2">
+                            <button onclick="deleteGroup(${groupId})" 
+                                    class="flex-1 bg-red-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-red-600">
+                                <i class="fas fa-trash-alt"></i> Xóa nhóm
+                            </button>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div class="mb-3 flex gap-3 text-xs text-gray-500">
+                        <span><i class="fas fa-crown text-yellow-500"></i> Chủ nhóm: ${members.filter(m => m.role === 'owner').length}</span>
+                        <span><i class="fas fa-user"></i> Thành viên: ${members.filter(m => m.role === 'member').length}</span>
+                    </div>
+
+                    <div class="space-y-2 max-h-96 overflow-y-auto">
+                        ${members.map(member => {
+                            const avatarUrl = member.avatar_url || '';
+                            const fullname = member.fullname || `User ${member.user_id}`;
+                            const firstLetter = fullname.charAt(0).toUpperCase();
+
+                            let avatarHtml = '';
+                            if (avatarUrl && avatarUrl !== '/static/default-avatar.png') {
+                                avatarHtml = `<img src="${avatarUrl}" class="w-8 h-8 rounded-full object-cover" onerror="this.onerror=null; this.src=''; this.parentElement.innerHTML='<div class=\'w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-semibold\'>${firstLetter}</div>'">`;
+                            } else {
+                                avatarHtml = `<div class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-semibold">${firstLetter}</div>`;
+                            }
+
+                            return `
+                                <div class="member-item flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <div class="flex-shrink-0">
+                                        ${avatarHtml}
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-medium text-gray-800 dark:text-white text-sm">${escapeHtml(fullname)}</p>
+                                        <p class="text-xs text-gray-500">
+                                            ${member.role === 'owner' ? '<i class="fas fa-crown text-yellow-500"></i> Chủ nhóm' : '<i class="fas fa-user"></i> Thành viên'}
+                                            ${member.email ? ` • ${escapeHtml(member.email)}` : ''}
+                                        </p>
+                                    </div>
+                                    ${member.role === 'owner' ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">Chủ nhóm</span>' : ''}
+                                    ${isOwner && member.can_delete ? `
+                                        <button onclick="removeMemberFromGroup(${groupId}, ${member.user_id}, '${escapeHtml(fullname)}')" 
+                                                class="text-red-500 hover:text-red-700 text-sm" title="Xóa thành viên">
+                                            <i class="fas fa-user-minus"></i>
+                                        </button>
+                                    ` : ''}
+                                    ${!isOwner && member.user_id === currentUser?.id && member.role !== 'owner' ? `
+                                        <button onclick="leaveGroup(${groupId})" 
+                                                class="text-orange-500 hover:text-orange-700 text-sm" title="Rời nhóm">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition text-sm">Đóng</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        async function addMemberToGroup(groupId) {
+            const identifier = document.getElementById('new-member-identifier')?.value.trim();
+            if (!identifier) {
+                showToast('Vui lòng nhập email hoặc mã sinh viên', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('identifier', identifier);
+
+            try {
+                const res = await fetch(`/api/groups/${groupId}/add-member`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast(data.message);
+                    document.getElementById('new-member-identifier').value = '';
+                    showGroupMembersById(groupId);
+                    loadMyGroups();
+                } else {
+                    showToast(data.detail || 'Thêm thành viên thất bại', 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi kết nối server', 'error');
+            }
+        }
+
+        async function removeMemberFromGroup(groupId, memberId, memberName) {
+            if (!confirm(`Bạn có chắc muốn xóa "${memberName}" khỏi nhóm?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/groups/${groupId}/members/${memberId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('Đã xóa thành viên khỏi nhóm');
+                    showGroupMembersById(groupId);
+                    loadMyGroups();
+                } else {
+                    showToast(data.detail || 'Xóa thất bại', 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi kết nối server', 'error');
+            }
+        }
+
+        async function deleteGroup(groupId) {
+            if (!confirm('⚠️ Bạn có chắc chắn muốn xóa nhóm này?\nTất cả thành viên và tin nhắn sẽ bị xóa vĩnh viễn!')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/groups/${groupId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('Đã xóa nhóm thành công');
+                    document.querySelector('.fixed')?.remove();
+                    loadMyGroups();
+                    loadRooms();
+                } else {
+                    showToast(data.detail || 'Xóa nhóm thất bại', 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi kết nối server', 'error');
+            }
+        }
+
+        async function loadMyGroups() {
+            try {
+                const res = await fetch('/api/groups/my-groups');
+                const data = await res.json();
+                const container = document.getElementById('my-groups-list');
+                const showMoreBtn = document.getElementById('show-more-btn');
+                const groupsCountSpan = document.getElementById('groups-count');
+
+                if (data.success && data.groups && data.groups.length > 0) {
+                    allGroups = data.groups;
+                    groupsCountSpan.textContent = `(${allGroups.length})`;
+
+                    const groupsWithMembers = await Promise.all(allGroups.map(async (group) => {
+                        try {
+                            const memberRes = await fetch(`/api/groups/${group.id}/members`);
+                            const memberData = await memberRes.json();
+                            group.member_count = memberData.success ? memberData.members.length : 0;
+                        } catch (e) {
+                            group.member_count = 0;
+                        }
+                        return group;
+                    }));
+                    allGroups = groupsWithMembers;
+
+                    if (allGroups.length > 3) {
+                        showMoreBtn.classList.remove('hidden');
+                        renderGroupsList(false);
+                    } else {
+                        showMoreBtn.classList.add('hidden');
+                        renderGroupsList(true);
+                    }
+                } else {
+                    container.innerHTML = `<div class="text-center text-gray-400 py-4 text-sm"><i class="fas fa-users"></i><p class="mt-1">Chưa có nhóm nào</p><p class="text-xs">Hãy tạo hoặc tham gia nhóm</p></div>`;
+                    showMoreBtn.classList.add('hidden');
+                    groupsCountSpan.textContent = '(0)';
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('my-groups-list').innerHTML = `<div class="text-center text-red-500 py-4 text-sm">❌ Lỗi tải dữ liệu</div>`;
+            }
+        }
+
+        function renderGroupsList(showAll) {
+            const container = document.getElementById('my-groups-list');
+            const groupsToShow = showAll ? allGroups : allGroups.slice(0, 3);
+
+            container.innerHTML = groupsToShow.map(group => `
+                <div class="group-card bg-gray-50 dark:bg-gray-800 rounded-lg p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700" onclick="joinGroupRoom(${group.id}, '${escapeHtml(group.name)}')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 dark:text-white truncate">${escapeHtml(group.name)}</p>
+                            <p class="text-xs text-gray-500">${group.major || 'Chưa phân loại'} • ${group.member_count} thành viên</p>
+                            <p class="text-xs text-purple-500">Mã: ${group.invite_code}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="event.stopPropagation(); copyInviteCode('${group.invite_code}')" class="text-xs text-blue-500 hover:text-blue-700" title="Sao chép mã mời">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            ${group.role !== 'owner' ? `
+                            <button onclick="event.stopPropagation(); leaveGroupFromCard(${group.id}, '${escapeHtml(group.name)}')" 
+                                    class="text-xs text-orange-500 hover:text-orange-700 leave-btn" title="Rời nhóm">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                            ` : `
+                            <span class="text-xs px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700" title="Chủ nhóm">
+                                👑
+                            </span>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleGroupsExpand() {
+            isGroupsExpanded = !isGroupsExpanded;
+            const container = document.getElementById('my-groups-container');
+            const toggleIcon = document.getElementById('toggle-icon');
+            const toggleText = document.getElementById('toggle-text');
+
+            if (isGroupsExpanded) {
+                renderGroupsList(true);
+                container.classList.add('expanded');
+                toggleIcon.className = 'fas fa-chevron-up';
+                toggleText.textContent = 'Thu gọn';
+            } else {
+                renderGroupsList(false);
+                container.classList.remove('expanded');
+                toggleIcon.className = 'fas fa-chevron-down';
+                toggleText.textContent = 'Xem tất cả';
+            }
+        }
+
+        function joinGroupRoom(groupId, groupName) {
+            fetch(`/api/forum/rooms`).then(res => res.json()).then(data => {
+                if (data.success) {
+                    const room = data.rooms.find(r => r.group_id === groupId && r.type === 'group');
+                    if (room) switchRoom(room.id, room.name, 'group', groupId);
+                    else showToast('Không tìm thấy phòng chat của nhóm', 'error');
+                }
+            }).catch(err => console.error(err));
+        }
+
+        function copyInviteCode(code) {
+            navigator.clipboard.writeText(code);
+            showToast(`✅ Đã sao chép mã mời: ${code}`);
+        }
+
+        function showCreateGroupModal() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md mx-4">
+                    <h2 class="text-lg font-bold mb-4 text-gray-800 dark:text-white">Tạo nhóm mới</h2>
+                    <input type="text" id="group-name" placeholder="Tên nhóm *" class="w-full border rounded-lg px-3 py-2 mb-3 text-sm bg-white dark:bg-gray-700 dark:text-white">
+                    <textarea id="group-desc" placeholder="Mô tả nhóm" class="w-full border rounded-lg px-3 py-2 mb-3 text-sm bg-white dark:bg-gray-700 dark:text-white" rows="2"></textarea>
+                    <select id="group-major" class="w-full border rounded-lg px-3 py-2 mb-3 text-sm bg-white dark:bg-gray-700 dark:text-white">
+                        <option value="">-- Chọn ngành --</option>
+                        <option value="Công nghệ thông tin">💻 Công nghệ thông tin</option>
+                        <option value="Kinh tế">💰 Kinh tế</option>
+                        <option value="Kỹ thuật">⚙️ Kỹ thuật</option>
+                        <option value="Ngoại ngữ">🌍 Ngoại ngữ</option>
+                    </select>
+                    <input type="text" id="group-subject" placeholder="Môn học" class="w-full border rounded-lg px-3 py-2 mb-4 text-sm bg-white dark:bg-gray-700 dark:text-white">
+                    <div class="flex gap-3 justify-end">
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded-lg text-sm">Hủy</button>
+                        <button onclick="createGroup()" class="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm">Tạo nhóm</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        async function createGroup() {
+            const name = document.getElementById('group-name')?.value;
+            if (!name) {
+                showToast('Vui lòng nhập tên nhóm', 'error');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('description', document.getElementById('group-desc')?.value || '');
+            formData.append('major', document.getElementById('group-major')?.value || '');
+            formData.append('subject', document.getElementById('group-subject')?.value || '');
+            try {
+                const res = await fetch('/api/groups/create', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`✅ Tạo nhóm thành công!\nMã mời: ${data.invite_code}`);
+                    document.querySelector('.fixed')?.remove();
+                    loadMyGroups();
+                    loadRooms();
+                } else {
+                    showToast(data.detail || 'Tạo nhóm thất bại', 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi kết nối server', 'error');
+            }
+        }
+
+        async function joinGroupByCode() {
+            const inviteCode = document.getElementById('join-code-input')?.value.trim();
+            if (!inviteCode) {
+                showToast('Vui lòng nhập mã mời', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`/api/groups/join/${inviteCode}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`✅ Đã tham gia nhóm ${data.group_name}!`);
+                    document.getElementById('join-code-input').value = '';
+                    loadMyGroups();
+                    loadRooms();
+                } else {
+                    showToast(data.detail || 'Tham gia nhóm thất bại', 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi kết nối server', 'error');
+            }
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    renderNotifications(data.notifications);
+                    updateNotificationBadge(data.unread_count);
+                }
+            } catch (error) {
+                console.error('Lỗi tải thông báo:', error);
+            }
+        }
+
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notifications-list');
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Chưa có thông báo nào</div>';
+                return;
+            }
+            container.innerHTML = notifications.map(notif => `
+                <div class="notification-item ${notif.is_read ? '' : 'notification-unread'} p-3 transition" onclick="viewNotification(${notif.id}, '${notif.link || ''}')">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0">
+                            ${notif.type === 'assignment' ? '<i class="fas fa-tasks text-purple-500"></i>' : '<i class="fas fa-info-circle text-blue-500"></i>'}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 dark:text-white">${escapeHtml(notif.title)}</p>
+                            <p class="text-xs text-gray-500 mt-1">${escapeHtml(notif.content.substring(0, 100))}${notif.content.length > 100 ? '...' : ''}</p>
+                            <p class="text-xs text-gray-400 mt-1">${formatTime(notif.created_at)}</p>
+                        </div>
+                        ${!notif.is_read ? '<div class="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notification-badge');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) loadNotifications();
+        }
+
+        async function viewNotification(notificationId, link) {
+            await fetch(`/api/notifications/mark-read/${notificationId}`, {
+                method: 'POST'
+            });
+            loadNotifications();
+            loadUnreadCount();
+            if (link) window.location.href = link;
+        }
+
+        async function markAllNotificationsRead() {
+            await fetch('/api/notifications/mark-all-read', {
+                method: 'POST'
+            });
+            loadNotifications();
+            loadUnreadCount();
+            showToast('Đã đánh dấu tất cả thông báo');
+        }
+
+        async function loadUnreadCount() {
+            try {
+                const res = await fetch('/api/notifications?limit=1');
+                const data = await res.json();
+                updateNotificationBadge(data.unread_count);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // Đóng dropdown khi click ra ngoài
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+
+        // Khởi tạo
+        // Khởi tạo
+document.addEventListener('DOMContentLoaded', () => {
+    initCollapsibleGroups();
+    loadCurrentUser();
+    loadRooms();
+    loadMyGroups();
+    loadUnreadCount();
+    
+    messageInterval = setInterval(() => {
+        if (currentRoomId) loadMessages();
+        loadMyGroups();
+        loadUnreadCount();
+    }, 5000);
+    
+    // ⭐ Thêm sự kiện Enter cho ô nhập tin nhắn
+    const msgInput = document.getElementById('message-input');
+    if (msgInput) {
+        msgInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+});
+
+        window.addEventListener('beforeunload', () => {
+            if (messageInterval) clearInterval(messageInterval);
+        });
+
+        // Export functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.sendMessage = sendMessage;
+        window.addReaction = addReaction;
+        window.showCreateGroupModal = showCreateGroupModal;
+        window.createGroup = createGroup;
+        window.joinGroupByCode = joinGroupByCode;
+        window.joinGroupRoom = joinGroupRoom;
+        window.copyInviteCode = copyInviteCode;
+        window.showGroupMembers = showGroupMembers;
+        window.showGroupMembersById = showGroupMembersById;
+        window.toggleGroupsExpand = toggleGroupsExpand;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+        window.addMemberToGroup = addMemberToGroup;
+        window.removeMemberFromGroup = removeMemberFromGroup;
+        window.deleteGroup = deleteGroup;
+        window.leaveGroup = leaveGroup;
+        window.leaveGroupFromCard = leaveGroupFromCard;
+        window.switchRoom = switchRoom;
+    </script>
+</body>
+</html>

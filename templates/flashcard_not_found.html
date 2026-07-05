@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Không tìm thấy - EduSmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #0f172a;
+                color: #f1f5f9;
+            }
+        }
+        .not-found {
+            text-align: center;
+            padding: 40px;
+        }
+        .not-found i {
+            font-size: 64px;
+            color: #8b5cf6;
+            margin-bottom: 20px;
+        }
+        .not-found h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .not-found p {
+            color: #6b7280;
+            max-width: 400px;
+            margin: 0 auto 24px;
+        }
+        @media (prefers-color-scheme: dark) {
+            .not-found p {
+                color: #94a3b8;
+            }
+        }
+        .btn-home {
+            display: inline-block;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139,92,246,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="not-found">
+        <i class="fas fa-folder-open"></i>
+        <h1>😅 Không tìm thấy bộ flashcard</h1>
+        <p>{{ message }}</p>
+        <a href="/" class="btn-home">
+            <i class="fas fa-home mr-2"></i> Về trang chủ
+        </a>
+    </div>
+</body>
+</html>

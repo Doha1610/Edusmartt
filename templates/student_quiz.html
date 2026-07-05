@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Flashcard & Ôn tập</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+                * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.2s ease;
+            margin: 0;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        body.light-mode {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1f2937;
+        }
+        
+        body.dark-mode {
+            background: transparent;
+            color: #f3f4f6;
+        }
+        
+        #star-canvas-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        
+        body.light-mode #star-canvas-background {
+            display: none;
+        }
+        
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        body.dark-mode .bg-white,
+        body.dark-mode .bg-gray-50,
+        body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        body.dark-mode .border-gray-200,
+        body.dark-mode .border-gray-300 {
+            border-color: #334155 !important;
+        }
+
+        /* ==================== SIDEBAR ==================== */
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 99999;
+            transition: transform 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+
+        body.dark-mode .left-sidebar-dark {
+            background: #030712;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 4px 12px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+            width: auto;
+        }
+
+        /* Collapsible Group Styles */
+        .collapsible-group {
+            margin-bottom: 4px;
+        }
+
+        .nav-group-toggle {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+
+        .group-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible-group.collapsed .group-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-group.collapsed .nav-group-items {
+            display: none;
+        }
+
+        /* Nút 3 gạch */
+        .sidebar-menu-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .sidebar-menu-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* RESPONSIVE MOBILE */
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn {
+                display: block !important;
+            }
+            .left-sidebar-dark { 
+                transform: translateX(-100%);
+            }
+            .left-sidebar-dark.open { 
+                transform: translateX(0) !important;
+            }
+            .main-container { 
+                margin-left: 0; 
+                width: 100%;
+            }
+        }
+
+        /* DESKTOP */
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn {
+                display: none !important;
+            }
+            .left-sidebar-dark {
+                transform: translateX(0) !important;
+            }
+            .main-container {
+                margin-left: 280px;
+            }
+        }
+
+        /* FORCE FIX - ĐẶT CUỐI CÙNG */
+        @media (max-width: 1024px) {
+            .left-sidebar-dark.open {
+                transform: translateX(0) !important;
+            }
+        }
+
+        /* Responsive cho điện thoại */
+        @media (max-width: 768px) {
+            .p-4, .p-6 {
+                padding: 12px !important;
+            }
+            h1.text-2xl {
+                font-size: 1.25rem !important;
+            }
+            .text-sm {
+                font-size: 0.75rem !important;
+            }
+            .text-xs {
+                font-size: 0.65rem !important;
+            }
+            .grid-cols-1.md\:grid-cols-2 {
+                gap: 12px !important;
+            }
+            .flashcard {
+                height: 260px !important;
+            }
+            .flashcard-front, .flashcard-back {
+                padding: 20px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 13px;
+            }
+            .flashcard {
+                height: 220px !important;
+            }
+            .custom-tab {
+                padding: 8px 12px !important;
+                font-size: 14px !important;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Flashcard styles */
+        .flashcard {
+            width: 100%;
+            max-width: 500px;
+            height: 320px;
+            perspective: 1000px;
+            cursor: pointer;
+            margin: 0 auto;
+        }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 20px;
+        }
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .flashcard-front {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: rotateY(0deg);
+        }
+        .flashcard-back {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            transform: rotateY(180deg);
+        }
+        body.dark-mode .flashcard-front {
+            background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+        }
+        body.dark-mode .flashcard-back {
+            background: linear-gradient(135deg, #be185d 0%, #9d174d 100%);
+        }
+
+        .flashcard-set {
+            transition: all 0.2s;
+        }
+        .flashcard-set:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);
+        }
+
+        /* Tabs */
+        .custom-tab {
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .custom-tab.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+        
+        /* Fix cho select trong dark mode */
+        body.dark-mode select,
+        body.dark-mode select option {
+            background-color: #1e293b !important;
+            color: #f3f4f6 !important;
+            border-color: #475569 !important;
+        }
+        
+        /* Fix cho input trong dark mode */
+        body.dark-mode input,
+        body.dark-mode textarea {
+            background-color: #1e293b !important;
+            color: #f3f4f6 !important;
+            border-color: #475569 !important;
+        }
+        
+        body.dark-mode input::placeholder,
+        body.dark-mode textarea::placeholder {
+            color: #94a3b8 !important;
+        }
+        
+        body.dark-mode label {
+            color: #cbd5e1 !important;
+        }
+
+                /* ==================== NOTIFICATION DROPDOWN ==================== */
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.5rem;
+            width: 320px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 360px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+        
+        body.dark-mode .notification-dropdown {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+        
+        .notification-item {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
+        
+        body.dark-mode .notification-item:hover {
+            background: #334155;
+        }
+        
+        .notification-unread {
+            background: #faf5ff;
+        }
+        
+        body.dark-mode .notification-unread {
+            background: #4c1d95;
+        }
+        
+        .notification-item .text-sm {
+            font-size: 12px;
+        }
+        
+        .notification-item .text-xs {
+            font-size: 10px;
+        }
+        
+        /* RESPONSIVE CHO NOTIFICATION TRÊN MOBILE - CHIỀU RỘNG = 65% MÀN HÌNH */
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto;
+                width: 65vw !important;
+                max-width: 320px;
+                min-width: 200px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto;
+                width: 65vw !important;
+                min-width: 180px;
+                max-width: 280px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .notification-dropdown {
+                width: 70vw !important;
+                min-width: 160px;
+            }
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar với Collapsible Groups -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars text-gray-400 hover:text-white text-xl"></i>
+                </div>
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Sinh viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 1: HỌC TẬP -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="study">
+                <span>📚 HỌC TẬP</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="study">
+                <div class="nav-item" onclick="window.location.href='/'">
+                    <i class="fas fa-home"></i>
+                    <span>Trang chủ</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/documents'">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Kho tài liệu</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/favorites'">
+                    <i class="fas fa-heart"></i>
+                    <span>Tài liệu yêu thích</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/assignments/student'">
+                    <i class="fas fa-tasks"></i>
+                    <span>Bài tập của tôi</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/my-classes'">
+    <i class="fas fa-chalkboard"></i>
+    <span>Lớp học của tôi</span>
+</div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 2: TƯƠNG TÁC & AI -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="interact">
+                <span>🤖 TƯƠNG TÁC & AI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="interact">
+                <div class="nav-item" onclick="window.location.href='/forum'">
+                    <i class="fas fa-comments"></i>
+                    <span>Diễn đàn</span>
+                </div>
+                <div class="nav-item active" onclick="window.location.href='/student/quiz'">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Flashcard & Ôn tập</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/suggest-documents'">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Gợi ý & Tải tài liệu</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 3: THEO DÕI -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="track">
+                <span>📊 THEO DÕI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="track">
+                <div class="nav-item" onclick="window.location.href='/student/learning-journey'">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Hành trình học tập</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/transcript'">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Bảng điểm</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 4: BÁN HÀNG -->
+       
+          
+        
+        <!-- Nhóm 5: CÀI ĐẶT -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="settings">
+                <span>⚙️ CÀI ĐẶT</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="settings">
+                <div class="nav-item" onclick="window.location.href='/student/settings'">
+                    <i class="fas fa-cog"></i>
+                    <span>Cài đặt chung</span>
+                </div>
+                <div class="nav-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                    <span id="theme-text-sidebar">Chế độ tối</span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                    Flashcard & Ôn tập
+                                </h1>
+                                <p class="text-gray-500 text-xs sm:text-sm mt-1">Tạo flashcard từ tài liệu và ôn tập mọi lúc, mọi nơi</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <!-- Notification Bell -->
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 transition">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300 text-base sm:text-lg"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y">
+                                        <div class="p-4 text-center text-gray-500">Đang tải...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300 text-base sm:text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                
+                <!-- Tabs -->
+                <div class="flex gap-2 sm:gap-3 mb-6 border-b pb-2 overflow-x-auto">
+                    <div class="custom-tab active text-sm sm:text-base whitespace-nowrap" onclick="switchTab('my-sets')">
+                        📚 Bộ flashcard của tôi
+                    </div>
+                    <div class="custom-tab text-sm sm:text-base whitespace-nowrap" onclick="switchTab('create')">
+                        ✨ Tạo flashcard từ tài liệu
+                    </div>
+                </div>
+
+                <!-- Tab: Bộ flashcard của tôi -->
+                <div id="my-sets-tab" class="main-tab-content">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 mb-6">
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="flex-1 relative">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="text" id="search-my-sets" placeholder="🔍 Tìm kiếm bộ flashcard..." 
+                                       class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 dark:text-white text-sm"
+                                       onkeyup="filterMyFlashcardSets()">
+                            </div>
+                            <button onclick="switchTab('create')" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition text-sm whitespace-nowrap">
+                                <i class="fas fa-plus-circle mr-1"></i> Tạo mới
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="my-sets-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                        <div class="col-span-full text-center py-8 sm:py-12">
+                            <i class="fas fa-spinner fa-spin text-3xl text-purple-500"></i>
+                            <p class="mt-2 text-gray-500 text-sm">Đang tải bộ flashcard...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Tạo flashcard từ tài liệu -->
+                <div id="create-tab" class="main-tab-content" style="display: none;">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6">
+                        <h2 class="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-file-pdf text-red-500"></i> Chọn tài liệu để tạo flashcard
+                        </h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Chọn tài liệu</label>
+                                <select id="document-select" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm dark:text-white">
+                                    <option value="">-- Chọn tài liệu --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Số lượng flashcard</label>
+                                <select id="flashcard-count" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm dark:text-white">
+                                    <option value="5">5 flashcard</option>
+                                    <option value="10" selected>10 flashcard</option>
+                                    <option value="15">15 flashcard</option>
+                                    <option value="20">20 flashcard</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="generateFlashcards()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg hover:opacity-90 transition text-sm">
+                            <i class="fas fa-magic mr-2"></i> Tạo flashcard từ tài liệu
+                        </button>
+                        
+                        <div id="generating-status" class="text-center py-4 hidden">
+                            <i class="fas fa-spinner fa-spin text-2xl text-purple-500"></i>
+                            <p class="mt-2 text-sm">AI đang tạo flashcard từ tài liệu...</p>
+                        </div>
+                        
+                        <div id="flashcard-preview" class="mt-6 hidden">
+                            <h3 class="font-semibold mb-3 text-base">Flashcard vừa tạo:</h3>
+                            <div id="preview-flashcard" class="flashcard" onclick="togglePreviewFlip()">
+                                <div class="flashcard-inner">
+                                    <div class="flashcard-front">
+                                        <i class="fas fa-question-circle text-3xl sm:text-4xl mb-4 opacity-50"></i>
+                                        <p id="preview-question" class="text-base sm:text-lg">Câu hỏi sẽ hiển thị ở đây</p>
+                                        <span class="text-xs sm:text-sm mt-4 opacity-70">👆 Nhấn để lật thẻ</span>
+                                    </div>
+                                    <div class="flashcard-back">
+                                        <i class="fas fa-lightbulb text-3xl sm:text-4xl mb-4 opacity-50"></i>
+                                        <p id="preview-answer" class="text-base sm:text-lg">Câu trả lời sẽ hiển thị ở đây</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-3 justify-center mt-4">
+                                <button onclick="regenerateFlashcards()" class="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm">
+                                    <i class="fas fa-sync-alt mr-1"></i> Tạo lại
+                                </button>
+                                <button id="save-set-btn" onclick="saveFlashcardSet()" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm">
+                                    <i class="fas fa-save mr-1"></i> Lưu bộ flashcard
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal học flashcard -->
+    <div id="study-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50" style="display: none;">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl p-4 sm:p-6 mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg sm:text-xl font-bold" id="study-title">Ôn tập flashcard</h3>
+                <button onclick="closeStudyModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="study-flashcard" class="flashcard" onclick="toggleStudyFlip()">
+                <div class="flashcard-inner">
+                    <div class="flashcard-front">
+                        <i class="fas fa-question-circle text-3xl sm:text-4xl mb-4 opacity-50"></i>
+                        <p id="study-question" class="text-base sm:text-xl">Câu hỏi</p>
+                    </div>
+                    <div class="flashcard-back">
+                        <i class="fas fa-lightbulb text-3xl sm:text-4xl mb-4 opacity-50"></i>
+                        <p id="study-answer" class="text-base sm:text-xl">Câu trả lời</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center mt-6">
+                <button onclick="previousCard()" class="px-4 sm:px-5 py-2 bg-gray-500 text-white rounded-lg text-sm">
+                    <i class="fas fa-chevron-left"></i> Trước
+                </button>
+                <span id="card-counter" class="text-gray-600 text-sm">1 / 1</span>
+                <button onclick="nextCard()" class="px-4 sm:px-5 py-2 bg-purple-500 text-white rounded-lg text-sm">
+                    Sau <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal chỉnh sửa tên flashcard -->
+    <div id="edit-name-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 mx-4">
+            <h3 class="text-lg sm:text-xl font-bold mb-4 dark:text-white">✏️ Chỉnh sửa tên bộ flashcard</h3>
+            <input type="text" id="edit-flashcard-name" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 mb-4 text-sm dark:text-white" placeholder="Nhập tên mới">
+            <input type="hidden" id="edit-flashcard-id">
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeEditModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm">Hủy</button>
+                <button onclick="saveFlashcardName()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== HỆ THỐNG NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); 
+                    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; 
+                    starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; 
+                    s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; 
+                    if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); 
+                    g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; 
+                    starCtx.lineWidth = 2; 
+                    starCtx.beginPath(); 
+                    starCtx.moveTo(m.x, m.y); 
+                    starCtx.lineTo(m.x - m.len, m.y - m.len); 
+                    starCtx.stroke(); 
+                    m.x += m.speed; 
+                    m.y += m.speed; 
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { 
+                if (starCanvas && isStarSystemActive) { 
+                    starCanvas.width = window.innerWidth; 
+                    starCanvas.height = window.innerHeight; 
+                    initStarsPro(); 
+                } 
+            }); 
+            setInterval(() => { 
+                if (isStarSystemActive) { 
+                    let c = Math.floor(Math.random() * 2) + 3; 
+                    for (let i = 0; i < c; i++) createMeteorPro(); 
+                } 
+            }, 1500); 
+            initStarsPro(); 
+            drawStarsPro(); 
+        }
+        
+        let isDarkModeActive = false;
+        let currentTab = 'my-sets';
+        let myFlashcardSets = [];
+        let filteredFlashcardSets = [];
+        let currentGeneratedCards = [];
+        let currentStudySet = null;
+        let currentStudyIndex = 0;
+        let isStudyFlipped = false;
+        let isPreviewFlipped = false;
+        
+        function toggleTheme() { 
+            const body = document.body, 
+                  starCanvasElem = document.getElementById('star-canvas-background'),
+                  themeIconSidebar = document.getElementById('theme-icon-sidebar'),
+                  themeTextSidebar = document.getElementById('theme-text-sidebar');
+                  
+            isDarkModeActive = !isDarkModeActive; 
+            
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); 
+                body.classList.add('dark-mode'); 
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-moon');
+                    themeIconSidebar.classList.add('fa-sun');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (starCanvasElem) { 
+                    starCanvasElem.style.display = 'block'; 
+                    if (!starCtx) { 
+                        isStarSystemActive = true; 
+                        initStarfieldPro(); 
+                    } else { 
+                        isStarSystemActive = true; 
+                        if (!starAnimationId) { 
+                            function restartDraw() { 
+                                if (starCtx && starCanvas && isStarSystemActive) drawStarsPro(); 
+                            } 
+                            restartDraw(); 
+                        } 
+                    } 
+                } 
+            } else { 
+                body.classList.remove('dark-mode'); 
+                body.classList.add('light-mode'); 
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-sun');
+                    themeIconSidebar.classList.add('fa-moon');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; 
+                isStarSystemActive = false; 
+                if (starAnimationId) { 
+                    cancelAnimationFrame(starAnimationId); 
+                    starAnimationId = null; 
+                } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { 
+            setTimeout(() => { toggleTheme(); }, 20); 
+        } else { 
+            const canvasBg = document.getElementById('star-canvas-background'); 
+            if (canvasBg) canvasBg.style.display = 'none'; 
+        }
+
+        // ==================== COLLAPSIBLE SIDEBAR ====================
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') {
+                    group.classList.add('collapsed');
+                }
+                
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, 
+                        group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        // ==================== TOGGLE SIDEBAR - QUAN TRỌNG ====================
+        function toggleSidebar() {
+    const sidebar = document.getElementById('leftSidebar');
+    if (sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+        sidebar.style.transform = '';
+    } else {
+        sidebar.classList.add('open');
+        sidebar.style.transform = 'translateX(0)';
+    }
+}
+
+        // ==================== HÀM TIỆN ÍCH ====================
+        async function logout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                const res = await fetch('/api/logout', { method: 'POST' });
+                if (res.ok) window.location.href = '/login';
+                else alert('Đăng xuất thất bại');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'Vừa xong';
+            if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`;
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            const tabs = document.querySelectorAll('.custom-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            if (event && event.target) event.target.classList.add('active');
+            else if (tabName === 'my-sets') tabs[0].classList.add('active');
+            else tabs[1].classList.add('active');
+            
+            document.getElementById('my-sets-tab').style.display = tabName === 'my-sets' ? 'block' : 'none';
+            document.getElementById('create-tab').style.display = tabName === 'create' ? 'block' : 'none';
+            
+            if (tabName === 'my-sets') loadMyFlashcardSets();
+            if (tabName === 'create') loadDocumentsForSelect();
+        }
+
+        // ==================== TÌM KIẾM FLASHCARD ====================
+        function filterMyFlashcardSets() {
+            const searchTerm = document.getElementById('search-my-sets')?.value.toLowerCase() || '';
+            
+            if (!searchTerm) {
+                filteredFlashcardSets = [...myFlashcardSets];
+            } else {
+                filteredFlashcardSets = myFlashcardSets.filter(set => 
+                    set.name.toLowerCase().includes(searchTerm)
+                );
+            }
+            renderMyFlashcardSets();
+        }
+
+        function renderMyFlashcardSets() {
+            const container = document.getElementById('my-sets-container');
+            
+            if (filteredFlashcardSets.length === 0) {
+                const searchTerm = document.getElementById('search-my-sets')?.value.toLowerCase() || '';
+                if (searchTerm) {
+                    container.innerHTML = `<div class="col-span-full text-center py-8 sm:py-12"><i class="fas fa-search text-5xl text-gray-300 mb-3"></i><p class="text-gray-500 text-sm">Không tìm thấy bộ flashcard nào</p></div>`;
+                } else {
+                    container.innerHTML = `<div class="col-span-full text-center py-8 sm:py-12"><i class="fas fa-folder-open text-5xl text-gray-300 mb-3"></i><p class="text-gray-500 text-sm">Bạn chưa có bộ flashcard nào</p><button onclick="switchTab('create')" class="mt-3 px-4 py-2 bg-purple-500 text-white rounded-lg text-sm">✨ Tạo ngay</button></div>`;
+                }
+                return;
+            }
+            
+            container.innerHTML = filteredFlashcardSets.map(set => `
+                <div class="flashcard-set bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <i class="fas fa-layer-group text-2xl sm:text-3xl text-purple-500"></i>
+                        <span class="text-xs text-gray-500">${set.card_count || JSON.parse(set.cards).length} thẻ</span>
+                    </div>
+                    <h3 class="font-bold text-base sm:text-lg mb-2">${escapeHtml(set.name)}</h3>
+                    <p class="text-xs text-gray-500 mb-4">Tạo ngày: ${new Date(set.created_at).toLocaleDateString('vi-VN')}</p>
+                    <div class="flex gap-2">
+                        <button onclick="studyFlashcardSet(${set.id})" class="flex-1 bg-purple-500 text-white py-2 rounded-lg text-sm">
+                            <i class="fas fa-play mr-1"></i> Học ngay
+                        </button>
+                        <button onclick="openEditModal(${set.id}, '${escapeHtml(set.name)}')" class="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteFlashcardSet(${set.id}, '${escapeHtml(set.name)}')" class="bg-red-500 text-white px-3 py-2 rounded-lg text-sm">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==================== CHỈNH SỬA TÊN FLASHCARD ====================
+        let editingFlashcardId = null;
+
+        function openEditModal(setId, currentName) {
+            editingFlashcardId = setId;
+            document.getElementById('edit-flashcard-name').value = currentName;
+            document.getElementById('edit-flashcard-id').value = setId;
+            document.getElementById('edit-name-modal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-name-modal').style.display = 'none';
+            editingFlashcardId = null;
+        }
+
+        async function saveFlashcardName() {
+            const setId = document.getElementById('edit-flashcard-id').value;
+            const newName = document.getElementById('edit-flashcard-name').value.trim();
+            
+            if (!newName) {
+                showToast('Tên bộ flashcard không được để trống!', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch(`/api/student/flashcard-sets/${setId}/rename`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    showToast('Đã cập nhật tên bộ flashcard');
+                    closeEditModal();
+                    loadMyFlashcardSets();
+                } else {
+                    showToast(data.message || 'Cập nhật thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối!', 'error');
+            }
+        }
+
+        // ==================== TẢI DANH SÁCH TÀI LIỆU ====================
+        async function loadDocumentsForSelect() {
+            try {
+                const res = await fetch('/api/documents');
+                const data = await res.json();
+                if (data.success) {
+                    const select = document.getElementById('document-select');
+                    select.innerHTML = '<option value="">-- Chọn tài liệu --</option>' + 
+                        data.documents.map(doc => `<option value="${doc.name}">${escapeHtml(doc.original_name || doc.name)} (${doc.major || 'Khác'})</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Lỗi tải tài liệu:', error);
+            }
+        }
+
+        // ==================== TẠO FLASHCARD TỪ AI ====================
+        async function generateFlashcards() {
+            const fileName = document.getElementById('document-select').value;
+            const numCards = parseInt(document.getElementById('flashcard-count').value);
+            
+            if (!fileName) {
+                showToast('Vui lòng chọn tài liệu!', 'error');
+                return;
+            }
+            
+            document.getElementById('generating-status').classList.remove('hidden');
+            document.getElementById('flashcard-preview').classList.add('hidden');
+            
+            try {
+                const res = await fetch(`/api/generate-flashcards/${encodeURIComponent(fileName)}?num_cards=${numCards}`);
+                const data = await res.json();
+                
+                document.getElementById('generating-status').classList.add('hidden');
+                
+                if (data.success && data.flashcards && data.flashcards.length > 0) {
+                    currentGeneratedCards = data.flashcards;
+                    displayPreviewCard(0);
+                    document.getElementById('flashcard-preview').classList.remove('hidden');
+                    showToast(`Đã tạo ${data.flashcards.length} flashcard thành công!`);
+                } else {
+                    showToast(data.error || 'Không thể tạo flashcard', 'error');
+                }
+            } catch (error) {
+                document.getElementById('generating-status').classList.add('hidden');
+                showToast('Lỗi kết nối server!', 'error');
+            }
+        }
+
+        function displayPreviewCard(index) {
+            if (currentGeneratedCards.length === 0) return;
+            const card = currentGeneratedCards[index];
+            document.getElementById('preview-question').textContent = card.question;
+            document.getElementById('preview-answer').textContent = card.answer;
+            document.querySelector('#preview-flashcard .flashcard-inner').style.transform = 'rotateY(0deg)';
+        }
+
+        function togglePreviewFlip() {
+            const inner = document.querySelector('#preview-flashcard .flashcard-inner');
+            if (inner.style.transform === 'rotateY(180deg)') {
+                inner.style.transform = 'rotateY(0deg)';
+            } else {
+                inner.style.transform = 'rotateY(180deg)';
+            }
+        }
+
+        function regenerateFlashcards() {
+            generateFlashcards();
+        }
+
+        async function saveFlashcardSet() {
+            if (currentGeneratedCards.length === 0) {
+                showToast('Chưa có flashcard để lưu!', 'error');
+                return;
+            }
+            
+            const setName = prompt('Nhập tên cho bộ flashcard:', `Flashcard ${new Date().toLocaleDateString()}`);
+            if (!setName) return;
+            
+            try {
+                const res = await fetch('/api/student/flashcard-sets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: setName,
+                        cards: currentGeneratedCards
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Đã lưu bộ flashcard!');
+                    switchTab('my-sets');
+                    loadMyFlashcardSets();
+                } else {
+                    showToast(data.error || 'Lưu thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối!', 'error');
+            }
+        }
+
+        // ==================== QUẢN LÝ BỘ FLASHCARD CỦA TÔI ====================
+        async function loadMyFlashcardSets() {
+            const container = document.getElementById('my-sets-container');
+            try {
+                const res = await fetch('/api/student/flashcard-sets');
+                const data = await res.json();
+                
+                if (data.success && data.sets && data.sets.length > 0) {
+                    myFlashcardSets = data.sets;
+                    filteredFlashcardSets = [...myFlashcardSets];
+                    renderMyFlashcardSets();
+                } else {
+                    myFlashcardSets = [];
+                    filteredFlashcardSets = [];
+                    renderMyFlashcardSets();
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 sm:py-12 text-red-500 text-sm">❌ Lỗi tải dữ liệu</div>`;
+            }
+        }
+
+        function studyFlashcardSet(setId) {
+            const set = myFlashcardSets.find(s => s.id === setId);
+            if (set) {
+                currentStudySet = {
+                    id: set.id,
+                    name: set.name,
+                    cards: JSON.parse(set.cards)
+                };
+                currentStudyIndex = 0;
+                isStudyFlipped = false;
+                document.getElementById('study-title').textContent = `📚 ${set.name}`;
+                updateStudyCard();
+                document.getElementById('study-modal').style.display = 'flex';
+            }
+        }
+
+        function updateStudyCard() {
+            if (!currentStudySet || currentStudySet.cards.length === 0) return;
+            const card = currentStudySet.cards[currentStudyIndex];
+            document.getElementById('study-question').textContent = card.question;
+            document.getElementById('study-answer').textContent = card.answer;
+            document.getElementById('card-counter').textContent = `${currentStudyIndex + 1} / ${currentStudySet.cards.length}`;
+            document.querySelector('#study-flashcard .flashcard-inner').style.transform = 'rotateY(0deg)';
+            isStudyFlipped = false;
+        }
+
+        function toggleStudyFlip() {
+            const inner = document.querySelector('#study-flashcard .flashcard-inner');
+            if (isStudyFlipped) {
+                inner.style.transform = 'rotateY(0deg)';
+            } else {
+                inner.style.transform = 'rotateY(180deg)';
+            }
+            isStudyFlipped = !isStudyFlipped;
+        }
+
+        function previousCard() {
+            if (currentStudyIndex > 0) {
+                currentStudyIndex--;
+                updateStudyCard();
+            } else {
+                showToast('Đây là thẻ đầu tiên!', 'warning');
+            }
+        }
+
+        function nextCard() {
+            if (currentStudyIndex < currentStudySet.cards.length - 1) {
+                currentStudyIndex++;
+                updateStudyCard();
+            } else {
+                showToast('🎉 Chúc mừng! Bạn đã học xong bộ flashcard này!');
+                closeStudyModal();
+            }
+        }
+
+        function closeStudyModal() {
+            document.getElementById('study-modal').style.display = 'none';
+            currentStudySet = null;
+        }
+
+        async function deleteFlashcardSet(setId, setName) {
+            if (!confirm(`Bạn có chắc muốn xóa bộ flashcard "${setName}"?`)) return;
+            try {
+                const res = await fetch(`/api/student/flashcard-sets/${setId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Đã xóa bộ flashcard!');
+                    loadMyFlashcardSets();
+                } else {
+                    showToast('Xóa thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối!', 'error');
+            }
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    renderNotifications(data.notifications);
+                    updateNotificationBadge(data.unread_count);
+                }
+            } catch (error) {
+                console.error('Lỗi tải thông báo:', error);
+            }
+        }
+
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notifications-list');
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Chưa có thông báo nào</div>';
+                return;
+            }
+            container.innerHTML = notifications.map(notif => `
+                <div class="notification-item ${notif.is_read ? '' : 'notification-unread'} p-3 transition" onclick="viewNotification(${notif.id}, '${notif.link || ''}')">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0">
+                            ${notif.type === 'assignment' ? '<i class="fas fa-tasks text-purple-500"></i>' : '<i class="fas fa-info-circle text-blue-500"></i>'}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium">${escapeHtml(notif.title)}</p>
+                            <p class="text-xs text-gray-500 mt-1">${escapeHtml(notif.content.substring(0, 100))}${notif.content.length > 100 ? '...' : ''}</p>
+                            <p class="text-xs text-gray-400 mt-1">${formatTime(notif.created_at)}</p>
+                        </div>
+                        ${!notif.is_read ? '<div class="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notification-badge');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) loadNotifications();
+        }
+
+        async function viewNotification(notificationId, link) {
+            await fetch(`/api/notifications/mark-read/${notificationId}`, { method: 'POST' });
+            loadNotifications();
+            loadUnreadCount();
+            if (link) window.location.href = link;
+        }
+
+        async function markAllNotificationsRead() {
+            await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+            loadNotifications();
+            loadUnreadCount();
+        }
+
+        async function loadUnreadCount() {
+            try {
+                const res = await fetch('/api/notifications?limit=1');
+                const data = await res.json();
+                updateNotificationBadge(data.unread_count);
+            } catch (error) { console.error(error); }
+        }
+
+        // Đóng dropdown khi click ra ngoài
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Đóng sidebar khi click ra ngoài trên mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleGroups();
+            loadMyFlashcardSets();
+            loadUnreadCount();
+            setInterval(loadUnreadCount, 30000);
+        });
+        
+        // Export functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.switchTab = switchTab;
+        window.generateFlashcards = generateFlashcards;
+        window.regenerateFlashcards = regenerateFlashcards;
+        window.saveFlashcardSet = saveFlashcardSet;
+        window.studyFlashcardSet = studyFlashcardSet;
+        window.deleteFlashcardSet = deleteFlashcardSet;
+        window.togglePreviewFlip = togglePreviewFlip;
+        window.previousCard = previousCard;
+        window.nextCard = nextCard;
+        window.closeStudyModal = closeStudyModal;
+        window.toggleStudyFlip = toggleStudyFlip;
+        window.filterMyFlashcardSets = filterMyFlashcardSets;
+        window.openEditModal = openEditModal;
+        window.closeEditModal = closeEditModal;
+        window.saveFlashcardName = saveFlashcardName;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+    </script>
+</body>
+</html>

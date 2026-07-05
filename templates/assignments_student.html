@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Bài tập của tôi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.2s ease;
+            margin: 0;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        body.light-mode {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1f2937;
+        }
+
+        body.dark-mode {
+            background: transparent;
+            color: #f3f4f6;
+        }
+
+        #star-canvas-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+
+        body.light-mode #star-canvas-background {
+            display: none;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        body.dark-mode .bg-white,
+        body.dark-mode .bg-gray-50,
+        body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        body.dark-mode .border-gray-200,
+        body.dark-mode .border-gray-300 {
+            border-color: #334155 !important;
+        }
+
+        /* Sidebar */
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+
+        body.dark-mode .left-sidebar-dark {
+            background: #030712;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 4px 12px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .nav-item i {
+            width: 22px;
+            font-size: 1rem;
+        }
+
+        .nav-item span {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.08);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+        }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+            width: auto;
+        }
+
+        /* Collapsible Group Styles */
+        .collapsible-group {
+            margin-bottom: 4px;
+        }
+
+        .nav-group-toggle {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+
+        .group-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible-group.collapsed .group-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-group.collapsed .nav-group-items {
+            display: none;
+        }
+
+        /* Nút menu inline - nằm cạnh logo trên header (chỉ hiện mobile) */
+        .mobile-menu-btn-inline {
+            display: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.05);
+            transition: background 0.2s;
+        }
+
+        .mobile-menu-btn-inline:hover {
+            background: rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 1024px) {
+            .mobile-menu-btn-inline {
+                display: block;
+            }
+            .left-sidebar-dark {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 1000;
+                top: 0;
+                left: 0;
+            }
+            .left-sidebar-dark.open {
+                transform: translateX(0);
+            }
+            .main-container {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+        /* Responsive cho điện thoại */
+        @media (max-width: 768px) {
+            .p-4, .p-6 {
+                padding: 12px !important;
+            }
+            h1.text-xl, h1.text-2xl {
+                font-size: 1.1rem !important;
+            }
+            .text-sm {
+                font-size: 0.75rem !important;
+            }
+            .text-xs {
+                font-size: 0.65rem !important;
+            }
+            .grid-cols-1.md\:grid-cols-4 {
+                gap: 12px !important;
+            }
+            .assignment-card {
+                padding: 15px !important;
+            }
+            .assignment-title {
+                font-size: 16px !important;
+            }
+            .assignment-info {
+                gap: 12px !important;
+                font-size: 11px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 13px;
+            }
+            .fa-lg, .fa-xl {
+                font-size: 1rem !important;
+            }
+            .custom-tab {
+                padding: 8px 16px !important;
+                font-size: 14px !important;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Assignment Cards */
+        .assignment-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+
+        body.dark-mode .assignment-card {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        .assignment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        .assignment-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        body.dark-mode .assignment-title {
+            color: #f1f5f9;
+        }
+
+        .assignment-info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 12px 0;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        body.dark-mode .assignment-info {
+            color: #94a3b8;
+        }
+
+        .assignment-info span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .deadline-safe {
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .deadline-warning {
+            color: #ef4444;
+            font-weight: 500;
+        }
+
+        .score {
+            font-size: 20px;
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #8b5cf6;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 10px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #8b5cf6;
+            color: #8b5cf6;
+        }
+
+        .btn-outline:hover {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ef4444;
+        }
+
+        .btn-warning:hover {
+            background: #dc2626;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-overdue {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-submitted {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        body.dark-mode .badge-overdue {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+
+        body.dark-mode .badge-pending {
+            background: #78350f;
+            color: #fde68a;
+        }
+
+        body.dark-mode .badge-submitted {
+            background: #064e3b;
+            color: #a7f3d0;
+        }
+
+        /* Tabs */
+        .custom-tab {
+            padding: 10px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .custom-tab.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+
+        .custom-tab:hover:not(.active) {
+            background: #e2e8f0;
+        }
+
+        body.dark-mode .custom-tab:hover:not(.active) {
+            background: #334155;
+        }
+
+        /* Stats Cards */
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        body.dark-mode .stat-card {
+            background: #1e293b;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-info h3 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        body.dark-mode .stat-info h3 {
+            color: #f1f5f9;
+        }
+
+        .stat-info p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        body.dark-mode .stat-info p {
+            color: #94a3b8;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            background: white;
+            border-radius: 15px;
+            color: #94a3b8;
+        }
+
+        body.dark-mode .empty-state {
+            background: #1e293b;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.5rem;
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        body.dark-mode .notification-dropdown {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+
+        .notification-item {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
+
+        body.dark-mode .notification-item:hover {
+            background: #334155;
+        }
+
+        .notification-unread {
+            background: #faf5ff;
+        }
+
+        body.dark-mode .notification-unread {
+            background: #4c1d95;
+        }
+
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto;
+                width: 65vw !important;
+                max-width: 320px;
+                min-width: 200px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto;
+                width: 65vw !important;
+                min-width: 180px;
+                max-width: 280px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .notification-dropdown {
+                width: 70vw !important;
+                min-width: 160px;
+            }
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar với Collapsible Groups -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Sinh viên</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nhóm 1: HỌC TẬP -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="study">
+                <span>📚 HỌC TẬP</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="study">
+                <div class="nav-item" onclick="window.location.href='/'">
+                    <i class="fas fa-home"></i>
+                    <span>Trang chủ</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/documents'">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Kho tài liệu</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/favorites'">
+                    <i class="fas fa-heart"></i>
+                    <span>Tài liệu yêu thích</span>
+                </div>
+                <div class="nav-item active" onclick="window.location.href='/assignments/student'">
+                    <i class="fas fa-tasks"></i>
+                    <span>Bài tập của tôi</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/my-classes'">
+    <i class="fas fa-chalkboard"></i>
+    <span>Lớp học của tôi</span>
+</div>
+            </div>
+        </div>
+
+        <!-- Nhóm 2: TƯƠNG TÁC & AI -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="interact">
+                <span>🤖 TƯƠNG TÁC & AI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="interact">
+                <div class="nav-item" onclick="window.location.href='/forum'">
+                    <i class="fas fa-comments"></i>
+                    <span>Diễn đàn</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/quiz'">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Flashcard & Ôn tập</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/suggest-documents'">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Gợi ý & Tải tài liệu</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nhóm 3: THEO DÕI -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="track">
+                <span>📊 THEO DÕI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="track">
+                <div class="nav-item" onclick="window.location.href='/student/learning-journey'">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Hành trình học tập</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/transcript'">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Bảng điểm</span>
+                </div>
+            </div>
+        </div>
+
+    
+
+        <!-- Nhóm 5: CÀI ĐẶT -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="settings">
+                <span>⚙️ CÀI ĐẶT</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="settings">
+                <div class="nav-item" onclick="window.location.href='/student/settings'">
+                    <i class="fas fa-cog"></i>
+                    <span>Cài đặt chung</span>
+                </div>
+                <div class="nav-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                    <span id="theme-text-sidebar">Chế độ tối</span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <!-- Header -->
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="mobile-menu-btn-inline" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                    Bài tập của tôi
+                                </h1>
+                                <p class="text-gray-500 text-xs sm:text-sm mt-1">Quản lý và làm bài tập được giao từ giáo viên</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <!-- Notification Bell -->
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 transition">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300 text-base sm:text-lg"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y">
+                                        <div class="p-4 text-center text-gray-500">Đang tải...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300 text-base sm:text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+
+                <!-- Thống kê nhanh - 4 thẻ -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6 mb-6 fade-in">
+                    <!-- Còn hạn -->
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-100 text-xs sm:text-sm">📖 Còn hạn</p>
+                                <p id="pending-count" class="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2">0</p>
+                            </div>
+                            <i class="fas fa-clock text-4xl sm:text-5xl opacity-50"></i>
+                        </div>
+                    </div>
+
+                    <!-- Quá hạn -->
+                    <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-orange-100 text-xs sm:text-sm">⚠️ Quá hạn</p>
+                                <p id="overdue-count" class="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2">0</p>
+                            </div>
+                            <i class="fas fa-exclamation-triangle text-4xl sm:text-5xl opacity-50"></i>
+                        </div>
+                    </div>
+
+                    <!-- Đã nộp -->
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-100 text-xs sm:text-sm">✅ Đã nộp</p>
+                                <p id="completed-count" class="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2">0</p>
+                            </div>
+                            <i class="fas fa-check-circle text-4xl sm:text-5xl opacity-50"></i>
+                        </div>
+                    </div>
+
+                    <!-- Điểm TB -->
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-100 text-xs sm:text-sm">📊 Điểm TB</p>
+                                <p id="avg-score" class="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2">0</p>
+                            </div>
+                            <i class="fas fa-chart-line text-4xl sm:text-5xl opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs - 3 tab -->
+                <div class="flex gap-2 sm:gap-3 mb-6 flex-wrap">
+                    <div class="custom-tab active text-sm sm:text-base" onclick="switchTab('pending')">
+                        📖 Chưa nộp (<span id="pending-tab-count">0</span>)
+                    </div>
+                    <div class="custom-tab text-sm sm:text-base" onclick="switchTab('overdue')">
+                        ⚠️ Quá hạn (<span id="overdue-tab-count">0</span>)
+                    </div>
+                    <div class="custom-tab text-sm sm:text-base" onclick="switchTab('completed')">
+                        ✅ Đã nộp (<span id="completed-tab-count">0</span>)
+                    </div>
+                </div>
+
+                <!-- Danh sách bài tập chưa nộp (còn hạn) -->
+                <div id="pending-container" class="fade-in">
+                    <div id="pending-list" class="text-center py-8 sm:py-12 text-gray-500">
+                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                        <p>Đang tải danh sách bài tập...</p>
+                    </div>
+                </div>
+
+                <!-- Danh sách bài tập quá hạn -->
+                <div id="overdue-container" style="display: none;" class="fade-in">
+                    <div id="overdue-list" class="text-center py-8 sm:py-12 text-gray-500">
+                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                        <p>Đang tải danh sách bài tập...</p>
+                    </div>
+                </div>
+
+                <!-- Danh sách bài tập đã nộp -->
+                <div id="completed-container" style="display: none;" class="fade-in">
+                    <div id="completed-list" class="text-center py-8 sm:py-12 text-gray-500">
+                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                        <p>Đang tải danh sách bài tập...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== HỆ THỐNG NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+
+        function initStarfieldPro() {
+            starCanvas = document.getElementById('star-canvas-background');
+            if (!starCanvas) return;
+            starCtx = starCanvas.getContext('2d');
+
+            function initStarsPro() {
+                starsArray = [];
+                for (let i = 0; i < 1500; i++)
+                    starsArray.push({
+                        x: Math.random() * starCanvas.width,
+                        y: Math.random() * starCanvas.height,
+                        r: Math.random() * 0.8,
+                        alpha: Math.random() * 0.5 + 0.5,
+                        speed: Math.random() * 0.3
+                    });
+            }
+
+            function createMeteorPro() {
+                meteorsArray.push({
+                    x: Math.random() * starCanvas.width,
+                    y: Math.random() * starCanvas.height / 2,
+                    len: Math.random() * 300 + 100,
+                    speed: Math.random() * 8 + 4,
+                    alpha: 1
+                });
+            }
+
+            function drawStarsPro() {
+                if (!starCtx || !starCanvas) return;
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+                for (let s of starsArray) {
+                    starCtx.beginPath();
+                    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")";
+                    starCtx.fill();
+                    s.alpha += (Math.random() - 0.5) * 0.05;
+                    s.alpha = Math.max(0, Math.min(1, s.alpha));
+                    s.y += s.speed;
+                    if (s.y > starCanvas.height) {
+                        s.y = 0;
+                        s.x = Math.random() * starCanvas.width;
+                    }
+                }
+                for (let i = meteorsArray.length - 1; i >= 0; i--) {
+                    let m = meteorsArray[i];
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len);
+                    g.addColorStop(0, "rgba(255,255,255,1)");
+                    g.addColorStop(1, "rgba(255,255,255,0)");
+                    starCtx.strokeStyle = g;
+                    starCtx.lineWidth = 2;
+                    starCtx.beginPath();
+                    starCtx.moveTo(m.x, m.y);
+                    starCtx.lineTo(m.x - m.len, m.y - m.len);
+                    starCtx.stroke();
+                    m.x += m.speed;
+                    m.y += m.speed;
+                }
+                starAnimationId = requestAnimationFrame(drawStarsPro);
+            }
+
+            window.addEventListener('resize', () => {
+                if (starCanvas && isStarSystemActive) {
+                    starCanvas.width = window.innerWidth;
+                    starCanvas.height = window.innerHeight;
+                    initStarsPro();
+                }
+            });
+            setInterval(() => {
+                if (isStarSystemActive) {
+                    let c = Math.floor(Math.random() * 2) + 3;
+                    for (let i = 0; i < c; i++) createMeteorPro();
+                }
+            }, 1500);
+            initStarsPro();
+            drawStarsPro();
+        }
+
+        let isDarkModeActive = false;
+
+        function toggleTheme() {
+            const body = document.body,
+                starCanvasElem = document.getElementById('star-canvas-background'),
+                themeIconSidebar = document.getElementById('theme-icon-sidebar'),
+                themeTextSidebar = document.getElementById('theme-text-sidebar');
+
+            isDarkModeActive = !isDarkModeActive;
+
+            if (isDarkModeActive) {
+                body.classList.remove('light-mode');
+                body.classList.add('dark-mode');
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-moon');
+                    themeIconSidebar.classList.add('fa-sun');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (starCanvasElem) {
+                    starCanvasElem.style.display = 'block';
+                    if (!starCtx) {
+                        isStarSystemActive = true;
+                        initStarfieldPro();
+                    } else {
+                        isStarSystemActive = true;
+                        if (!starAnimationId) {
+                            function restartDraw() {
+                                if (starCtx && starCanvas && isStarSystemActive) drawStarsPro();
+                            }
+                            restartDraw();
+                        }
+                    }
+                }
+            } else {
+                body.classList.remove('dark-mode');
+                body.classList.add('light-mode');
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-sun');
+                    themeIconSidebar.classList.add('fa-moon');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (starCanvasElem) starCanvasElem.style.display = 'none';
+                isStarSystemActive = false;
+                if (starAnimationId) {
+                    cancelAnimationFrame(starAnimationId);
+                    starAnimationId = null;
+                }
+            }
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light');
+        }
+
+        const savedStarTheme = localStorage.getItem('star_theme_mode');
+        if (savedStarTheme === 'dark') {
+            setTimeout(() => {
+                toggleTheme();
+            }, 20);
+        } else {
+            const canvasBg = document.getElementById('star-canvas-background');
+            if (canvasBg) canvasBg.style.display = 'none';
+        }
+
+        // ==================== COLLAPSIBLE SIDEBAR ====================
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') {
+                    group.classList.add('collapsed');
+                }
+
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`,
+                        group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() {
+            document.getElementById('leftSidebar').classList.toggle('open');
+        }
+
+        // ==================== HÀM TIỆN ÍCH ====================
+        async function logout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                const res = await fetch('/api/logout', {
+                    method: 'POST'
+                });
+                if (res.ok) window.location.href = '/login';
+                else alert('Đăng xuất thất bại');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Không có';
+            const date = new Date(dateString);
+            return date.toLocaleString('vi-VN');
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'Vừa xong';
+            if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`;
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    renderNotifications(data.notifications);
+                    updateNotificationBadge(data.unread_count);
+                }
+            } catch (error) {
+                console.error('Lỗi tải thông báo:', error);
+            }
+        }
+
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notifications-list');
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Chưa có thông báo nào</div>';
+                return;
+            }
+            container.innerHTML = notifications.map(notif => `
+                <div class="notification-item ${notif.is_read ? '' : 'notification-unread'} p-3 transition" onclick="viewNotification(${notif.id}, '${notif.link || ''}')">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0">
+                            ${notif.type === 'assignment' ? '<i class="fas fa-tasks text-purple-500"></i>' : '<i class="fas fa-info-circle text-blue-500"></i>'}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium">${escapeHtml(notif.title)}</p>
+                            <p class="text-xs text-gray-500 mt-1">${escapeHtml(notif.content.substring(0, 100))}${notif.content.length > 100 ? '...' : ''}</p>
+                            <p class="text-xs text-gray-400 mt-1">${formatTime(notif.created_at)}</p>
+                        </div>
+                        ${!notif.is_read ? '<div class="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notification-badge');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) loadNotifications();
+        }
+
+        async function viewNotification(notificationId, link) {
+            await fetch(`/api/notifications/mark-read/${notificationId}`, {
+                method: 'POST'
+            });
+            loadNotifications();
+            loadUnreadCount();
+            if (link) window.location.href = link;
+        }
+
+        async function markAllNotificationsRead() {
+            await fetch('/api/notifications/mark-all-read', {
+                method: 'POST'
+            });
+            loadNotifications();
+            loadUnreadCount();
+        }
+
+        async function loadUnreadCount() {
+            try {
+                const res = await fetch('/api/notifications?limit=1');
+                const data = await res.json();
+                updateNotificationBadge(data.unread_count);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // ========== BÀI TẬP ==========
+        let pendingAssignments = [];    // Còn hạn
+        let overdueAssignments = [];    // Quá hạn
+        let completedAssignments = [];  // Đã nộp
+
+        let currentTab = 'pending';
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+
+            // Cập nhật active tab
+            const tabs = document.querySelectorAll('.custom-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            if (event && event.target) event.target.classList.add('active');
+            else if (tabName === 'pending') tabs[0].classList.add('active');
+            else if (tabName === 'overdue') tabs[1].classList.add('active');
+            else tabs[2].classList.add('active');
+
+            // Ẩn/hiện container
+            const pendingContainer = document.getElementById('pending-container');
+            const overdueContainer = document.getElementById('overdue-container');
+            const completedContainer = document.getElementById('completed-container');
+
+            pendingContainer.style.display = 'none';
+            overdueContainer.style.display = 'none';
+            completedContainer.style.display = 'none';
+
+            if (tabName === 'pending') {
+                pendingContainer.style.display = 'block';
+                renderPendingAssignments();
+            } else if (tabName === 'overdue') {
+                overdueContainer.style.display = 'block';
+                renderOverdueAssignments();
+            } else {
+                completedContainer.style.display = 'block';
+                renderCompletedAssignments();
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/student/stats');
+                const data = await response.json();
+
+                if (data.success) {
+                    // Cập nhật số lượng
+                    const totalAssignments = data.total_assignments || 0;
+                    const submitted = data.submitted_count || 0;
+                    const notSubmitted = totalAssignments - submitted;
+
+                    // Tạm thời hiển thị, sẽ được cập nhật chính xác sau khi load bài tập
+                    document.getElementById('completed-count').textContent = submitted;
+                    document.getElementById('avg-score').textContent = data.avg_grade || 0;
+
+                    // Cập nhật số lượng trên tab
+                    document.getElementById('completed-tab-count').textContent = submitted;
+                }
+            } catch (error) {
+                console.error('Lỗi tải thống kê:', error);
+            }
+        }
+
+        async function loadPendingAssignments() {
+            const container = document.getElementById('pending-list');
+            try {
+                const response = await fetch('/api/student/pending-assignments');
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.detail || 'Lỗi tải dữ liệu');
+                }
+
+                const now = new Date();
+                const assignments = data.assignments || [];
+
+                // Phân loại: còn hạn và quá hạn
+                pendingAssignments = [];
+                overdueAssignments = [];
+
+                assignments.forEach(a => {
+                    if (a.deadline && new Date(a.deadline) < now) {
+                        overdueAssignments.push(a);
+                    } else {
+                        pendingAssignments.push(a);
+                    }
+                });
+
+                // Cập nhật số lượng trên thẻ thống kê
+                document.getElementById('pending-count').textContent = pendingAssignments.length;
+                document.getElementById('overdue-count').textContent = overdueAssignments.length;
+
+                // Cập nhật số lượng trên tab
+                document.getElementById('pending-tab-count').textContent = pendingAssignments.length;
+                document.getElementById('overdue-tab-count').textContent = overdueAssignments.length;
+
+                // Render theo tab hiện tại
+                if (currentTab === 'pending') renderPendingAssignments();
+                if (currentTab === 'overdue') renderOverdueAssignments();
+
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <p>Lỗi tải dữ liệu. Vui lòng thử lại!</p>
+                        <button onclick="loadPendingAssignments()" class="btn mt-3">🔄 Thử lại</button>
+                    </div>
+                `;
+                console.error(error);
+            }
+        }
+
+        function renderPendingAssignments() {
+            const container = document.getElementById('pending-list');
+
+            if (pendingAssignments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎉</div>
+                        <p>Chúc mừng! Bạn đã hoàn thành tất cả bài tập còn hạn!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = pendingAssignments.map(a => `
+                <div class="assignment-card" style="border-left: 4px solid #10b981;">
+                    <div class="assignment-title">${escapeHtml(a.title || a.quiz_title)}</div>
+                    <div class="assignment-info">
+                        <span><i class="fas fa-book-open"></i> ${escapeHtml(a.class_name || 'Nhóm học tập')}</span>
+                        ${a.deadline ? `<span class="deadline-safe"><i class="fas fa-calendar-alt"></i> Hạn nộp: ${formatDate(a.deadline)}</span>` : ''}
+                        ${a.time_limit ? `<span><i class="fas fa-hourglass-half"></i> Thời gian: ${a.time_limit} phút</span>` : ''}
+                    </div>
+                    <div class="assignment-info">
+                        <span><i class="fas fa-question-circle"></i> Số câu hỏi: ${a.questions ? JSON.parse(a.questions).length : 0}</span>
+                    </div>
+                    <a href="/take-quiz?assignment_id=${a.id}" class="btn">
+                        <i class="fas fa-pen-alt"></i> Làm bài ngay
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        function renderOverdueAssignments() {
+            const container = document.getElementById('overdue-list');
+
+            if (overdueAssignments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎉</div>
+                        <p>Không có bài tập quá hạn!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = overdueAssignments.map(a => `
+                <div class="assignment-card" style="border-left: 4px solid #ef4444;">
+                    <div class="flex justify-between items-start flex-wrap gap-2">
+                        <div class="assignment-title">${escapeHtml(a.title || a.quiz_title)}</div>
+                        <span class="badge badge-overdue"><i class="fas fa-clock mr-1"></i>QUÁ HẠN</span>
+                    </div>
+                    <div class="assignment-info">
+                        <span><i class="fas fa-book-open"></i> ${escapeHtml(a.class_name || 'Nhóm học tập')}</span>
+                        <span class="deadline-warning"><i class="fas fa-exclamation-triangle"></i> Hạn nộp: ${formatDate(a.deadline)} (Đã quá hạn)</span>
+                        ${a.time_limit ? `<span><i class="fas fa-hourglass-half"></i> Thời gian: ${a.time_limit} phút</span>` : ''}
+                    </div>
+                    <div class="assignment-info">
+                        <span><i class="fas fa-question-circle"></i> Số câu hỏi: ${a.questions ? JSON.parse(a.questions).length : 0}</span>
+                    </div>
+                    <a href="/take-quiz?assignment_id=${a.id}" class="btn btn-warning">
+                        <i class="fas fa-pen-alt"></i> Làm bài ngay (có thể bị trừ điểm)
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        async function loadCompletedAssignments() {
+            const container = document.getElementById('completed-list');
+            try {
+                const response = await fetch('/api/student/completed-assignments');
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.detail || 'Lỗi tải dữ liệu');
+                }
+
+                completedAssignments = data.assignments || [];
+                renderCompletedAssignments();
+
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <p>Lỗi tải dữ liệu. Vui lòng thử lại!</p>
+                        <button onclick="loadCompletedAssignments()" class="btn mt-3">🔄 Thử lại</button>
+                    </div>
+                `;
+                console.error(error);
+            }
+        }
+
+        function renderCompletedAssignments() {
+            const container = document.getElementById('completed-list');
+
+            if (completedAssignments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>Bạn chưa nộp bài tập nào!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = completedAssignments.map(a => `
+                <div class="assignment-card">
+                    <div class="assignment-title">${escapeHtml(a.title || a.quiz_title)}</div>
+                    <div class="assignment-info">
+                        <span><i class="fas fa-book-open"></i> ${escapeHtml(a.class_name || 'Nhóm học tập')}</span>
+                        <span><i class="fas fa-calendar-check"></i> Nộp lúc: ${formatDate(a.submitted_at)}</span>
+                    </div>
+                    <div class="assignment-info">
+                        <span class="score"><i class="fas fa-trophy"></i> Điểm: ${a.score}/10</span>
+                        <span><i class="fas fa-check-circle"></i> Đúng: ${a.correct_count}/${a.total_questions} câu</span>
+                    </div>
+                    <a href="/submission-result?submission_id=${a.submission_id}" class="btn btn-outline">
+                        <i class="fas fa-chart-bar"></i> Xem chi tiết
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        // Đóng dropdown khi click ra ngoài
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Đóng sidebar khi click ra ngoài trên mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn-inline');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleGroups();
+            loadStats();
+            loadPendingAssignments();
+            loadCompletedAssignments();
+            loadUnreadCount();
+
+            setInterval(loadUnreadCount, 30000);
+        });
+
+        // Export functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.switchTab = switchTab;
+        window.loadPendingAssignments = loadPendingAssignments;
+        window.loadCompletedAssignments = loadCompletedAssignments;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+    </script>
+</body>
+</html>

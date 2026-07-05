@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Trang quản trị Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.2s ease;
+            margin: 0;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        body.light-mode {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1f2937;
+        }
+        
+        body.dark-mode {
+            background: transparent;
+            color: #f3f4f6;
+        }
+        
+        #star-canvas-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        
+        body.light-mode #star-canvas-background {
+            display: none;
+        }
+        
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        body.dark-mode .bg-white,
+        body.dark-mode .bg-gray-50,
+        body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        body.dark-mode .border-gray-200,
+        body.dark-mode .border-gray-300 {
+            border-color: #334155 !important;
+        }
+
+        /* Sidebar */
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+
+        body.dark-mode .left-sidebar-dark {
+            background: #030712;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 4px 12px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+            width: auto;
+        }
+
+        /* Collapsible Group Styles */
+        .collapsible-group {
+            margin-bottom: 4px;
+        }
+
+        .nav-group-toggle {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+
+        .group-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible-group.collapsed .group-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-group.collapsed .nav-group-items {
+            display: none;
+        }
+
+        /* Nút 3 gạch - mặc định ẩn, chỉ hiện trên mobile */
+        .sidebar-menu-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .sidebar-menu-btn:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        
+        body.dark-mode .sidebar-menu-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* RESPONSIVE MOBILE - dưới 1024px */
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn {
+                display: block !important;
+            }
+            .left-sidebar-dark { 
+                transform: translateX(-100%);
+            }
+            .left-sidebar-dark.open { 
+                transform: translateX(0) !important;
+            }
+            .main-container { 
+                margin-left: 0; 
+                width: 100%;
+            }
+        }
+
+        /* DESKTOP - trên 1025px */
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn {
+                display: none !important;
+            }
+            .left-sidebar-dark {
+                transform: translateX(0) !important;
+            }
+            .main-container {
+                margin-left: 280px;
+            }
+        }
+
+        /* Responsive cho điện thoại */
+        @media (max-width: 768px) {
+            .p-4, .p-6 {
+                padding: 12px !important;
+            }
+            h1.text-2xl {
+                font-size: 1.1rem !important;
+            }
+            .text-sm {
+                font-size: 0.75rem !important;
+            }
+            .text-xs {
+                font-size: 0.65rem !important;
+            }
+            .stat-card {
+                padding: 12px !important;
+            }
+            .stat-card .text-2xl {
+                font-size: 1.25rem !important;
+            }
+            .grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4 {
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 13px;
+            }
+            .flex.justify-between.items-center {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+            .flex.gap-2 {
+                justify-content: center;
+            }
+            table {
+                font-size: 11px;
+            }
+            th, td {
+                padding: 8px 4px !important;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        /* Notification Dropdown - căn phải, rộng 65vw trên mobile */
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            left: auto;
+            top: 100%;
+            margin-top: 0.5rem;
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+        
+        body.dark-mode .notification-dropdown {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+        
+        .notification-item {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
+        
+        body.dark-mode .notification-item:hover {
+            background: #334155;
+        }
+        
+        .notification-unread {
+            background: #faf5ff;
+        }
+        
+        body.dark-mode .notification-unread {
+            background: #4c1d95;
+        }
+
+        /* Mobile: notification rộng 65vw */
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto !important;
+                width: 65vw !important;
+                max-width: 320px;
+                min-width: 200px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto !important;
+                width: 65vw !important;
+                min-width: 180px;
+                max-width: 280px;
+            }
+        }
+
+        .report-card {
+            transition: all 0.3s ease;
+        }
+        .report-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .export-btn {
+            transition: all 0.2s ease;
+        }
+        .export-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Dark mode table styles */
+        body.dark-mode table thead {
+            background-color: #1e293b;
+        }
+        body.dark-mode table tbody tr:hover {
+            background-color: #334155;
+        }
+        body.dark-mode select,
+        body.dark-mode select option {
+            background-color: #1e293b;
+            color: #f3f4f6;
+            border-color: #475569;
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar - KHÔNG CÓ NÚT 3 GẠCH BÊN TRONG -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <!-- ĐÃ XÓA NÚT 3 GẠCH Ở ĐÂY -->
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Quản trị viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 1: TỔNG QUAN -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="overview">
+                <span>📊 TỔNG QUAN</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="overview">
+                <div class="nav-item active" onclick="window.location.href='/'">
+                    <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 2: QUẢN LÝ & BÁO CÁO NGƯỜI DÙNG (GỘP) -->
+        <div class="collapsible-group">
+    <div class="nav-group-title nav-group-toggle" data-group="users">
+        <span>👥 QUẢN LÝ & BÁO CÁO NGƯỜI DÙNG</span><i class="fas fa-chevron-down group-icon"></i>
+    </div>
+    <div class="nav-group-items" data-group="users">
+        <div class="nav-item" onclick="window.location.href='/admin/users'">
+            <i class="fas fa-users-cog"></i><span>Quản lý người dùng</span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='/admin/teachers'">
+            <i class="fas fa-chalkboard-user"></i><span>Quản lý giáo viên</span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='/admin/students'">
+            <i class="fas fa-user-graduate"></i><span>Quản lý sinh viên</span>
+        </div>
+    </div>
+</div>
+        
+        <!-- Nhóm 3: QUẢN LÝ NỘI DUNG -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="content">
+                <span>📚 QUẢN LÝ NỘI DUNG</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="content">
+                <div class="nav-item" onclick="window.location.href='/admin/documents'">
+                    <i class="fas fa-folder-open"></i><span>Kho tài liệu</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/admin/document-approvals'">
+            <i class="fas fa-file-signature"></i><span>Phê duyệt tài liệu</span>
+        </div>
+                
+            </div>
+        </div>
+        
+        <!-- Nhóm 4: QUẢN LÝ HỌC TẬP -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="learning">
+                <span>🏫 QUẢN LÝ HỌC TẬP</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="learning">
+                <div class="nav-item" onclick="window.location.href='/admin/classes'">
+                    <i class="fas fa-chalkboard"></i><span>Lớp học</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Nhóm 5: CÀI ĐẶT HỆ THỐNG -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="system">
+                <span>⚙️ CÀI ĐẶT HỆ THỐNG</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="system">
+                <div class="nav-item" onclick="window.location.href='/admin/settings'">
+    <i class="fas fa-cog"></i><span>Cài đặt chung</span>
+</div>
+                <div class="nav-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                    <span id="theme-text-sidebar">Chế độ tối</span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <!-- Header - NÚT 3 GẠCH NẰM Ở ĐÂY, CẠNH TIÊU ĐỀ -->
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <!-- NÚT 3 GẠCH - NẰM Ở HEADER, CẠNH TIÊU ĐỀ -->
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <h1 class="text-base sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                📊 Dashboard Quản trị
+                            </h1>
+                        </div>
+                        
+                        <!-- Phần bên phải: icon chuông + avatar + dark mode -->
+                        <div class="flex items-center space-x-2 sm:space-x-3">
+                            <!-- ICON CHUÔNG THÔNG BÁO -->
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300 text-base sm:text-lg"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm text-gray-800 dark:text-white">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500 hover:text-purple-600">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y dark:divide-gray-700">
+                                        <div class="p-4 text-center text-gray-500 text-sm">
+                                            <i class="fas fa-spinner fa-spin mr-2"></i> Đang tải...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Avatar Admin -->
+                            <div class="flex items-center gap-2">
+                                <div id="admin-avatar" class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm">
+                                    👤
+                                </div>
+                                <span id="admin-name" class="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">Admin</span>
+                            </div>
+                            
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300 text-base sm:text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 sm:p-6 mb-6 text-white">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-bold" id="welcome-message">Chào mừng trở lại!</h2>
+                            <p class="mt-1 opacity-90 text-sm">Hôm nay là ngày đẹp trời để quản lý hệ thống</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm opacity-80" id="current-datetime"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6">
+                    <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-3 sm:p-5 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Tổng người dùng</p>
+                                <p class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white" id="total-users">0</p>
+                            </div>
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                <i class="fas fa-users text-blue-500 text-base sm:text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-3 sm:p-5 border-l-4 border-green-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Giáo viên</p>
+                                <p class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white" id="total-teachers">0</p>
+                            </div>
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                                <i class="fas fa-chalkboard-user text-green-500 text-base sm:text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-3 sm:p-5 border-l-4 border-purple-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Sinh viên</p>
+                                <p class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white" id="total-students">0</p>
+                            </div>
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user-graduate text-purple-500 text-base sm:text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-3 sm:p-5 border-l-4 border-orange-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Tài liệu</p>
+                                <p class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white" id="total-documents">0</p>
+                            </div>
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                                <i class="fas fa-file-pdf text-orange-500 text-base sm:text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-5">
+                        <h3 class="font-semibold text-gray-800 dark:text-white mb-4 text-sm sm:text-base">📊 Thống kê người dùng theo vai trò</h3>
+                        <canvas id="userChart" height="200"></canvas>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-5">
+                        <h3 class="font-semibold text-gray-800 dark:text-white mb-4 text-sm sm:text-base">📈 Hoạt động gần đây</h3>
+                        <div id="recent-activities" class="space-y-3 max-h-64 overflow-y-auto">
+                            <div class="text-center text-gray-400 py-4 text-sm">Đang tải...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== PHẦN BÁO CÁO THỐNG KÊ ==================== -->
+                <div id="reports" class="mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
+                            <i class="fas fa-chart-line text-purple-500 mr-2"></i>Báo cáo thống kê
+                        </h2>
+                        <div class="flex gap-2">
+                            
+                            <button onclick="exportReport('excel')" class="export-btn bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm hover:bg-green-600">
+                                <i class="fas fa-file-excel mr-1"></i> Xuất Excel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Báo cáo tóm tắt -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                        <div class="report-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-700 dark:text-gray-300 text-sm">📚 Tổng quan nội dung</h4>
+                                <i class="fas fa-database text-purple-400"></i>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Tổng tài liệu:</span>
+                                    <span class="font-semibold text-gray-800 dark:text-white" id="report-total-docs">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Tài liệu đã duyệt:</span>
+                                    <span class="font-semibold text-green-600" id="report-approved-docs">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Tài liệu chờ duyệt:</span>
+                                    <span class="font-semibold text-yellow-600" id="report-pending-docs">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Tài liệu bị từ chối:</span>
+                                    <span class="font-semibold text-red-600" id="report-rejected-docs">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="report-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-700 dark:text-gray-300 text-sm">📝 Hoạt động học tập</h4>
+                                <i class="fas fa-graduation-cap text-blue-400"></i>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Bài tập đã giao:</span>
+                                    <span class="font-semibold text-gray-800 dark:text-white" id="report-total-assignments">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Bài đã nộp:</span>
+                                    <span class="font-semibold text-green-600" id="report-submitted">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Tỷ lệ hoàn thành:</span>
+                                    <span class="font-semibold text-purple-600" id="report-completion-rate">0%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Điểm TB chung:</span>
+                                    <span class="font-semibold text-orange-600" id="report-avg-score">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="report-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-700 dark:text-gray-300 text-sm">👥 Tương tác cộng đồng</h4>
+                                <i class="fas fa-comments text-green-400"></i>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Tin nhắn diễn đàn:</span>
+                                    <span class="font-semibold text-gray-800 dark:text-white" id="report-total-messages">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Nhóm học tập:</span>
+                                    <span class="font-semibold text-gray-800 dark:text-white" id="report-total-groups">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Phản hồi trung bình:</span>
+                                    <span class="font-semibold text-blue-600" id="report-avg-reactions">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Thành viên tích cực:</span>
+                                    <span class="font-semibold text-purple-600" id="report-active-members">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Báo cáo tăng trưởng người dùng -->
+                <div id="user-report" class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-5 mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                        <h3 class="font-semibold text-gray-800 dark:text-white text-sm sm:text-base">
+                            <i class="fas fa-chart-line text-blue-500 mr-2"></i>Báo cáo tăng trưởng người dùng
+                        </h3>
+                        <div class="flex gap-2">
+                            <select id="user-report-period" class="border rounded-lg px-3 py-1 text-sm dark:bg-gray-700 dark:border-gray-600">
+                                <option value="week">7 ngày qua</option>
+                                <option value="month">30 ngày qua</option>
+                                <option value="year">12 tháng qua</option>
+                            </select>
+                            <button onclick="loadUserReport()" class="bg-purple-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-purple-600">Cập nhật</button>
+                        </div>
+                    </div>
+                    <canvas id="userGrowthChart" height="100"></canvas>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                        <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                            <p class="text-xl sm:text-2xl font-bold text-blue-600" id="new-users-week">0</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Người dùng mới</p>
+                        </div>
+                        <div class="text-center p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                            <p class="text-xl sm:text-2xl font-bold text-green-600" id="active-users">0</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Người dùng hoạt động</p>
+                        </div>
+                        <div class="text-center p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                            <p class="text-xl sm:text-2xl font-bold text-purple-600" id="avg-daily-active">0</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Trung bình/ngày</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Users Table -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-gray-800 dark:text-white text-sm sm:text-base">👥 Người dùng mới đăng ký</h3>
+                        <a href="/admin/teachers" class="text-xs sm:text-sm text-purple-500 hover:text-purple-600">Xem tất cả →</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">ID</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Họ tên</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Mã số</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Vai trò</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-users-table" class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <tr><td colspan="5" class="text-center py-4 text-gray-400">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== HỆ THỐNG NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); 
+                    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; 
+                    starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; 
+                    s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; 
+                    if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); 
+                    g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; 
+                    starCtx.lineWidth = 2; 
+                    starCtx.beginPath(); 
+                    starCtx.moveTo(m.x, m.y); 
+                    starCtx.lineTo(m.x - m.len, m.y - m.len); 
+                    starCtx.stroke(); 
+                    m.x += m.speed; 
+                    m.y += m.speed; 
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { 
+                if (starCanvas && isStarSystemActive) { 
+                    starCanvas.width = window.innerWidth; 
+                    starCanvas.height = window.innerHeight; 
+                    initStarsPro(); 
+                } 
+            }); 
+            setInterval(() => { 
+                if (isStarSystemActive) { 
+                    let c = Math.floor(Math.random() * 2) + 3; 
+                    for (let i = 0; i < c; i++) createMeteorPro(); 
+                } 
+            }, 1500); 
+            initStarsPro(); 
+            drawStarsPro(); 
+        }
+        
+        let isDarkModeActive = false;
+        
+        function toggleTheme() { 
+            const body = document.body, 
+                  starCanvasElem = document.getElementById('star-canvas-background'),
+                  themeIconSidebar = document.getElementById('theme-icon-sidebar'),
+                  themeTextSidebar = document.getElementById('theme-text-sidebar');
+                  
+            isDarkModeActive = !isDarkModeActive; 
+            
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); 
+                body.classList.add('dark-mode'); 
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-moon');
+                    themeIconSidebar.classList.add('fa-sun');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (starCanvasElem) { 
+                    starCanvasElem.style.display = 'block'; 
+                    if (!starCtx) { 
+                        isStarSystemActive = true; 
+                        initStarfieldPro(); 
+                    } else { 
+                        isStarSystemActive = true; 
+                        if (!starAnimationId) { 
+                            function restartDraw() { 
+                                if (starCtx && starCanvas && isStarSystemActive) drawStarsPro(); 
+                            } 
+                            restartDraw(); 
+                        } 
+                    } 
+                } 
+            } else { 
+                body.classList.remove('dark-mode'); 
+                body.classList.add('light-mode'); 
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-sun');
+                    themeIconSidebar.classList.add('fa-moon');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; 
+                isStarSystemActive = false; 
+                if (starAnimationId) { 
+                    cancelAnimationFrame(starAnimationId); 
+                    starAnimationId = null; 
+                } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { 
+            setTimeout(() => { toggleTheme(); }, 20); 
+        } else { 
+            const canvasBg = document.getElementById('star-canvas-background'); 
+            if (canvasBg) canvasBg.style.display = 'none'; 
+        }
+
+        // ==================== COLLAPSIBLE SIDEBAR ====================
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') {
+                    group.classList.add('collapsed');
+                }
+                
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, 
+                        group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('leftSidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // ==================== HÀM TIỆN ÍCH ====================
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function logout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                const res = await fetch('/api/logout', { method: 'POST' });
+                if (res.ok) window.location.href = '/login';
+                else alert('Đăng xuất thất bại');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDateTime() {
+            const now = new Date();
+            return now.toLocaleDateString('vi-VN') + ' ' + now.toLocaleTimeString('vi-VN');
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            if (days === 0) return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            if (days === 1) return 'Hôm qua';
+            if (days < 7) return `${days} ngày trước`;
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        async function exportReport(type) {
+    try {
+        showToast('Đang xuất báo cáo...', 'info');
+        
+        let url = '';
+        if (type === 'excel') {
+            url = '/api/admin/export-report';
+        } else {
+            showToast('Chức năng đang phát triển', 'info');
+            return;
+        }
+        
+        window.open(url, '_blank');
+        showToast('Đã xuất báo cáo thành công!', 'success');
+    } catch (error) {
+        console.error('Lỗi xuất báo cáo:', error);
+        showToast('Lỗi xuất báo cáo', 'error');
+    }
+}
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ==================== THÔNG TIN ADMIN ====================
+        let currentUser = null;
+        let userGrowthChart = null;
+
+        async function loadCurrentUser() {
+            try {
+                const res = await fetch('/api/current-user');
+                const data = await res.json();
+                if (data.logged_in && data.role === 'admin') {
+                    currentUser = data;
+                    document.getElementById('admin-name').textContent = data.fullname || 'Admin';
+                    document.getElementById('admin-avatar').innerHTML = data.avatar_url && data.avatar_url !== '/static/default-avatar.png' 
+                        ? `<img src="${data.avatar_url}" class="w-8 h-8 rounded-full object-cover">` 
+                        : `<div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">${(data.fullname || 'A').charAt(0).toUpperCase()}</div>`;
+                    
+                    const hour = new Date().getHours();
+                    let greeting = '';
+                    if (hour < 12) greeting = 'Chào buổi sáng';
+                    else if (hour < 18) greeting = 'Chào buổi chiều';
+                    else greeting = 'Chào buổi tối';
+                    document.getElementById('welcome-message').textContent = `${greeting}, ${data.fullname || 'Admin'}!`;
+                } else {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Lỗi tải thông tin user:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        // ==================== DASHBOARD DATA ====================
+        let userChart = null;
+
+        async function loadDashboardStats() {
+            try {
+                const res = await fetch('/api/admin/stats');
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('total-users').textContent = data.total_users || 0;
+                    document.getElementById('total-teachers').textContent = data.total_teachers || 0;
+                    document.getElementById('total-students').textContent = data.total_students || 0;
+                    document.getElementById('total-documents').textContent = data.total_documents || 0;
+                    
+                    document.getElementById('report-total-docs').textContent = data.total_documents || 0;
+                    document.getElementById('report-approved-docs').textContent = data.approved_docs || 0;
+                    document.getElementById('report-pending-docs').textContent = data.pending_docs || 0;
+                    document.getElementById('report-rejected-docs').textContent = data.rejected_docs || 0;
+                    document.getElementById('report-total-assignments').textContent = data.total_assignments || 0;
+                    document.getElementById('report-submitted').textContent = data.submitted_assignments || 0;
+                    document.getElementById('report-completion-rate').textContent = data.completion_rate || '0%';
+                    document.getElementById('report-avg-score').textContent = data.avg_score || '0';
+                    document.getElementById('report-total-messages').textContent = data.total_messages || 0;
+                    document.getElementById('report-total-groups').textContent = data.total_groups || 0;
+                    document.getElementById('report-avg-reactions').textContent = data.avg_reactions || '0';
+                    document.getElementById('report-active-members').textContent = data.active_members || 0;
+                    
+                    if (userChart) userChart.destroy();
+                    const ctx = document.getElementById('userChart').getContext('2d');
+                    userChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Giáo viên', 'Sinh viên'],
+                            datasets: [{
+                                data: [data.total_teachers || 0, data.total_students || 0],
+                                backgroundColor: ['#10b981', '#8b5cf6'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { position: 'bottom', labels: { font: { size: 12 } } }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Lỗi tải thống kê:', error);
+            }
+        }
+
+        async function loadRecentUsers() {
+            try {
+                const res = await fetch('/api/admin/recent-users?limit=5');
+                const data = await res.json();
+                if (data.success && data.users) {
+                    const tbody = document.getElementById('recent-users-table');
+                    if (data.users.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">Chưa có người dùng nào</td></tr>';
+                    } else {
+                        tbody.innerHTML = data.users.map(user => `
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                <td class="px-3 py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">${user.id}</td>
+                                <td class="px-3 py-2 text-xs sm:text-sm font-medium text-gray-800 dark:text-white">${escapeHtml(user.fullname)}</td>
+                                <td class="px-3 py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">${escapeHtml(user.email)}</td>
+                                <td class="px-3 py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">${user.student_id || '---'}</td>
+                                <td class="px-3 py-2 text-xs sm:text-sm">
+                                    <span class="px-2 py-1 rounded-full text-xs ${user.role === 'admin' ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : user.role === 'teacher' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' : 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'}">
+                                        ${user.role === 'admin' ? 'Quản trị' : user.role === 'teacher' ? 'Giáo viên' : 'Sinh viên'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Lỗi tải người dùng:', error);
+            }
+        }
+
+        async function loadRecentActivities() {
+            const container = document.getElementById('recent-activities');
+            try {
+                const res = await fetch('/api/notifications?limit=5');
+                const data = await res.json();
+                if (data.success && data.notifications && data.notifications.length > 0) {
+                    container.innerHTML = data.notifications.map(notif => `
+                        <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                <i class="fas fa-bell text-purple-500 text-xs sm:text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs sm:text-sm font-medium text-gray-800 dark:text-white">${escapeHtml(notif.title)}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${escapeHtml(notif.content.substring(0, 80))}${notif.content.length > 80 ? '...' : ''}</p>
+                                <p class="text-xs text-gray-400 mt-1">${formatTime(notif.created_at)}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">Chưa có hoạt động nào</div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">Không thể tải hoạt động</div>';
+            }
+        }
+
+        // ==================== BÁO CÁO ====================
+        async function loadUserReport() {
+            const period = document.getElementById('user-report-period').value;
+            try {
+                const res = await fetch(`/api/admin/user-report?period=${period}`);
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('new-users-week').textContent = data.new_users || 0;
+                    document.getElementById('active-users').textContent = data.active_users || 0;
+                    document.getElementById('avg-daily-active').textContent = data.avg_daily || 0;
+                    
+                    if (userGrowthChart) userGrowthChart.destroy();
+                    const ctx = document.getElementById('userGrowthChart').getContext('2d');
+                    userGrowthChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels || [],
+                            datasets: [{
+                                label: 'Người dùng mới',
+                                data: data.values || [],
+                                borderColor: '#8b5cf6',
+                                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { position: 'top', labels: { font: { size: 11 } } }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Lỗi tải báo cáo người dùng:', error);
+            }
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    renderNotifications(data.notifications);
+                    updateNotificationBadge(data.unread_count);
+                }
+            } catch (error) {
+                console.error('Lỗi tải thông báo:', error);
+            }
+        }
+        
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notifications-list');
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Chưa có thông báo nào</div>';
+                return;
+            }
+            container.innerHTML = notifications.map(notif => `
+                <div class="notification-item ${notif.is_read ? '' : 'notification-unread'} p-3 transition" onclick="viewNotification(${notif.id}, '${notif.link || ''}')">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas ${notif.type === 'assignment' ? 'fa-tasks' : 'fa-info-circle'} ${notif.type === 'assignment' ? 'text-purple-500' : 'text-blue-500'}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 dark:text-white">${escapeHtml(notif.title)}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${escapeHtml(notif.content.substring(0, 100))}${notif.content.length > 100 ? '...' : ''}</p>
+                            <p class="text-xs text-gray-400 mt-1">${formatTime(notif.created_at)}</p>
+                        </div>
+                        ${!notif.is_read ? '<div class="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notification-badge');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+        
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) loadNotifications();
+        }
+        
+        async function viewNotification(notificationId, link) {
+            await fetch(`/api/notifications/mark-read/${notificationId}`, { method: 'POST' });
+            loadNotifications();
+            loadUnreadCount();
+            if (link) window.location.href = link;
+        }
+        
+        async function markAllNotificationsRead() {
+            await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+            loadNotifications();
+            loadUnreadCount();
+            showToast('Đã đánh dấu tất cả thông báo', 'success');
+        }
+        
+        async function loadUnreadCount() {
+            try {
+                const res = await fetch('/api/notifications?limit=1');
+                const data = await res.json();
+                updateNotificationBadge(data.unread_count);
+            } catch (error) { console.error(error); }
+        }
+
+        // Đóng dropdown khi click ra ngoài
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Đóng sidebar khi click ra ngoài trên mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+        
+        // Cập nhật thời gian
+        function updateDateTime() {
+            document.getElementById('current-datetime').textContent = formatDateTime();
+        }
+        
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleGroups();
+            loadCurrentUser();
+            loadDashboardStats();
+            loadRecentUsers();
+            loadRecentActivities();
+            loadUserReport();
+            loadUnreadCount();
+            updateDateTime();
+            
+            setInterval(updateDateTime, 1000);
+            setInterval(() => {
+                loadDashboardStats();
+                loadRecentUsers();
+                loadUnreadCount();
+            }, 30000);
+        });
+        
+        // Export functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.scrollToSection = scrollToSection;
+        window.exportReport = exportReport;
+        window.loadUserReport = loadUserReport;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+    </script>
+</body>
+</html>

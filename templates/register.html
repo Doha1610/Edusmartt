@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Đăng ký tài khoản</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .register-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .register-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 480px;
+            width: 100%;
+            padding: 40px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+        }
+        
+        .logo-icon i {
+            font-size: 30px;
+            color: white;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
+        }
+        
+        .form-group input.error {
+            border-color: #ef4444;
+        }
+        
+        .form-group select {
+            background: white;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            cursor: pointer;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .btn-register {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(139,92,246,0.4);
+        }
+        
+        .btn-register:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .login-link a {
+            color: #8b5cf6;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+        
+        .role-badge.active {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            color: white;
+        }
+        
+        .role-badge:hover {
+            transform: scale(1.02);
+        }
+        
+        .role-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .info-note {
+            background: #fef3c7;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #92400e;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-note i {
+            font-size: 16px;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .toast-success { background: #10b981; }
+        .toast-error { background: #ef4444; }
+        .toast-info { background: #3b82f6; }
+        
+        /* Modal OTP */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            max-width: 400px;
+            width: 90%;
+            padding: 32px;
+            text-align: center;
+        }
+        .otp-inputs {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 24px 0;
+        }
+        .otp-input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            outline: none;
+        }
+        .otp-input:focus {
+            border-color: #8b5cf6;
+        }
+        .resend-link {
+            color: #8b5cf6;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .auto-code {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #6b7280;
+            text-align: center;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        /* ===== PASSWORD REQUIREMENTS ===== */
+        #passwordRequirements {
+            margin-top: 8px;
+            font-size: 13px;
+            display: none;
+            border-left: 3px solid #dc3545;
+            padding-left: 12px;
+            background: #f8f9fa;
+            border-radius: 0 8px 8px 0;
+            padding: 10px 12px;
+        }
+        #passwordRequirements .req-item {
+            padding: 3px 0;
+            color: #dc3545;
+        }
+        #passwordRequirements .req-item.valid {
+            color: #28a745;
+        }
+        #passwordRequirements .req-item .icon {
+            margin-right: 6px;
+        }
+        .password-strength-bar {
+            height: 4px;
+            border-radius: 4px;
+            margin-top: 8px;
+            background: #e5e7eb;
+            transition: all 0.3s;
+        }
+        .password-strength-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: all 0.3s;
+            width: 0%;
+        }
+        .password-strength-text {
+            font-size: 12px;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        /* ⭐ THÊM: ẨN/HIỆN CHUYÊN NGÀNH */
+        #majorGroup {
+            display: none;
+        }
+        #majorGroup.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-card">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">Đăng ký tài khoản</h1>
+                <p class="text-gray-500 text-sm mt-2">Tham gia cộng đồng học tập EduSmart</p>
+            </div>
+            
+            <!-- Chọn vai trò -->
+            <div class="role-selector">
+                <div class="role-badge active" data-role="student" onclick="selectRole('student')">
+                    <i class="fas fa-user-graduate"></i> Sinh viên
+                </div>
+                <div class="role-badge" data-role="teacher" onclick="selectRole('teacher')">
+                    <i class="fas fa-chalkboard-user"></i> Giáo viên
+                </div>
+            </div>
+            
+            <!-- Thông báo cho giáo viên -->
+            <div id="teacherNote" class="info-note" style="display: none;">
+                <i class="fas fa-info-circle"></i>
+                <span>⚠️ Tài khoản giáo viên cần được admin phê duyệt trước khi đăng nhập.</span>
+            </div>
+            
+            <form id="registerForm" onsubmit="event.preventDefault(); register()">
+                <div class="form-group">
+                    <label>Họ và tên <span class="text-red-500">*</span></label>
+                    <input type="text" id="fullname" placeholder="VD: Nguyễn Văn A" required>
+                    <div class="error-message" id="fullnameError">Vui lòng nhập họ tên</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email <span class="text-red-500">*</span></label>
+                    <input type="email" id="email" placeholder="example@edusmart.com" required>
+                    <div class="error-message" id="emailError">Vui lòng nhập email hợp lệ</div>
+                </div>
+                
+                <!-- ⭐ THÊM: CHUYÊN NGÀNH (CHỈ HIỆN CHO GIÁO VIÊN) -->
+                <div class="form-group" id="majorGroup">
+                    <label>Chuyên ngành giảng dạy <span class="text-red-500">*</span></label>
+                    <select id="major">
+                        <option value="">-- Chọn chuyên ngành --</option>
+                        <option value="Công nghệ thông tin">💻 Công nghệ thông tin</option>
+                        <option value="Khoa học máy tính">🖥️ Khoa học máy tính</option>
+                        <option value="Kỹ thuật phần mềm">⚙️ Kỹ thuật phần mềm</option>
+                        <option value="Hệ thống thông tin">📊 Hệ thống thông tin</option>
+                        <option value="An toàn thông tin">🔒 An toàn thông tin</option>
+                        <option value="Trí tuệ nhân tạo">🤖 Trí tuệ nhân tạo</option>
+                        <option value="Khoa học dữ liệu">📈 Khoa học dữ liệu</option>
+                        <option value="Điện tử viễn thông">📡 Điện tử viễn thông</option>
+                        <option value="Cơ khí">🔧 Cơ khí</option>
+                        <option value="Xây dựng">🏗️ Xây dựng</option>
+                        <option value="Kinh tế">💰 Kinh tế</option>
+                        <option value="Quản trị kinh doanh">📋 Quản trị kinh doanh</option>
+                        <option value="Tài chính ngân hàng">🏦 Tài chính ngân hàng</option>
+                        <option value="Kế toán">📒 Kế toán</option>
+                        <option value="Ngoại ngữ">🌍 Ngoại ngữ</option>
+                        <option value="Sư phạm">📚 Sư phạm</option>
+                        <option value="Luật">⚖️ Luật</option>
+                        <option value="Y dược">🏥 Y dược</option>
+                        <option value="Khác">📌 Khác</option>
+                    </select>
+                    <div class="error-message" id="majorError">Vui lòng chọn chuyên ngành</div>
+                </div>
+                
+                <!-- ===== MẬT KHẨU ===== -->
+                <div class="form-group">
+                    <label>Mật khẩu <span class="text-red-500">*</span></label>
+                    <input type="password" id="password" placeholder="Ít nhất 6 ký tự" required
+                           onfocus="showPasswordRequirements()" oninput="validatePassword(this.value)">
+                    
+                    <!-- Yêu cầu mật khẩu -->
+                    <div id="passwordRequirements">
+                        <div class="req-item" id="reqLength">
+                            <span class="icon">❌</span> Ít nhất 6 ký tự
+                        </div>
+                        <div class="req-item" id="reqUppercase">
+                            <span class="icon">❌</span> Ít nhất 1 chữ hoa (A-Z)
+                        </div>
+                        <div class="req-item" id="reqLowercase">
+                            <span class="icon">❌</span> Ít nhất 1 chữ thường (a-z)
+                        </div>
+                        <div class="req-item" id="reqNumber">
+                            <span class="icon">❌</span> Ít nhất 1 số (0-9)
+                        </div>
+                        <div class="req-item" id="reqSpecial">
+                            <span class="icon">❌</span> Ít nhất 1 ký tự đặc biệt (!@#$%^&*()_+-=[]{}|;:,.<>?/~`)
+                        </div>
+                        
+                        <!-- Thanh độ mạnh -->
+                        <div class="password-strength-bar">
+                            <div class="fill" id="strengthFill"></div>
+                        </div>
+                        <div class="password-strength-text" id="strengthText">Độ mạnh: Yếu</div>
+                    </div>
+                    
+                    <div class="error-message" id="passwordError">Vui lòng nhập mật khẩu hợp lệ</div>
+                </div>
+                
+                <!-- ===== XÁC NHẬN MẬT KHẨU ===== -->
+                <div class="form-group">
+                    <label>Xác nhận mật khẩu <span class="text-red-500">*</span></label>
+                    <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu" required oninput="checkConfirmPassword()">
+                    <div id="confirmHelp" style="font-size: 13px; margin-top: 4px;"></div>
+                    <div class="error-message" id="confirmError">Mật khẩu không khớp</div>
+                </div>
+                
+                <div class="auto-code" id="autoCodeNote">
+                    <i class="fas fa-id-card mr-1"></i> Mã số sẽ được hệ thống tự động tạo sau khi đăng ký
+                </div>
+                
+                <button type="submit" class="btn-register" id="registerBtn">
+                    <i class="fas fa-user-plus mr-2"></i> Đăng ký
+                </button>
+            </form>
+            
+            <div class="login-link">
+                Đã có tài khoản? <a href="/login">Đăng nhập ngay</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal nhập OTP -->
+    <div id="otpModal" class="modal-overlay">
+        <div class="modal-content">
+            <i class="fas fa-envelope text-5xl text-purple-500 mb-4"></i>
+            <h3 class="text-xl font-bold mb-2">Xác thực email</h3>
+            <p class="text-gray-600 text-sm mb-4">Mã OTP đã được gửi đến email của bạn</p>
+            <div class="otp-inputs">
+                <input type="text" class="otp-input" maxlength="1" onkeyup="moveToNext(this, 0)">
+                <input type="text" class="otp-input" maxlength="1" onkeyup="moveToNext(this, 1)">
+                <input type="text" class="otp-input" maxlength="1" onkeyup="moveToNext(this, 2)">
+                <input type="text" class="otp-input" maxlength="1" onkeyup="moveToNext(this, 3)">
+                <input type="text" class="otp-input" maxlength="1" onkeyup="moveToNext(this, 4)">
+                <input type="text" class="otp-input" maxlength="1" onkeyup="moveToNext(this, 5)">
+            </div>
+            <button onclick="verifyOTP()" class="bg-purple-500 text-white px-6 py-2 rounded-lg w-full mb-3 hover:bg-purple-600">
+                Xác thực
+            </button>
+            <p class="text-sm text-gray-500">
+                <span class="resend-link" onclick="resendOTP()">Gửi lại mã</span>
+                <span id="countdown" class="text-gray-400"></span>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        let selectedRole = 'student';
+        let tempUserId = null;
+        let countdownInterval = null;
+        let isPasswordValid = false;
+        
+        // ==================== CHỌN VAI TRÒ ====================
+        function selectRole(role) {
+            selectedRole = role;
+            document.querySelectorAll('.role-badge').forEach(el => {
+                if (el.getAttribute('data-role') === role) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+            
+            const teacherNote = document.getElementById('teacherNote');
+            const autoCodeNote = document.getElementById('autoCodeNote');
+            const majorGroup = document.getElementById('majorGroup');
+            const majorSelect = document.getElementById('major');
+            
+            if (role === 'teacher') {
+                teacherNote.style.display = 'flex';
+                autoCodeNote.innerHTML = '<i class="fas fa-id-card mr-1"></i> Mã số giáo viên sẽ được hệ thống tự động tạo sau khi đăng ký';
+                // ⭐ HIỂN THỊ CHUYÊN NGÀNH CHO GIÁO VIÊN
+                majorGroup.classList.add('visible');
+                majorSelect.required = true;
+            } else {
+                teacherNote.style.display = 'none';
+                autoCodeNote.innerHTML = '<i class="fas fa-id-card mr-1"></i> Mã số sinh viên sẽ được hệ thống tự động tạo sau khi đăng ký';
+                // ⭐ ẨN CHUYÊN NGÀNH CHO SINH VIÊN
+                majorGroup.classList.remove('visible');
+                majorSelect.required = false;
+                majorSelect.value = '';
+            }
+        }
+        
+        // ==================== TOAST ====================
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // ==================== KIỂM TRA MẬT KHẨU ====================
+        function showPasswordRequirements() {
+            document.getElementById('passwordRequirements').style.display = 'block';
+        }
+        
+        function validatePassword(password) {
+            const requirements = {
+                length: password.length >= 6,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?\/~`]/.test(password)
+            };
+            
+            // Cập nhật từng yêu cầu
+            updateRequirement('reqLength', requirements.length, 'Ít nhất 6 ký tự');
+            updateRequirement('reqUppercase', requirements.uppercase, 'Ít nhất 1 chữ hoa (A-Z)');
+            updateRequirement('reqLowercase', requirements.lowercase, 'Ít nhất 1 chữ thường (a-z)');
+            updateRequirement('reqNumber', requirements.number, 'Ít nhất 1 số (0-9)');
+            updateRequirement('reqSpecial', requirements.special, 'Ít nhất 1 ký tự đặc biệt');
+            
+            // Kiểm tra tất cả
+            const allValid = Object.values(requirements).every(v => v === true);
+            isPasswordValid = allValid;
+            
+            // Đổi màu border
+            const container = document.getElementById('passwordRequirements');
+            if (allValid) {
+                container.style.borderLeft = '3px solid #28a745';
+            } else {
+                container.style.borderLeft = '3px solid #dc3545';
+            }
+            
+            // Cập nhật thanh độ mạnh
+            updateStrengthBar(password, requirements);
+            
+            // Ẩn lỗi mật khẩu
+            document.getElementById('passwordError').style.display = 'none';
+            
+            return allValid;
+        }
+        
+        function updateRequirement(elementId, isValid, text) {
+            const element = document.getElementById(elementId);
+            const icon = element.querySelector('.icon');
+            
+            if (isValid) {
+                element.className = 'req-item valid';
+                icon.textContent = '✅';
+            } else {
+                element.className = 'req-item';
+                icon.textContent = '❌';
+            }
+        }
+        
+        function updateStrengthBar(password, requirements) {
+            const fill = document.getElementById('strengthFill');
+            const text = document.getElementById('strengthText');
+            
+            // Đếm số yêu cầu đã thỏa mãn
+            const count = Object.values(requirements).filter(v => v === true).length;
+            const percent = (count / 5) * 100;
+            
+            fill.style.width = percent + '%';
+            
+            let color, label;
+            if (count <= 2) {
+                color = '#ef4444';
+                label = 'Yếu';
+            } else if (count <= 3) {
+                color = '#f59e0b';
+                label = 'Trung bình';
+            } else if (count <= 4) {
+                color = '#3b82f6';
+                label = 'Tốt';
+            } else {
+                color = '#10b981';
+                label = 'Mạnh';
+            }
+            
+            fill.style.backgroundColor = color;
+            text.textContent = 'Độ mạnh: ' + label;
+            text.style.color = color;
+        }
+        
+        // ==================== XÁC NHẬN MẬT KHẨU ====================
+        function checkConfirmPassword() {
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const help = document.getElementById('confirmHelp');
+            const error = document.getElementById('confirmError');
+            
+            if (confirm === '') {
+                help.textContent = '';
+                help.style.color = '';
+                error.style.display = 'none';
+                return;
+            }
+            
+            if (password === confirm) {
+                help.innerHTML = '✅ Mật khẩu khớp';
+                help.style.color = '#28a745';
+                error.style.display = 'none';
+            } else {
+                help.innerHTML = '❌ Mật khẩu không khớp';
+                help.style.color = '#ef4444';
+                error.style.display = 'block';
+            }
+        }
+        
+        // ==================== VALIDATE FORM ====================
+        function validateForm() {
+            let isValid = true;
+            const fullname = document.getElementById('fullname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const major = document.getElementById('major').value;
+            
+            // Validate fullname
+            if (!fullname || fullname.length < 2) {
+                document.getElementById('fullnameError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('fullnameError').style.display = 'none';
+            }
+            
+            // Validate email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                document.getElementById('emailError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('emailError').style.display = 'none';
+            }
+            
+            // ⭐ VALIDATE CHUYÊN NGÀNH (CHỈ KHI CHỌN GIÁO VIÊN)
+            if (selectedRole === 'teacher') {
+                if (!major) {
+                    document.getElementById('majorError').style.display = 'block';
+                    isValid = false;
+                } else {
+                    document.getElementById('majorError').style.display = 'none';
+                }
+            }
+            
+            // Validate password (dùng hàm validatePassword đã có)
+            if (!validatePassword(password)) {
+                document.getElementById('passwordError').style.display = 'block';
+                document.getElementById('passwordError').textContent = 'Vui lòng nhập mật khẩu đáp ứng tất cả yêu cầu';
+                isValid = false;
+            } else {
+                document.getElementById('passwordError').style.display = 'none';
+            }
+            
+            // Validate confirm password
+            if (password !== confirmPassword || confirmPassword === '') {
+                document.getElementById('confirmError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('confirmError').style.display = 'none';
+            }
+            
+            return isValid;
+        }
+        
+        // ==================== TẠO MÃ SỐ ====================
+        function generateStudentId() {
+            return 'SV' + Date.now() + Math.floor(Math.random() * 1000);
+        }
+        
+        function generateTeacherId() {
+            return 'GV' + Date.now() + Math.floor(Math.random() * 1000);
+        }
+        
+        // ==================== ĐĂNG KÝ ====================
+        async function register() {
+            if (!validateForm()) return;
+            
+            const fullname = document.getElementById('fullname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const major = document.getElementById('major').value;
+            
+            // Tự động tạo mã số
+            let studentId = '';
+            if (selectedRole === 'student') {
+                studentId = generateStudentId();
+            } else {
+                studentId = generateTeacherId();
+            }
+            
+            const btn = document.getElementById('registerBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...';
+            
+            try {
+                // ⭐ THÊM major VÀO REQUEST
+                const requestData = {
+                    fullname: fullname,
+                    email: email,
+                    student_id: studentId,
+                    role: selectedRole,
+                    password: password
+                };
+                
+                // Nếu là giáo viên, thêm major
+                if (selectedRole === 'teacher' && major) {
+                    requestData.major = major;
+                }
+                
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    tempUserId = data.user_id;
+                    showToast(data.message, 'success');
+                    
+                    if (data.requires_verification) {
+                        openOTPModal();
+                        startCountdown(60);
+                    } else {
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 2000);
+                    }
+                } else {
+                    showToast(data.detail || 'Đăng ký thất bại', 'error');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showToast('Lỗi kết nối server!', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-user-plus mr-2"></i> Đăng ký';
+            }
+        }
+        
+        // ==================== OTP ====================
+        function openOTPModal() {
+            document.getElementById('otpModal').style.display = 'flex';
+            setTimeout(() => document.querySelector('.otp-input').focus(), 100);
+        }
+        
+        function closeOTPModal() {
+            document.getElementById('otpModal').style.display = 'none';
+            document.querySelectorAll('.otp-input').forEach(input => input.value = '');
+            if (countdownInterval) clearInterval(countdownInterval);
+        }
+        
+        function moveToNext(current, index) {
+            if (current.value.length === 1) {
+                const next = document.querySelectorAll('.otp-input')[index + 1];
+                if (next) next.focus();
+            }
+        }
+        
+        function getOTPCode() {
+            let code = '';
+            document.querySelectorAll('.otp-input').forEach(input => {
+                code += input.value;
+            });
+            return code;
+        }
+        
+        async function verifyOTP() {
+            const otpCode = getOTPCode();
+            if (otpCode.length !== 6) {
+                showToast('Vui lòng nhập đủ 6 số OTP', 'error');
+                return;
+            }
+            
+            const formData = new URLSearchParams();
+            formData.append('user_id', tempUserId);
+            formData.append('otp_code', otpCode);
+            
+            try {
+                const response = await fetch('/api/verify-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                
+                if (response.redirected) {
+                    showToast('✅ Xác thực thành công! Đang chuyển hướng...', 'success');
+                    setTimeout(() => {
+                        window.location.href = response.url;
+                    }, 1000);
+                } else {
+                    const data = await response.json();
+                    if (data.detail) {
+                        showToast(data.detail, 'error');
+                    } else {
+                        showToast('Mã OTP không đúng!', 'error');
+                    }
+                }
+            } catch (error) {
+                showToast('Lỗi xác thực OTP', 'error');
+            }
+        }
+        
+        async function resendOTP() {
+            const email = document.getElementById('email').value.trim();
+            if (!email) {
+                showToast('Vui lòng nhập email', 'error');
+                return;
+            }
+            
+            const formData = new URLSearchParams();
+            formData.append('email', email);
+            
+            try {
+                const response = await fetch('/api/resend-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Đã gửi lại mã OTP!', 'success');
+                    startCountdown(60);
+                } else {
+                    showToast(data.detail || 'Gửi lại thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi gửi lại OTP', 'error');
+            }
+        }
+        
+        function startCountdown(seconds) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            const countdownEl = document.getElementById('countdown');
+            let remaining = seconds;
+            
+            countdownInterval = setInterval(() => {
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownEl.innerHTML = '';
+                } else {
+                    countdownEl.innerHTML = ` (${remaining}s)`;
+                    remaining--;
+                }
+            }, 1000);
+        }
+        
+        // Đóng modal khi click bên ngoài
+        document.getElementById('otpModal').addEventListener('click', function(e) {
+            if (e.target === this) closeOTPModal();
+        });
+        
+        // Enter key cho OTP
+        document.querySelectorAll('.otp-input').forEach((input, index) => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    if (index === 5) {
+                        verifyOTP();
+                    } else {
+                        const next = document.querySelectorAll('.otp-input')[index + 1];
+                        if (next) next.focus();
+                    }
+                }
+                if (e.key === 'Backspace' && this.value === '' && index > 0) {
+                    const prev = document.querySelectorAll('.otp-input')[index - 1];
+                    if (prev) prev.focus();
+                }
+            });
+        });
+        
+        // ⭐ KHỞI TẠO MẶC ĐỊNH
+        selectRole('student');
+    </script>
+</body>
+</html>

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Hành trình học tập</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; transition: background 0.2s ease; min-height: 100vh; }
+        body.light-mode { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); color: #1f2937; }
+        body.dark-mode { background: transparent; color: #f3f4f6; }
+        
+        #star-canvas-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%); }
+        body.light-mode #star-canvas-background { display: none; }
+        .content-wrapper { position: relative; z-index: 10; width: 100%; }
+        
+        body.dark-mode .bg-white, body.dark-mode .bg-gray-50, body.dark-mode .bg-gray-100 { background-color: #1e293b !important; border-color: #334155 !important; }
+        body.dark-mode .text-gray-600, body.dark-mode .text-gray-700, body.dark-mode .text-gray-800 { color: #cbd5e1 !important; }
+        
+        /* Sidebar */
+        .left-sidebar-dark { background: #0a0c10; width: 280px; position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; transition: transform 0.3s ease; border-right: 1px solid rgba(255,255,255,0.08); overflow-y: auto; }
+        body.dark-mode .left-sidebar-dark { background: #030712; }
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; margin: 4px 12px; border-radius: 10px; transition: all 0.2s; color: #9ca3af; cursor: pointer; }
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+        .nav-group-title { padding: 16px 20px 6px 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; }
+        .main-container { margin-left: 280px; transition: margin 0.3s ease; width: auto; }
+        .collapsible-group { margin-bottom: 4px; }
+        .nav-group-toggle { display: flex !important; justify-content: space-between !important; align-items: center !important; cursor: pointer; }
+        .group-icon { font-size: 0.75rem; transition: transform 0.2s ease; }
+        .collapsible-group.collapsed .group-icon { transform: rotate(-90deg); }
+        .collapsible-group.collapsed .nav-group-items { display: none; }
+        .sidebar-menu-btn { cursor: pointer; padding: 8px; border-radius: 8px; display: none; }
+        
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn { display: block !important; }
+            .left-sidebar-dark { transform: translateX(-100%); }
+            .left-sidebar-dark.open { transform: translateX(0) !important; }
+            .main-container { margin-left: 0; width: 100%; }
+        }
+        
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn { display: none !important; }
+            .left-sidebar-dark { transform: translateX(0) !important; }
+            .main-container { margin-left: 280px; }
+        }
+        
+        /* ==================== HEATMAP CSS ==================== */
+        .heatmap-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+        
+        .heatmap-months {
+            display: flex;
+            margin-bottom: 8px;
+            margin-left: 90px;
+        }
+        
+        .month-cell {
+            font-size: 11px;
+            color: #6b7280;
+            text-align: center;
+            font-weight: 500;
+            margin-right: 55px;
+            white-space: nowrap;
+            border-right: 1px solid transparent;
+        }
+        
+        body.dark-mode .month-cell { color: #9ca3af; }
+        
+        .heatmap-grid {
+            display: flex;
+        }
+        
+        .heatmap-weekdays {
+            width: 70px;
+            flex-shrink: 0;
+        }
+        
+        .weekday-label {
+            height: 18px;
+            font-size: 12px;
+            color: #6b7280;
+            text-align: right;
+            padding-right: 12px;
+            line-height: 20px;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        
+        body.dark-mode .weekday-label { color: #9ca3af; }
+        
+        .heatmap-cells-wrapper {
+            flex: 1;
+        }
+        
+        .heatmap-row {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+        
+        .heatmap-cell {
+            flex: 1;
+            aspect-ratio: 1 / 1;
+            min-width: 18px;
+            max-width: 20px;
+            border-radius: 4px;
+            background-color: #e5e7eb;
+            transition: transform 0.1s;
+            cursor: pointer;
+        }
+        
+        .heatmap-cell:active { transform: scale(1.15); }
+        .heatmap-cell.level-0 { background-color: #e5e7eb; }
+        .heatmap-cell.level-1 { background-color: #a7f3d0; }
+        .heatmap-cell.level-2 { background-color: #34d399; }
+        .heatmap-cell.level-3 { background-color: #059669; }
+        
+        body.dark-mode .heatmap-cell.level-0 { background-color: #374151; }
+        body.dark-mode .heatmap-cell.level-1 { background-color: #065f46; }
+        body.dark-mode .heatmap-cell.level-2 { background-color: #047857; }
+        body.dark-mode .heatmap-cell.level-3 { background-color: #10b981; }
+        
+        .heatmap-tooltip {
+            position: fixed;
+            background: #1f2937;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 9999;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        body.dark-mode .heatmap-tooltip { background: #374151; }
+        
+        @media (max-width: 768px) {
+            .heatmap-weekdays { width: 65px; }
+            .heatmap-months { margin-left: 65px; }
+            .weekday-label { font-size: 11px; height: 22px; line-height: 22px; padding-right: 8px; }
+            .heatmap-row { gap: 3px; margin-bottom: 5px; }
+            .heatmap-cell { min-width: 16px; max-width: 18px; }
+            .month-cell { font-size: 10px; }
+            .month-cell { margin-right: 35px; }  /* ← thêm dòng này */
+        }
+        
+        @media (max-width: 480px) {
+            .heatmap-weekdays { width: 55px; }
+            .heatmap-months { margin-left: 55px; }
+            .weekday-label { font-size: 10px; height: 12px; line-height: 18px; padding-right: 6px; }
+            .heatmap-row { gap: 2px; margin-bottom: 4px; }
+            .heatmap-cell { min-width: 14px; max-width: 16px; }
+            .month-cell { font-size: 9px; }
+        }
+        
+        .level-progress { height: 12px; background: #e5e7eb; border-radius: 10px; overflow: hidden; }
+        .level-progress-bar { height: 100%; background: linear-gradient(90deg, #8b5cf6, #7c3aed); border-radius: 10px; transition: width 0.5s; }
+        
+        .badge-card { transition: all 0.2s; cursor: pointer; }
+        .badge-card:hover { transform: translateY(-3px); }
+        .badge-achieved { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
+        .badge-locked { background: #9ca3af; color: #e5e7eb; }
+        body.dark-mode .badge-locked { background: #4b5563; }
+        
+        .stat-number { font-size: 28px; font-weight: bold; }
+        @media (max-width: 768px) { .stat-number { font-size: 20px !important; } }
+        
+        .notification-dropdown { position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 380px; background: white; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); z-index: 1000; max-height: 400px; overflow-y: auto; }
+        body.dark-mode .notification-dropdown { background: #1e293b; border: 1px solid #334155; }
+        .notification-item { cursor: pointer; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+        .notification-item:hover { background: #f3f4f6; }
+        .notification-unread { background: #faf5ff; }
+        @media (max-width: 768px) { .notification-dropdown { position: fixed; top: 55px; right: 12px; width: 65vw !important; max-width: 320px; } }
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="sidebar-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars text-gray-400 hover:text-white text-xl"></i></div>
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center"><i class="fas fa-graduation-cap text-white text-lg"></i></div>
+                <div><h1 class="text-white font-bold text-sm">EduSmart</h1><p class="text-gray-400 text-[10px]">Sinh viên</p></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="study"><span>📚 HỌC TẬP</span><i class="fas fa-chevron-down group-icon"></i></div>
+            <div class="nav-group-items" data-group="study">
+                <div class="nav-item" onclick="window.location.href='/'"><i class="fas fa-home"></i><span>Trang chủ</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/documents'"><i class="fas fa-folder-open"></i><span>Kho tài liệu</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/favorites'"><i class="fas fa-heart"></i><span>Tài liệu yêu thích</span></div>
+                <div class="nav-item" onclick="window.location.href='/assignments/student'"><i class="fas fa-tasks"></i><span>Bài tập của tôi</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/my-classes'">
+    <i class="fas fa-chalkboard"></i>
+    <span>Lớp học của tôi</span>
+</div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="interact"><span>🤖 TƯƠNG TÁC & AI</span><i class="fas fa-chevron-down group-icon"></i></div>
+            <div class="nav-group-items" data-group="interact">
+                <div class="nav-item" onclick="window.location.href='/forum'"><i class="fas fa-comments"></i><span>Diễn đàn</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/quiz'"><i class="fas fa-gamepad"></i><span>Flashcard & Ôn tập</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/suggest-documents'"><i class="fas fa-lightbulb"></i><span>Gợi ý & Tải tài liệu</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="tracking"><span>📊 THEO DÕI</span><i class="fas fa-chevron-down group-icon"></i></div>
+            <div class="nav-group-items" data-group="tracking">
+                <div class="nav-item active" onclick="window.location.href='/student/learning-journey'"><i class="fas fa-chart-line"></i><span>Hành trình học tập</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/transcript'"><i class="fas fa-graduation-cap"></i><span>Bảng điểm</span></div>
+            </div>
+        </div>
+        
+        
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="settings"><span>⚙️ CÀI ĐẶT</span><i class="fas fa-chevron-down group-icon"></i></div>
+            <div class="nav-group-items" data-group="settings">
+                <div class="nav-item" onclick="window.location.href='/student/settings'"><i class="fas fa-cog"></i><span>Cài đặt chung</span></div>
+                <div class="nav-item" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon-sidebar"></i><span id="theme-text-sidebar">Chế độ tối</span></div>
+                <div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i></div>
+                            <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center"><i class="fas fa-chart-line text-white text-lg"></i></div>
+                            <h1 class="text-base sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Hành trình học tập</h1>
+                        </div>
+                        <div class="flex items-center space-x-2 sm:space-x-3">
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700"><i class="fas fa-bell text-gray-600 dark:text-gray-300"></i><span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 hidden">0</span></button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl"><h3 class="font-semibold text-sm">📢 Thông báo</h3><button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button></div>
+                                    <div id="notifications-list" class="divide-y">Đang tải...</div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700"><i class="fas fa-moon text-gray-600 dark:text-yellow-300"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                <div class="space-y-6">
+                    <!-- Level Card -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="text-center md:text-left"><div class="text-3xl sm:text-4xl font-bold text-purple-600" id="level">Cấp 1</div><div class="text-xs sm:text-sm text-gray-500" id="level-name">Tân binh</div></div>
+                            <div class="flex-1 w-full"><div class="flex justify-between text-xs sm:text-sm mb-1"><span>Điểm kinh nghiệm (XP)</span><span id="xp-progress">0 / 100</span></div><div class="level-progress"><div class="level-progress-bar" id="xp-bar" style="width: 0%"></div></div></div>
+                            <div class="text-center"><div class="text-xl sm:text-2xl font-bold text-purple-600" id="total-xp">0</div><div class="text-xs text-gray-500">Tổng XP</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Streak Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white"><div class="flex items-center gap-3"><i class="fas fa-fire text-2xl sm:text-3xl"></i><div><p class="text-xs sm:text-sm opacity-90">Chuỗi hoạt động hiện tại</p><p class="text-2xl sm:text-3xl font-bold" id="current-streak">0</p><p class="text-[10px] sm:text-xs opacity-80">ngày liên tiếp</p></div></div></div>
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-4 text-white"><div class="flex items-center gap-3"><i class="fas fa-trophy text-2xl sm:text-3xl"></i><div><p class="text-xs sm:text-sm opacity-90">Chuỗi dài nhất</p><p class="text-2xl sm:text-3xl font-bold" id="longest-streak">0</p><p class="text-[10px] sm:text-xs opacity-80">kỷ lục cá nhân</p></div></div></div>
+                    </div>
+
+                    <!-- Heatmap -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6">
+                        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                            <h2 class="text-base sm:text-lg font-bold flex items-center gap-2"><i class="fas fa-calendar-alt text-purple-500"></i> Hoạt động 365 ngày</h2>
+                            <div class="text-xs sm:text-sm text-gray-500"><span id="total-contributions" class="font-bold text-purple-600">0</span> ngày hoạt động trong năm qua</div>
+                        </div>
+                        <div class="heatmap-wrapper overflow-x-auto" id="heatmap-wrapper">
+                            <div id="heatmap-container" class="text-center py-8 text-gray-500 text-sm">Đang tải dữ liệu...</div>
+                        </div>
+                        <div class="flex justify-between items-center mt-4 flex-wrap gap-2">
+                            <div class="text-[10px] sm:text-xs text-gray-400"><span class="inline-block w-3 h-3 rounded-sm bg-gray-200 dark:bg-gray-600 mr-1 align-middle"></span><span class="inline-block w-3 h-3 rounded-sm bg-green-200 dark:bg-green-900 mr-1 align-middle"></span><span class="inline-block w-3 h-3 rounded-sm bg-green-400 dark:bg-green-700 mr-1 align-middle"></span><span class="inline-block w-3 h-3 rounded-sm bg-green-600 dark:bg-green-500 mr-1 align-middle"></span><span class="ml-1">Ít hoạt động → Nhiều hoạt động</span></div>
+                            <div class="text-[10px] sm:text-xs text-gray-400"><i class="far fa-question-circle mr-1"></i><span>Mỗi ô = 1 ngày. Chạm vào ô để xem chi tiết</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Badges -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6">
+                        <h2 class="text-base sm:text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-medal text-yellow-500"></i> Huy hiệu đạt được</h2>
+                        <div id="badges-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"><div class="text-center py-8 col-span-full text-sm text-gray-500">Đang tải...</div></div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                        <div class="bg-blue-50 dark:bg-blue-900/30 rounded-xl p-3 text-center"><i class="fas fa-file-alt text-blue-500 text-lg sm:text-xl"></i><p class="stat-number text-blue-600" id="stat-submissions">0</p><p class="text-[10px] sm:text-xs text-gray-500">Bài đã nộp</p></div>
+                        <div class="bg-green-50 dark:bg-green-900/30 rounded-xl p-3 text-center"><i class="fas fa-eye text-green-500 text-lg sm:text-xl"></i><p class="stat-number text-green-600" id="stat-views">0</p><p class="text-[10px] sm:text-xs text-gray-500">Tài liệu đã xem</p></div>
+                        <div class="bg-purple-50 dark:bg-purple-900/30 rounded-xl p-3 text-center"><i class="fas fa-cloud-upload-alt text-purple-500 text-lg sm:text-xl"></i><p class="stat-number text-purple-600" id="stat-uploads">0</p><p class="text-[10px] sm:text-xs text-gray-500">Đã upload</p></div>
+                        <div class="bg-yellow-50 dark:bg-yellow-900/30 rounded-xl p-3 text-center"><i class="fas fa-layer-group text-yellow-500 text-lg sm:text-xl"></i><p class="stat-number text-yellow-600" id="stat-flashcards">0</p><p class="text-[10px] sm:text-xs text-gray-500">Flashcard</p></div>
+                        <div class="bg-red-50 dark:bg-red-900/30 rounded-xl p-3 text-center"><i class="fas fa-comments text-red-500 text-lg sm:text-xl"></i><p class="stat-number text-red-600" id="stat-forums">0</p><p class="text-[10px] sm:text-xs text-gray-500">Tin nhắn</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== HỆ THỐNG NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { if (starCanvas && isStarSystemActive) { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; initStarsPro(); } }); 
+            initStarsPro(); drawStarsPro(); 
+        }
+        
+        let isDarkModeActive = false;
+        function toggleTheme() { 
+            const body = document.body, starCanvasElem = document.getElementById('star-canvas-background'), themeIconSidebar = document.getElementById('theme-icon-sidebar'), themeTextSidebar = document.getElementById('theme-text-sidebar');
+            isDarkModeActive = !isDarkModeActive; 
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); body.classList.add('dark-mode'); 
+                if (themeIconSidebar) { themeIconSidebar.classList.remove('fa-moon'); themeIconSidebar.classList.add('fa-sun'); }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (starCanvasElem) { starCanvasElem.style.display = 'block'; if (!starCtx) { isStarSystemActive = true; initStarfieldPro(); } else { isStarSystemActive = true; if (!starAnimationId) drawStarsPro(); } } 
+            } else { 
+                body.classList.remove('dark-mode'); body.classList.add('light-mode'); 
+                if (themeIconSidebar) { themeIconSidebar.classList.remove('fa-sun'); themeIconSidebar.classList.add('fa-moon'); }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; 
+                isStarSystemActive = false; if (starAnimationId) { cancelAnimationFrame(starAnimationId); starAnimationId = null; } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') setTimeout(() => toggleTheme(), 20);
+        else { const canvasBg = document.getElementById('star-canvas-background'); if (canvasBg) canvasBg.style.display = 'none'; }
+
+        // Sidebar
+        function initCollapsibleGroups() {
+            document.querySelectorAll('.collapsible-group').forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                if (localStorage.getItem(`sidebar_group_${groupId}`) === 'collapsed') group.classList.add('collapsed');
+                toggle?.addEventListener('click', (e) => { e.stopPropagation(); group.classList.toggle('collapsed'); localStorage.setItem(`sidebar_group_${groupId}`, group.classList.contains('collapsed') ? 'collapsed' : 'expanded'); });
+            });
+        }
+        function toggleSidebar() {
+    const sidebar = document.getElementById('leftSidebar');
+    if (sidebar.style.transform === 'translateX(0px)' || sidebar.classList.contains('open')) {
+        sidebar.style.transform = 'translateX(-100%)';
+        sidebar.classList.remove('open');
+    } else {
+        sidebar.style.transform = 'translateX(0)';
+        sidebar.classList.add('open');
+    }
+}
+
+        async function logout() { if (confirm('Bạn có chắc muốn đăng xuất?')) { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; } }
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        function formatNotificationTime(timestamp) { if (!timestamp) return ''; const date = new Date(timestamp); const now = new Date(); const diff = Math.floor((now - date) / 1000); if (diff < 60) return 'Vừa xong'; if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`; if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`; if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`; return date.toLocaleDateString('vi-VN'); }
+
+        // Notifications
+        async function loadNotifications() { try { const res = await fetch('/api/notifications?limit=10'); const data = await res.json(); if (data.success) { renderNotifications(data.notifications); updateNotificationBadge(data.unread_count); } } catch (error) { console.error(error); } }
+        function renderNotifications(notifications) { const container = document.getElementById('notifications-list'); if (!notifications || notifications.length === 0) { container.innerHTML = '<div class="p-4 text-center text-gray-500">Chưa có thông báo</div>'; return; } container.innerHTML = notifications.map(n => `<div class="notification-item ${n.is_read ? '' : 'notification-unread'} p-3" onclick="viewNotification(${n.id}, '${n.link || ''}')"><div class="flex items-start gap-3"><div class="flex-shrink-0">${n.type === 'assignment' ? '<i class="fas fa-tasks text-purple-500"></i>' : '<i class="fas fa-info-circle text-blue-500"></i>'}</div><div class="flex-1 min-w-0"><p class="text-sm font-medium">${escapeHtml(n.title)}</p><p class="text-xs text-gray-500 mt-1">${escapeHtml(n.content.substring(0, 80))}${n.content.length > 80 ? '...' : ''}</p><p class="text-xs text-gray-400 mt-1">${formatNotificationTime(n.created_at)}</p></div>${!n.is_read ? '<div class="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>' : ''}</div></div>`).join(''); }
+        function updateNotificationBadge(count) { const badge = document.getElementById('notification-badge'); if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); } }
+        function toggleNotificationDropdown() { const dropdown = document.getElementById('notification-dropdown'); dropdown.classList.toggle('hidden'); if (!dropdown.classList.contains('hidden')) loadNotifications(); }
+        async function viewNotification(notificationId, link) { await fetch(`/api/notifications/mark-read/${notificationId}`, { method: 'POST' }); loadNotifications(); loadUnreadCount(); if (link) window.location.href = link; }
+        async function markAllNotificationsRead() { await fetch('/api/notifications/mark-all-read', { method: 'POST' }); loadNotifications(); loadUnreadCount(); }
+        async function loadUnreadCount() { try { const res = await fetch('/api/notifications?limit=1'); const data = await res.json(); updateNotificationBadge(data.unread_count); } catch (error) { console.error(error); } }
+
+        // Load learning journey
+        async function loadLearningJourney() {
+            try {
+                const res = await fetch('/api/student/learning-journey');
+                const data = await res.json();
+                if (data.success) {
+                    const stats = data.stats;
+                    document.getElementById('level').textContent = `Cấp ${stats.level}`;
+                    document.getElementById('level-name').textContent = stats.level_name;
+                    document.getElementById('total-xp').textContent = stats.total_xp;
+                    document.getElementById('xp-progress').textContent = `${stats.current_level_xp} / ${stats.next_level_xp}`;
+                    document.getElementById('xp-bar').style.width = `${(stats.current_level_xp / stats.next_level_xp) * 100}%`;
+                    document.getElementById('current-streak').textContent = stats.current_streak;
+                    document.getElementById('longest-streak').textContent = stats.longest_streak;
+                    document.getElementById('stat-submissions').textContent = stats.total_submissions;
+                    document.getElementById('stat-views').textContent = stats.total_views;
+                    document.getElementById('stat-uploads').textContent = stats.total_uploads;
+                    document.getElementById('stat-flashcards').textContent = stats.total_flashcards;
+                    document.getElementById('stat-forums').textContent = stats.total_forums;
+                    document.getElementById('total-contributions').textContent = stats.active_days || 0;
+                    renderHeatmap(data.heatmap);
+                    renderBadges(data.badges);
+                }
+            } catch (error) { console.error('Lỗi:', error); document.getElementById('heatmap-container').innerHTML = '<div class="text-center py-8 text-red-500">❌ Lỗi tải dữ liệu</div>'; }
+        }
+
+        let currentTooltip = null;
+        function showTooltip(text, x, y) {
+            if (currentTooltip) currentTooltip.remove();
+            const tooltip = document.createElement('div');
+            tooltip.className = 'heatmap-tooltip';
+            tooltip.textContent = text;
+            document.body.appendChild(tooltip);
+            let left = x + 15, top = y + 15;
+            if (left + tooltip.offsetWidth > window.innerWidth) left = x - tooltip.offsetWidth - 15;
+            if (top + tooltip.offsetHeight > window.innerHeight) top = y - tooltip.offsetHeight - 15;
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            currentTooltip = tooltip;
+            setTimeout(() => { if (currentTooltip) { currentTooltip.remove(); currentTooltip = null; } }, 2000);
+        }
+
+        // ==================== HEATMAP - THÁNG BẮT ĐẦU TỪ ĐÚNG VỊ TRÍ ====================
+        function renderHeatmap(heatmapData) {
+            const container = document.getElementById('heatmap-container');
+            if (!heatmapData || heatmapData.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500">Chưa có dữ liệu hoạt động</div>';
+                return;
+            }
+
+            // Tạo map dữ liệu theo ngày
+            const dayMap = new Map();
+            heatmapData.forEach(item => { dayMap.set(item.date, item); });
+
+            // Lấy năm từ dữ liệu
+            const dates = heatmapData.map(d => new Date(d.date)).sort((a,b) => a - b);
+            let currentYear = dates.length > 0 ? dates[0].getFullYear() : 2026;
+            
+            // Tạo tất cả các ngày trong năm
+            const startDate = new Date(currentYear, 0, 1);
+            const endDate = new Date(currentYear, 11, 31);
+            const allDays = [];
+            let currentDate = new Date(startDate);
+            
+            while (currentDate <= endDate) {
+                const dateStr = currentDate.toISOString().split('T')[0];
+                const dayData = dayMap.get(dateStr) || { date: dateStr, score: 0, level: 0 };
+                allDays.push(dayData);
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Tính số ngày lẻ đầu năm (để căn chỉnh thứ)
+            const firstDayOfYear = startDate.getDay(); // 0 = Chủ nhật
+            const startOffset = firstDayOfYear === 0 ? 6 : firstDayOfYear - 1;
+            
+            // Tạo mảng padding đầu năm
+            const paddingDays = [];
+            for (let i = 0; i < startOffset; i++) {
+                paddingDays.push(null);
+            }
+            
+            // Kết hợp padding + allDays
+            const allDaysWithPadding = [...paddingDays, ...allDays];
+            
+            // Đảm bảo số ngày chia hết cho 7
+            while (allDaysWithPadding.length % 7 !== 0) {
+                allDaysWithPadding.push(null);
+            }
+            
+            const totalWeeks = allDaysWithPadding.length / 7;
+            
+            // Tạo mảng các tuần
+            const weeks = [];
+            for (let i = 0; i < totalWeeks; i++) {
+                const week = [];
+                for (let j = 0; j < 7; j++) {
+                    week.push(allDaysWithPadding[i * 7 + j]);
+                }
+                weeks.push(week);
+            }
+
+            // Tính số cột (ô) cho từng tháng (dựa trên vị trí thực tế)
+            const monthColumns = new Array(12).fill(0);
+            const monthStartPositions = new Array(12).fill(-1);
+            
+            // Duyệt qua tất cả các ô để xác định tháng nào nằm ở cột nào
+            for (let col = 0; col < weeks.length; col++) {
+                for (let row = 0; row < 7; row++) {
+                    const cell = weeks[col][row];
+                    if (cell && cell.date) {
+                        const month = new Date(cell.date).getMonth();
+                        monthColumns[month]++;
+                        if (monthStartPositions[month] === -1) {
+                            monthStartPositions[month] = col;
+                        }
+                    }
+                }
+            }
+
+            const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+            const weekdays = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+
+            // Tạo header tháng với margin-left theo vị trí bắt đầu của tháng 1
+            let monthsHtml = '<div class="heatmap-months" style="margin-left: 90px;">';
+            
+            // Thêm khoảng trống cho các ô padding trước tháng 1
+            if (monthStartPositions[0] > 0) {
+                monthsHtml += `<div style="flex: ${monthStartPositions[0]};"></div>`;
+            }
+            
+            // Tạo các tháng với độ rộng tương ứng số cột
+            for (let i = 0; i < 12; i++) {
+                const cols = monthColumns[i];
+                if (cols > 0) {
+                    monthsHtml += `<div class="month-cell" style="flex: ${cols}; text-align: center;">${monthNames[i]}</div>`;
+                }
+            }
+            monthsHtml += '</div>';
+
+            // Tạo grid heatmap
+            let html = monthsHtml;
+            html += '<div class="heatmap-grid">';
+            
+            // Cột ngày trong tuần
+            html += '<div class="heatmap-weekdays">';
+            for (let i = 0; i < 7; i++) {
+                html += `<div class="weekday-label">${weekdays[i]}</div>`;
+            }
+            html += '</div>';
+            
+            // Các ô heatmap
+            html += '<div class="heatmap-cells-wrapper">';
+            for (let row = 0; row < 7; row++) {
+                html += '<div class="heatmap-row">';
+                for (let col = 0; col < weeks.length; col++) {
+                    const cell = weeks[col][row];
+                    if (cell && cell.date) {
+                        const date = new Date(cell.date);
+                        const formattedDate = `${date.getDate()}/${date.getMonth() + 1}`;
+                        const title = `${formattedDate}: ${cell.score} điểm hoạt động`;
+                        const level = cell.level;
+                        html += `<div class="heatmap-cell level-${level}" data-title="${title}"></div>`;
+                    } else {
+                        html += `<div class="heatmap-cell level-0" style="opacity:0; cursor:default;"></div>`;
+                    }
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+            html += '</div>';
+
+            container.innerHTML = html;
+            
+            // Thêm tooltip
+            const cells = container.querySelectorAll('.heatmap-cell[data-title]');
+            cells.forEach(cell => {
+                cell.addEventListener('mouseenter', (e) => { if (window.innerWidth > 768) showTooltip(cell.dataset.title, e.clientX, e.clientY); });
+                cell.addEventListener('mouseleave', () => { if (window.innerWidth > 768 && currentTooltip) { currentTooltip.remove(); currentTooltip = null; } });
+                cell.addEventListener('touchstart', (e) => { e.preventDefault(); const touch = e.touches[0]; showTooltip(cell.dataset.title, touch.clientX, touch.clientY); });
+                cell.addEventListener('click', (e) => { showTooltip(cell.dataset.title, e.clientX, e.clientY); });
+            });
+        }
+
+        function renderBadges(badges) {
+            const container = document.getElementById('badges-container');
+            if (!badges || badges.length === 0) { container.innerHTML = '<div class="text-center py-8 text-gray-500 col-span-full">Chưa có huy hiệu nào</div>'; return; }
+            container.innerHTML = badges.map(badge => {
+                const achievedClass = badge.achieved ? 'badge-achieved' : 'badge-locked';
+                const iconColor = badge.achieved ? 'text-white' : 'text-gray-300';
+                const progressHtml = !badge.achieved && badge.progress !== undefined && badge.target !== undefined ?
+                    `<div class="text-[10px] mt-1">${badge.progress}/${badge.target}</div><div class="w-full h-1 bg-white/30 rounded-full mt-1 overflow-hidden"><div class="h-full bg-white rounded-full" style="width: ${(badge.progress / badge.target) * 100}%"></div></div>` : '';
+                return `<div class="badge-card ${achievedClass} rounded-xl p-2 sm:p-3 text-center"><i class="fas ${badge.icon} text-xl sm:text-2xl ${iconColor} mb-1"></i><p class="text-[10px] sm:text-xs font-semibold truncate">${escapeHtml(badge.name)}</p><p class="text-[8px] sm:text-[10px] opacity-80">${escapeHtml(badge.description)}</p>${progressHtml}</div>`;
+            }).join('');
+        }
+
+        // Đóng dropdown
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.add('hidden');
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(e.target) && !menuBtn.contains(e.target)) sidebar.classList.remove('open');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCollapsibleGroups();
+            loadLearningJourney();
+            loadUnreadCount();
+            setInterval(loadUnreadCount, 30000);
+        });
+
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+    </script>
+</body>
+</html>

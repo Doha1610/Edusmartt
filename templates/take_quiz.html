@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Làm bài thi trắc nghiệm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.2s ease;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        }
+        body.dark-mode { background: #0f172a; color: #f3f4f6; }
+        body.dark-mode .bg-white,
+        body.dark-mode .bg-gray-50 { background-color: #1e293b !important; }
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800 { color: #cbd5e1 !important; }
+        .question-card { transition: all 0.2s; border-left: 4px solid #8b5cf6; }
+        .question-card.answered { border-left-color: #10b981; }
+        .option-btn { transition: all 0.2s; cursor: pointer; }
+        .option-btn:hover { background: #ede9fe; transform: translateX(5px); }
+        .option-btn.selected { background: #8b5cf6; color: white; }
+        body.dark-mode .option-btn.selected { background: #6d28d9; }
+        .timer-danger { animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+        <div class="bg-white rounded-2xl shadow-lg p-5 mb-6">
+            <div class="flex justify-between items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800" id="quiz-title">Đang tải...</h1>
+                    <p class="text-gray-500 text-sm mt-1" id="quiz-info">Đang tải thông tin bài thi...</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl px-6 py-2">
+                        <p class="text-white text-xs">Thời gian còn lại</p>
+                        <p class="text-white text-2xl font-bold" id="timer-display">--:--</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="questions-container" class="space-y-4">
+            <div class="text-center text-gray-500 py-12">
+                <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                <p>Đang tải câu hỏi...</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-5 mt-6">
+            <div class="flex justify-between items-center flex-wrap gap-3">
+                <div>
+                    <p class="text-sm text-gray-500">
+                        <span id="answered-count">0</span>/<span id="total-questions">0</span> câu đã trả lời
+                    </p>
+                    <div class="w-48 h-2 bg-gray-200 rounded-full mt-2">
+                        <div id="progress-bar" class="h-2 bg-purple-500 rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                </div>
+                <button id="submit-btn" onclick="submitQuiz()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl font-semibold transition">
+                    <i class="fas fa-paper-plane mr-2"></i> NỘP BÀI
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const assignmentId = urlParams.get('assignment_id') || urlParams.get('id');
+        
+        let quizData = null;
+        let userAnswers = {};
+        let timerInterval = null;
+        let timeLeft = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!assignmentId) {
+                showError('Không tìm thấy bài thi. Vui lòng quay lại trang bài tập.');
+                return;
+            }
+            loadQuiz();
+        });
+
+        async function loadQuiz() {
+            try {
+                const res = await fetch(`/api/student/assignment/${assignmentId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    if (data.already_submitted) {
+                        showError('Bạn đã nộp bài thi này rồi!');
+                        return;
+                    }
+                    quizData = data.assignment;
+                    renderQuiz();
+                    startTimer();
+                } else {
+                    showError(data.detail || 'Không thể tải bài thi');
+                }
+            } catch (error) {
+                console.error(error);
+                showError('Lỗi kết nối server');
+            }
+        }
+
+        function renderQuiz() {
+            document.getElementById('quiz-title').textContent = quizData.title || quizData.quiz_title || 'Bài thi trắc nghiệm';
+            document.getElementById('quiz-info').textContent = `${quizData.questions?.length || 0} câu hỏi`;
+            document.getElementById('total-questions').textContent = quizData.questions?.length || 0;
+            
+            const container = document.getElementById('questions-container');
+            const questions = quizData.questions || [];
+            
+            if (questions.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-12">Không có câu hỏi nào</div>';
+                return;
+            }
+            
+            container.innerHTML = questions.map((q, idx) => `
+                <div class="question-card bg-white rounded-xl p-5 shadow-md" data-qid="${idx}" id="q-${idx}">
+                    <div class="flex items-start gap-3">
+                        <span class="bg-purple-100 text-purple-700 rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold flex-shrink-0">${idx+1}</span>
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-800 mb-3">${escapeHtml(q.text)}</p>
+                            <div class="space-y-2 ml-2" id="options-${idx}">
+                                ${q.options.map((opt, optIdx) => `
+                                    <div class="option-btn bg-gray-50 rounded-lg p-3 cursor-pointer flex items-center gap-3 hover:bg-purple-50 transition" 
+                                         onclick="selectOption(${idx}, ${optIdx})" data-opt="${optIdx}">
+                                        <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                            ${userAnswers[idx] === optIdx ? '<i class="fas fa-check text-purple-500 text-xs"></i>' : ''}
+                                        </div>
+                                        <span class="text-gray-700">${escapeHtml(opt)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Khôi phục các lựa chọn đã có
+            Object.keys(userAnswers).forEach(idx => {
+                const optionIdx = userAnswers[idx];
+                const container = document.getElementById(`options-${idx}`);
+                if (container) {
+                    const options = container.querySelectorAll('.option-btn');
+                    if (options[optionIdx]) {
+                        const circle = options[optionIdx].querySelector('.w-5.h-5');
+                        options[optionIdx].classList.add('selected');
+                        if (circle) circle.innerHTML = '<i class="fas fa-check text-purple-500 text-xs"></i>';
+                    }
+                }
+                const questionCard = document.getElementById(`q-${idx}`);
+                if (questionCard) questionCard.classList.add('answered');
+            });
+            
+            updateProgress();
+        }
+
+        function selectOption(questionIdx, optionIdx) {
+            userAnswers[questionIdx] = optionIdx;
+            
+            const container = document.getElementById(`options-${questionIdx}`);
+            if (container) {
+                const options = container.querySelectorAll('.option-btn');
+                options.forEach((opt, idx) => {
+                    const circle = opt.querySelector('.w-5.h-5');
+                    if (idx === optionIdx) {
+                        opt.classList.add('selected');
+                        if (circle) circle.innerHTML = '<i class="fas fa-check text-purple-500 text-xs"></i>';
+                    } else {
+                        opt.classList.remove('selected');
+                        if (circle) circle.innerHTML = '';
+                    }
+                });
+            }
+            
+            const questionCard = document.getElementById(`q-${questionIdx}`);
+            if (questionCard) questionCard.classList.add('answered');
+            
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const total = quizData?.questions?.length || 0;
+            const answered = Object.keys(userAnswers).length;
+            document.getElementById('answered-count').textContent = answered;
+            const percent = total > 0 ? (answered / total) * 100 : 0;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+        }
+
+        function startTimer() {
+            if (quizData.time_limit && quizData.time_limit > 0) {
+                timeLeft = quizData.time_limit * 60;
+            } else if (quizData.deadline) {
+                const deadline = new Date(quizData.deadline);
+                const now = new Date();
+                timeLeft = Math.max(0, Math.floor((deadline - now) / 1000));
+            } else {
+                timeLeft = 60 * 60;
+            }
+            
+            if (timeLeft <= 0) {
+                document.getElementById('timer-display').textContent = '00:00';
+                return;
+            }
+            
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Hết thời gian làm bài! Bài thi sẽ được tự động nộp.');
+                    submitQuiz();
+                } else if (timeLeft < 300) {
+                    document.getElementById('timer-display').classList.add('timer-danger', 'text-red-500');
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer-display').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        async function submitQuiz() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            const total = quizData?.questions?.length || 0;
+            const answered = Object.keys(userAnswers).length;
+            
+            if (answered < total) {
+                if (!confirm(`Bạn mới trả lời ${answered}/${total} câu hỏi. Bạn có chắc muốn nộp bài không?`)) {
+                    return;
+                }
+            } else {
+                if (!confirm('Bạn có chắc muốn nộp bài không?')) {
+                    return;
+                }
+            }
+            
+            const questions = quizData.questions;
+            let correctCount = 0;
+            const answersArray = [];
+            
+            for (let i = 0; i < total; i++) {
+                const userAnswer = userAnswers[i];
+                const isCorrect = userAnswer !== undefined && userAnswer === questions[i].correct;
+                if (isCorrect) correctCount++;
+                answersArray.push(userAnswer !== undefined ? userAnswer : -1);
+            }
+            
+            const score = (correctCount / total) * 10;
+            
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang lưu...';
+            
+            try {
+                const res = await fetch('/api/student/submit-assignment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        assignment_id: parseInt(assignmentId),
+                        answers: answersArray
+                    })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert(`✅ Nộp bài thành công!\nĐiểm: ${data.score.toFixed(1)}/10\nĐúng: ${data.correct_count}/${data.total_questions} câu`);
+                    window.location.href = `/submission-result?submission_id=${data.submission_id}`;
+                } else {
+                    alert('Lỗi lưu kết quả: ' + (data.detail || 'Vui lòng thử lại'));
+                }
+            } catch (error) {
+                alert('Lỗi kết nối server');
+                console.error(error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> NỘP BÀI';
+            }
+        }
+
+        function showError(message) {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = `
+                <div class="bg-white rounded-xl p-8 text-center">
+                    <i class="fas fa-exclamation-triangle text-5xl text-red-500 mb-3"></i>
+                    <p class="text-red-500 font-medium">${message}</p>
+                    <button onclick="window.location.href='/student/assignments'" class="mt-4 bg-purple-500 text-white px-4 py-2 rounded-lg">
+                        Quay lại trang bài tập
+                    </button>
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

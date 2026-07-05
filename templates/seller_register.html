@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Đăng ký bán tài liệu - EduSmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.2s ease;
+            margin: 0;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        body.light-mode {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1f2937;
+        }
+        
+        body.dark-mode {
+            background: transparent;
+            color: #f3f4f6;
+        }
+        
+        #star-canvas-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        
+        body.light-mode #star-canvas-background {
+            display: none;
+        }
+        
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+        
+        body.dark-mode .bg-white,
+        body.dark-mode .bg-gray-50,
+        body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        body.dark-mode .border-gray-200,
+        body.dark-mode .border-gray-300 {
+            border-color: #334155 !important;
+        }
+        
+        /* Dark mode input styles */
+        body.dark-mode input,
+        body.dark-mode select,
+        body.dark-mode textarea {
+            background-color: #0f172a !important;
+            color: #f1f5f9 !important;
+            border-color: #475569 !important;
+        }
+
+        body.dark-mode input:focus,
+        body.dark-mode select:focus,
+        body.dark-mode textarea:focus {
+            border-color: #8b5cf6 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3) !important;
+        }
+
+        body.dark-mode input:disabled,
+        body.dark-mode input[readonly] {
+            background-color: #1e293b !important;
+            color: #94a3b8 !important;
+        }
+
+        /* Sidebar */
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+        
+        body.dark-mode .left-sidebar-dark {
+            background: #030712;
+        }
+        
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 4px 12px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+        
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+        
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+        
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+            width: auto;
+        }
+
+        /* Collapsible Group Styles */
+        .collapsible-group {
+            margin-bottom: 4px;
+        }
+
+        .nav-group-toggle {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+
+        .group-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible-group.collapsed .group-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-group.collapsed .nav-group-items {
+            display: none;
+        }
+
+        /* Nút 3 gạch - chỉ hiện trên mobile */
+        .sidebar-menu-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .sidebar-menu-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn {
+                display: block !important;
+            }
+            .left-sidebar-dark { 
+                transform: translateX(-100%);
+            }
+            .left-sidebar-dark.open { 
+                transform: translateX(0) !important;
+            }
+            .main-container { 
+                margin-left: 0; 
+                width: 100%;
+            }
+            .grid-cols-2.md\:grid-cols-4 {
+                gap: 8px;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn {
+                display: none !important;
+            }
+            .left-sidebar-dark {
+                transform: translateX(0) !important;
+            }
+            .main-container {
+                margin-left: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .p-4, .p-6 {
+                padding: 12px !important;
+            }
+            h1.text-xl {
+                font-size: 1rem !important;
+            }
+            .text-sm {
+                font-size: 0.75rem !important;
+            }
+            .text-xs {
+                font-size: 0.65rem !important;
+            }
+            .grid-cols-2 {
+                gap: 8px;
+            }
+            .flex.gap-1 {
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 13px;
+            }
+            .notification-dropdown {
+                width: calc(100vw - 32px) !important;
+                left: 16px !important;
+                right: 16px !important;
+            }
+        }
+        
+        .tab-active {
+            border-bottom: 2px solid #8b5cf6;
+            color: #8b5cf6;
+        }
+        
+        .stat-card {
+            transition: all 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Notification Dropdown - CĂN PHẢI */
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            left: auto;
+            top: 100%;
+            margin-top: 0.5rem;
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+        body.dark-mode .notification-dropdown {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+        .notification-item {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
+        body.dark-mode .notification-item:hover {
+            background: #334155;
+        }
+        .notification-unread {
+            background: #faf5ff;
+        }
+        body.dark-mode .notification-unread {
+            background: #4c1d95;
+        }
+
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto !important;
+                width: 65vw !important;
+                max-width: 320px;
+                min-width: 200px;
+                max-height: 70vh;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto !important;
+                width: 65vw !important;
+                min-width: 180px;
+                max-width: 280px;
+            }
+        }
+    </style>
+</head>
+<body class="light-mode">
+    
+    <canvas id="star-canvas-background"></canvas>
+    
+   
+    
+    <!-- Sidebar với Collapsible Groups -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars text-gray-400 hover:text-white text-xl"></i>
+                </div>
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]" id="userRoleLabel">Sinh viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 1: HỌC TẬP -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="study">
+                <span>📚 HỌC TẬP</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="study">
+                <div class="nav-item" onclick="window.location.href='/'">
+                    <i class="fas fa-home"></i><span>Trang chủ</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/documents'">
+                    <i class="fas fa-folder-open"></i><span>Kho tài liệu</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/favorites'">
+                    <i class="fas fa-heart"></i><span>Tài liệu yêu thích</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/assignments/student'">
+                    <i class="fas fa-tasks"></i><span>Bài tập của tôi</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 2: TƯƠNG TÁC & AI -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="interact">
+                <span>🤖 TƯƠNG TÁC & AI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="interact">
+                <div class="nav-item" onclick="window.location.href='/forum'">
+                    <i class="fas fa-comments"></i><span>Diễn đàn</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/quiz'">
+                    <i class="fas fa-gamepad"></i><span>Flashcard & Ôn tập</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/suggest-documents'">
+                    <i class="fas fa-lightbulb"></i><span>Gợi ý & Tải tài liệu</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 3: THEO DÕI -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="tracking">
+                <span>📊 THEO DÕI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="tracking">
+                <div class="nav-item" onclick="window.location.href='/student/learning-journey'">
+                    <i class="fas fa-chart-line"></i><span>Hành trình học tập</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/transcript'">
+                    <i class="fas fa-graduation-cap"></i><span>Bảng điểm</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 4: BÁN HÀNG -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="selling">
+                <span>💰 BÁN HÀNG</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="selling">
+                <div id="sellerMenuItem" class="nav-item active" onclick="handleSellerClick()">
+                    <i class="fas fa-store"></i>
+                    <span id="sellerMenuText">Đang tải...</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 5: CÀI ĐẶT -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="settings">
+                <span>⚙️ CÀI ĐẶT</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="settings">
+                <div class="nav-item" onclick="window.location.href='/student/settings'">
+                    <i class="fas fa-cog"></i><span>Cài đặt chung</span>
+                </div>
+                <div class="nav-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                    <span id="theme-text-sidebar">Chế độ tối</span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <!-- Header chuẩn với icon chuông bên phải -->
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <!-- Phần bên trái -->
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-store text-white text-lg"></i>
+                            </div>
+                            <h1 class="text-base sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                <span id="pageTitle">Đăng ký bán tài liệu</span>
+                            </h1>
+                        </div>
+                        
+                        <!-- Phần bên phải: icon chuông + dark mode -->
+                        <div class="flex items-center space-x-2 sm:space-x-3">
+                            <!-- ICON CHUÔNG THÔNG BÁO -->
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300 text-base sm:text-lg"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm text-gray-800 dark:text-white">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500 hover:text-purple-600">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y dark:divide-gray-700">
+                                        <div class="p-4 text-center text-gray-500 text-sm">
+                                            <i class="fas fa-spinner fa-spin mr-2"></i> Đang tải...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300 text-base sm:text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                <!-- Nội dung chính thay đổi theo trạng thái -->
+                <div id="mainContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== HỆ THỐNG NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); 
+                    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; 
+                    starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; 
+                    s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; 
+                    if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); 
+                    g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; 
+                    starCtx.lineWidth = 2; 
+                    starCtx.beginPath(); 
+                    starCtx.moveTo(m.x, m.y); 
+                    starCtx.lineTo(m.x - m.len, m.y - m.len); 
+                    starCtx.stroke(); 
+                    m.x += m.speed; 
+                    m.y += m.speed; 
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { 
+                if (starCanvas && isStarSystemActive) { 
+                    starCanvas.width = window.innerWidth; 
+                    starCanvas.height = window.innerHeight; 
+                    initStarsPro(); 
+                } 
+            }); 
+            setInterval(() => { 
+                if (isStarSystemActive) { 
+                    let c = Math.floor(Math.random() * 2) + 3; 
+                    for (let i = 0; i < c; i++) createMeteorPro(); 
+                } 
+            }, 1500); 
+            initStarsPro(); 
+            drawStarsPro(); 
+        }
+        
+        let isDarkModeActive = false;
+        
+        function toggleTheme() { 
+            const body = document.body, 
+                  starCanvasElem = document.getElementById('star-canvas-background'),
+                  themeIconSidebar = document.getElementById('theme-icon-sidebar'),
+                  themeTextSidebar = document.getElementById('theme-text-sidebar');
+                  
+            isDarkModeActive = !isDarkModeActive; 
+            
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); 
+                body.classList.add('dark-mode'); 
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-moon');
+                    themeIconSidebar.classList.add('fa-sun');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (starCanvasElem) { 
+                    starCanvasElem.style.display = 'block'; 
+                    if (!starCtx) { 
+                        isStarSystemActive = true; 
+                        initStarfieldPro(); 
+                    } else { 
+                        isStarSystemActive = true; 
+                        if (!starAnimationId) { 
+                            function restartDraw() { 
+                                if (starCtx && starCanvas && isStarSystemActive) drawStarsPro(); 
+                            } 
+                            restartDraw(); 
+                        } 
+                    } 
+                } 
+            } else { 
+                body.classList.remove('dark-mode'); 
+                body.classList.add('light-mode'); 
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-sun');
+                    themeIconSidebar.classList.add('fa-moon');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; 
+                isStarSystemActive = false; 
+                if (starAnimationId) { 
+                    cancelAnimationFrame(starAnimationId); 
+                    starAnimationId = null; 
+                } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { 
+            setTimeout(() => { toggleTheme(); }, 20); 
+        } else { 
+            const canvasBg = document.getElementById('star-canvas-background'); 
+            if (canvasBg) canvasBg.style.display = 'none'; 
+        }
+
+        // ==================== COLLAPSIBLE SIDEBAR ====================
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') {
+                    group.classList.add('collapsed');
+                }
+                
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, 
+                        group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('leftSidebar');
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                sidebar.style.transform = '';
+            } else {
+                sidebar.classList.add('open');
+                sidebar.style.transform = 'translateX(0)';
+            }
+        }
+
+        // ==================== BIẾN TOÀN CỤC ====================
+        let currentUser = null;
+        let sellerStatus = null;
+        
+        // ==================== LẤY THÔNG TIN USER ====================
+        async function loadUserInfo() {
+            try {
+                const res = await fetch('/api/current-user');
+                const data = await res.json();
+                if (data.logged_in) {
+                    currentUser = data;
+                    document.getElementById('userRoleLabel').textContent = data.role === 'student' ? 'Sinh viên' : data.role;
+                    await checkSellerStatus();
+                } else {
+                    window.location.href = '/login';
+                }
+            } catch (err) {
+                console.error('Lỗi lấy user:', err);
+                window.location.href = '/login';
+            }
+        }
+        
+        // ==================== KIỂM TRA TRẠNG THÁI NGƯỜI BÁN ====================
+        async function checkSellerStatus() {
+            try {
+                const res = await fetch('/api/seller/status');
+                const data = await res.json();
+                sellerStatus = data;
+                updateSellerMenu();
+                
+                if (data.status === 'approved') {
+                    renderSellerDashboard();
+                } else if (data.status === 'pending') {
+                    renderPendingApproval();
+                } else if (data.status === 'rejected') {
+                    renderRejected(data.message);
+                } else {
+                    renderRegisterForm();
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                renderRegisterForm();
+            }
+        }
+        
+        // ==================== CẬP NHẬT MENU BÊN SIDEBAR ====================
+        function updateSellerMenu() {
+            const menuText = document.getElementById('sellerMenuText');
+            if (!menuText) return;
+            
+            if (sellerStatus?.status === 'approved') {
+                menuText.innerHTML = 'Quản lý bán hàng';
+            } else if (sellerStatus?.status === 'pending') {
+                menuText.innerHTML = '⏳ Đang chờ duyệt';
+            } else {
+                menuText.innerHTML = 'Đăng ký bán tài liệu';
+            }
+        }
+        
+        function handleSellerClick() {
+            if (sellerStatus?.status === 'pending') {
+                alert('Yêu cầu của bạn đang được xử lý. Vui lòng chờ admin phê duyệt!');
+            } else {
+                window.location.href = '/seller/register';
+            }
+        }
+        
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    renderNotifications(data.notifications);
+                    updateNotificationBadge(data.unread_count);
+                }
+            } catch (error) {
+                console.error('Lỗi tải thông báo:', error);
+            }
+        }
+
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notifications-list');
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Chưa có thông báo nào</div>';
+                return;
+            }
+            container.innerHTML = notifications.map(notif => `
+                <div class="notification-item ${notif.is_read ? '' : 'notification-unread'} p-3 transition" onclick="viewNotification(${notif.id}, '${notif.link || ''}')">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0">
+                            ${notif.type === 'assignment' ? '<i class="fas fa-tasks text-purple-500"></i>' : '<i class="fas fa-info-circle text-blue-500"></i>'}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 dark:text-white">${escapeHtml(notif.title)}</p>
+                            <p class="text-xs text-gray-500 mt-1">${escapeHtml(notif.content.substring(0, 100))}${notif.content.length > 100 ? '...' : ''}</p>
+                            <p class="text-xs text-gray-400 mt-1">${formatTime(notif.created_at)}</p>
+                        </div>
+                        ${!notif.is_read ? '<div class="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notification-badge');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) loadNotifications();
+        }
+
+        async function viewNotification(notificationId, link) {
+            await fetch(`/api/notifications/mark-read/${notificationId}`, { method: 'POST' });
+            loadNotifications();
+            loadUnreadCount();
+            if (link) window.location.href = link;
+        }
+
+        async function markAllNotificationsRead() {
+            await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+            loadNotifications();
+            loadUnreadCount();
+            showToast('Đã đánh dấu tất cả thông báo', 'success');
+        }
+
+        async function loadUnreadCount() {
+            try {
+                const res = await fetch('/api/notifications?limit=1');
+                const data = await res.json();
+                updateNotificationBadge(data.unread_count);
+            } catch (error) { console.error(error); }
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'Vừa xong';
+            if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`;
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        // ==================== 1. GIAO DIỆN ĐĂNG KÝ ====================
+        function renderRegisterForm() {
+            document.getElementById('pageTitle').innerHTML = 'Đăng ký bán tài liệu';
+            
+            document.getElementById('mainContent').innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 fade-in">
+                    <form id="registerForm">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">Số điện thoại <span class="text-red-500">*</span></label>
+                            <input type="tel" id="phone" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white text-sm" placeholder="Nhập số điện thoại" required>
+                            <p class="text-xs text-gray-400 mt-1">📱 Số điện thoại liên lạc (để admin xác minh khi cần)</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">Email <span class="text-red-500">*</span></label>
+                            <input type="email" id="email" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-gray-100 dark:bg-gray-800 cursor-not-allowed text-sm" value="${currentUser?.email || ''}" readonly>
+                            <p class="text-xs text-gray-400 mt-1">📧 Email đã được xác thực từ tài khoản đăng nhập</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">Ngân hàng <span class="text-red-500">*</span></label>
+                                <select id="bank_name" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white text-sm">
+                                    <option value="">-- Chọn ngân hàng --</option>
+                                    <option value="Vietcombank">🏦 Vietcombank</option>
+                                    <option value="BIDV">🏦 BIDV</option>
+                                    <option value="VietinBank">🏦 VietinBank</option>
+                                    <option value="Agribank">🏦 Agribank</option>
+                                    <option value="Sacombank">🏦 Sacombank</option>
+                                    <option value="TPBank">🏦 TPBank</option>
+                                    <option value="MB Bank">🏦 MB Bank</option>
+                                    <option value="Techcombank">🏦 Techcombank</option>
+                                    <option value="VPBank">🏦 VPBank</option>
+                                    <option value="ACB">🏦 ACB</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">Số tài khoản <span class="text-red-500">*</span></label>
+                                <input type="text" id="bank_account_number" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white text-sm" placeholder="Nhập số tài khoản" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">Tên chủ tài khoản <span class="text-red-500">*</span></label>
+                            <input type="text" id="bank_account_name" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white text-sm" placeholder="Nhập tên chủ tài khoản" required>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">Số CCCD/CMND <span class="text-red-500">*</span></label>
+                            <input type="text" id="identity_number" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white text-sm" placeholder="Nhập số CCCD/CMND" required>
+                            <p class="text-xs text-gray-400 mt-1">🔒 Sẽ được xác minh bởi admin</p>
+                        </div>
+
+                        <!-- Cam kết -->
+                        <div class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-shield-alt text-yellow-600 dark:text-yellow-400 mt-0.5"></i>
+                                <div class="text-xs text-gray-700 dark:text-gray-300">
+                                    <p class="font-semibold mb-1">📜 Cam kết của người bán:</p>
+                                    <p>✓ Tôi xác nhận đây là tài liệu do tôi tự biên soạn hoặc có đầy đủ quyền phân phối.</p>
+                                    <p>✓ Tài liệu không vi phạm bản quyền, không chứa nội dung vi phạm pháp luật.</p>
+                                    <p>✓ Tôi đồng ý để EduSmart thu 10% phí trên mỗi giao dịch thành công.</p>
+                                </div>
+                            </div>
+                            <label class="flex items-center gap-2 mt-3">
+                                <input type="checkbox" id="agree" class="rounded border-gray-300 dark:border-gray-600 text-purple-600 focus:ring-purple-500">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Tôi đã đọc và đồng ý với các điều khoản</span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-2 rounded-lg font-semibold transition text-sm">
+                            <i class="fas fa-paper-plane mr-2"></i>Gửi yêu cầu đăng ký
+                        </button>
+                    </form>
+                </div>
+            `;
+            
+            document.getElementById('registerForm')?.addEventListener('submit', handleRegister);
+        }
+        
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const agree = document.getElementById('agree').checked;
+            if (!agree) {
+                alert('Vui lòng đồng ý với các điều khoản cam kết');
+                return;
+            }
+            
+            const phone = document.getElementById('phone').value;
+            if (!phone || phone.length < 10) {
+                alert('Vui lòng nhập số điện thoại hợp lệ');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('phone', phone);
+            formData.append('email', currentUser.email);
+            formData.append('bank_name', document.getElementById('bank_name').value);
+            formData.append('bank_account_number', document.getElementById('bank_account_number').value);
+            formData.append('bank_account_name', document.getElementById('bank_account_name').value);
+            formData.append('identity_number', document.getElementById('identity_number').value);
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
+            submitBtn.disabled = true;
+            
+            try {
+                const res = await fetch('/api/seller/register', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                if (data.success) {
+                    renderPendingApproval();
+                    updateSellerMenu();
+                } else {
+                    alert(data.message || 'Đăng ký thất bại');
+                }
+            } catch (error) {
+                alert('Lỗi kết nối server');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+        
+        // ==================== 2. GIAO DIỆN ĐANG CHỜ DUYỆT ====================
+        function renderPendingApproval() {
+            document.getElementById('pageTitle').innerHTML = 'Đăng ký bán tài liệu';
+            
+            document.getElementById('mainContent').innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 sm:p-8 text-center fade-in">
+                    <div class="w-20 h-20 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-clock text-yellow-500 text-4xl"></i>
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-2">⏳ Đang chờ admin phê duyệt</h3>
+                    <p class="text-gray-500 dark:text-gray-400">Yêu cầu đăng ký bán hàng của bạn đang được xem xét.</p>
+                    <p class="text-xs sm:text-sm text-gray-400 mt-2">Thời gian duyệt thường từ 1-2 ngày làm việc</p>
+                    <a href="/" class="inline-block mt-6 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-sm">
+                        <i class="fas fa-home mr-1"></i>Về trang chủ
+                    </a>
+                </div>
+            `;
+        }
+        
+        // ==================== 3. GIAO DIỆN BỊ TỪ CHỐI ====================
+        function renderRejected(reason) {
+            document.getElementById('pageTitle').innerHTML = 'Đăng ký bán tài liệu';
+            
+            document.getElementById('mainContent').innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 sm:p-8 text-center fade-in">
+                    <div class="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-times-circle text-red-500 text-4xl"></i>
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-2">❌ Yêu cầu bị từ chối</h3>
+                    <p class="text-red-600 dark:text-red-400">Lý do: ${reason || 'Không rõ'}</p>
+                    <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-sm">
+                        <i class="fas fa-redo mr-1"></i>Đăng ký lại
+                    </button>
+                </div>
+            `;
+        }
+        
+        // ==================== 4. GIAO DIỆN BÁN HÀNG (SAU KHI ĐƯỢC DUYỆT) ====================
+        async function renderSellerDashboard() {
+            document.getElementById('pageTitle').innerHTML = 'Quản lý bán hàng';
+            
+            await loadSellerStats();
+            
+            document.getElementById('mainContent').innerHTML = `
+                <div class="fade-in">
+                    <!-- Thống kê nhanh -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-3 sm:p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Tài liệu</p>
+                                    <p class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400" id="statDocuments">0</p>
+                                </div>
+                                <i class="fas fa-file-pdf text-2xl sm:text-3xl text-blue-400"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-3 sm:p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Đã bán</p>
+                                    <p class="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400" id="statSold">0</p>
+                                </div>
+                                <i class="fas fa-shopping-cart text-2xl sm:text-3xl text-green-400"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-3 sm:p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Doanh thu</p>
+                                    <p class="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400" id="statRevenue">0đ</p>
+                                </div>
+                                <i class="fas fa-money-bill-wave text-2xl sm:text-3xl text-yellow-400"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-3 sm:p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Lượt xem</p>
+                                    <p class="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400" id="statViews">0</p>
+                                </div>
+                                <i class="fas fa-eye text-2xl sm:text-3xl text-purple-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="flex gap-1 border-b dark:border-gray-700 mb-4 overflow-x-auto">
+                        <button onclick="switchTab('documents')" id="tab-documents" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-purple-600 border-b-2 border-purple-600 whitespace-nowrap">
+                            <i class="fas fa-file-pdf mr-1"></i>Tài liệu của tôi
+                        </button>
+                        <button onclick="switchTab('upload')" id="tab-upload" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 whitespace-nowrap">
+                            <i class="fas fa-upload mr-1"></i>Đăng tài liệu
+                        </button>
+                        <button onclick="switchTab('orders')" id="tab-orders" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 whitespace-nowrap">
+                            <i class="fas fa-shopping-cart mr-1"></i>Đơn hàng
+                        </button>
+                        <button onclick="switchTab('banking')" id="tab-banking" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 whitespace-nowrap">
+                            <i class="fas fa-university mr-1"></i>Thông tin thanh toán
+                        </button>
+                    </div>
+
+                    <!-- Tab Documents -->
+                    <div id="documentsTab">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+                            <div id="documentsList" class="divide-y dark:divide-gray-700">
+                                <div class="text-center py-8 text-gray-500 text-sm">Đang tải...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Upload -->
+                    <div id="uploadTab" style="display: none;">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                            <h3 class="font-bold mb-3 text-gray-800 dark:text-white text-sm">Đăng tài liệu mới</h3>
+                            <form id="uploadForm" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">File PDF <span class="text-red-500">*</span></label>
+                                    <input type="file" id="file" accept=".pdf" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Tên tài liệu <span class="text-red-500">*</span></label>
+                                    <input type="text" id="doc_name" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white" required>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Chuyên ngành</label>
+                                        <select id="major" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white">
+                                            <option value="">-- Chọn --</option>
+                                            <option value="Công nghệ thông tin">💻 Công nghệ thông tin</option>
+                                            <option value="Toán học">📐 Toán học</option>
+                                            <option value="Kinh tế">📊 Kinh tế</option>
+                                            <option value="Ngoại ngữ">🌍 Ngoại ngữ</option>
+                                            <option value="Kỹ thuật">🔧 Kỹ thuật</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Giá bán (VNĐ)</label>
+                                        <input type="number" id="price" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white" value="0">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Mô tả</label>
+                                    <textarea id="description" rows="2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white" placeholder="Mô tả tài liệu..."></textarea>
+                                </div>
+                                <button type="submit" class="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600">
+                                    <i class="fas fa-cloud-upload-alt mr-1"></i>Đăng tài liệu
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tab Orders -->
+                    <div id="ordersTab" style="display: none;">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+                            <div id="ordersList" class="divide-y dark:divide-gray-700">
+                                <div class="text-center py-8 text-gray-500 text-sm">Đang tải...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Banking -->
+                    <div id="bankingTab" style="display: none;">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                            <h3 class="font-bold mb-3 text-gray-800 dark:text-white text-sm">Thông tin thanh toán</h3>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Ngân hàng</label>
+                                <input type="text" id="bank_name" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 cursor-not-allowed" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Số tài khoản</label>
+                                <input type="text" id="bank_account_number" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 cursor-not-allowed" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Chủ tài khoản</label>
+                                <input type="text" id="bank_account_name" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 cursor-not-allowed" readonly>
+                            </div>
+                            <button onclick="alert('Vui lòng liên hệ admin để cập nhật thông tin')" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm">
+                                <i class="fas fa-edit mr-1"></i>Yêu cầu cập nhật
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Gắn sự kiện
+            document.getElementById('uploadForm')?.addEventListener('submit', handleUpload);
+            
+            // Load dữ liệu
+            await loadSellerDocuments();
+            await loadSellerOrders();
+            await loadSellerBankingInfo();
+        }
+        
+        async function loadSellerStats() {
+            try {
+                const res = await fetch('/api/seller/stats');
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('statDocuments').innerText = data.total_documents || 0;
+                    document.getElementById('statSold').innerText = data.total_sold || 0;
+                    document.getElementById('statRevenue').innerHTML = (data.total_revenue || 0).toLocaleString() + 'đ';
+                    document.getElementById('statViews').innerText = data.total_views || 0;
+                }
+            } catch (error) {}
+        }
+        
+        async function loadSellerDocuments() {
+            try {
+                const res = await fetch('/api/seller/documents');
+                const data = await res.json();
+                const container = document.getElementById('documentsList');
+                
+                if (data.documents?.length) {
+                    container.innerHTML = data.documents.map(doc => `
+                        <div class="flex justify-between items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-800 dark:text-white text-sm">${escapeHtml(doc.document_name)}</p>
+                                <div class="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <span><i class="fas fa-tag mr-1"></i>${escapeHtml(doc.major || 'Chưa phân loại')}</span>
+                                    <span><i class="fas fa-coins mr-1"></i>${(doc.price || 0).toLocaleString()}đ</span>
+                                    <span><i class="fas fa-eye mr-1"></i>${doc.view_count || 0}</span>
+                                    <span><i class="fas fa-shopping-cart mr-1"></i>${doc.sold_count || 0}</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <span class="px-2 py-1 rounded-full text-[10px] ${doc.status === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'}">
+                                    ${doc.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}
+                                </span>
+                                <button onclick="deleteSellerDocument(${doc.id})" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm">📭 Chưa có tài liệu nào</div>';
+                }
+            } catch (error) {}
+        }
+        
+        async function loadSellerOrders() {
+            try {
+                const res = await fetch('/api/seller/orders');
+                const data = await res.json();
+                const container = document.getElementById('ordersList');
+                
+                if (data.orders?.length) {
+                    container.innerHTML = data.orders.map(order => `
+                        <div class="flex justify-between items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <div>
+                                <p class="font-medium text-gray-800 dark:text-white text-sm">${escapeHtml(order.document_name)}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Người mua: ${escapeHtml(order.buyer_name)}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-green-600 dark:text-green-400 text-sm">${order.amount.toLocaleString()}đ</p>
+                                <p class="text-xs text-gray-400">${new Date(order.created_at).toLocaleDateString('vi-VN')}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm">🛒 Chưa có đơn hàng nào</div>';
+                }
+            } catch (error) {}
+        }
+        
+        async function loadSellerBankingInfo() {
+            try {
+                const res = await fetch('/api/seller/info');
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('bank_name').value = data.bank_name || '';
+                    document.getElementById('bank_account_number').value = data.bank_account_number || '';
+                    document.getElementById('bank_account_name').value = data.bank_account_name || '';
+                }
+            } catch (error) {}
+        }
+        
+        async function handleUpload(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('file', document.getElementById('file').files[0]);
+            formData.append('document_name', document.getElementById('doc_name').value);
+            formData.append('major', document.getElementById('major').value);
+            formData.append('price', document.getElementById('price').value);
+            formData.append('description', document.getElementById('description').value);
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Đang xử lý...';
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch('/api/seller/upload-document', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Đăng tài liệu thành công!');
+                    e.target.reset();
+                    await loadSellerDocuments();
+                    await loadSellerStats();
+                    switchTab('documents');
+                } else {
+                    alert(data.message || 'Đăng thất bại');
+                }
+            } catch (error) {
+                alert('Lỗi kết nối');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+        
+        async function deleteSellerDocument(docId) {
+            if (!confirm('Xóa tài liệu này?')) return;
+            try {
+                const res = await fetch(`/api/seller/delete-document/${docId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    await loadSellerDocuments();
+                    await loadSellerStats();
+                }
+            } catch (error) {}
+        }
+        
+        function switchTab(tab) {
+            ['documents', 'upload', 'orders', 'banking'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const content = document.getElementById(`${t}Tab`);
+                if (t === tab) {
+                    if (btn) btn.className = 'px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-purple-600 border-b-2 border-purple-600 whitespace-nowrap';
+                    if (content) content.style.display = 'block';
+                } else {
+                    if (btn) btn.className = 'px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 whitespace-nowrap';
+                    if (content) content.style.display = 'none';
+                }
+            });
+            if (tab === 'documents') loadSellerDocuments();
+            if (tab === 'orders') loadSellerOrders();
+        }
+        
+        // ==================== HÀM TIỆN ÍCH ====================
+        async function logout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login';
+            }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Đóng dropdown khi click ra ngoài
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Đóng sidebar khi click ra ngoài trên mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+        
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleGroups();
+            loadUserInfo();
+            loadUnreadCount();
+            setInterval(loadUnreadCount, 30000);
+        });
+        
+        // Export functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.handleSellerClick = handleSellerClick;
+        window.switchTab = switchTab;
+        window.deleteSellerDocument = deleteSellerDocument;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+    </script>
+</body>
+</html>

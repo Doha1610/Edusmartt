@@ -1,0 +1,1018 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Sinh viên | Lớp học của tôi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.2s ease;
+            margin: 0;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        body.light-mode {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1f2937;
+        }
+
+        body.dark-mode {
+            background: transparent;
+            color: #f3f4f6;
+        }
+
+        #star-canvas-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+
+        body.light-mode #star-canvas-background {
+            display: none;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        body.dark-mode .bg-white,
+        body.dark-mode .bg-gray-50,
+        body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        body.dark-mode .border-gray-200,
+        body.dark-mode .border-gray-300 {
+            border-color: #334155 !important;
+        }
+
+        /* Sidebar */
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+
+        body.dark-mode .left-sidebar-dark {
+            background: #030712;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 4px 12px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+            width: auto;
+        }
+
+        .collapsible-group {
+            margin-bottom: 4px;
+        }
+
+        .nav-group-toggle {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+
+        .group-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible-group.collapsed .group-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-group.collapsed .nav-group-items {
+            display: none;
+        }
+
+        .sidebar-menu-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .sidebar-menu-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn {
+                display: block !important;
+            }
+            .left-sidebar-dark { 
+                transform: translateX(-100%);
+            }
+            .left-sidebar-dark.open { 
+                transform: translateX(0) !important;
+            }
+            .main-container { 
+                margin-left: 0; 
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn {
+                display: none !important;
+            }
+            .left-sidebar-dark {
+                transform: translateX(0) !important;
+            }
+            .main-container {
+                margin-left: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .p-4, .p-6 {
+                padding: 12px !important;
+            }
+            .flex.gap-6 {
+                flex-direction: column !important;
+                gap: 16px !important;
+            }
+            .grid {
+                gap: 12px !important;
+            }
+            h1.text-xl {
+                font-size: 1.1rem !important;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .class-card {
+            transition: all 0.2s;
+            border-left: 4px solid #8b5cf6;
+        }
+
+        .class-card:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .doc-item {
+            transition: all 0.2s;
+        }
+
+        .doc-item:hover {
+            background: #f3f4f6;
+        }
+
+        body.dark-mode .doc-item:hover {
+            background: #334155;
+        }
+
+        .tab-btn {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            border-bottom: 2px solid #8b5cf6;
+            color: #8b5cf6;
+        }
+
+        .tab-content.hidden {
+            display: none;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        body.dark-mode .modal-content {
+            background: #1e293b;
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            left: auto;
+            top: 100%;
+            margin-top: 0.5rem;
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        body.dark-mode .notification-dropdown {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+
+        .notification-item {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
+
+        body.dark-mode .notification-item:hover {
+            background: #334155;
+        }
+
+        .notification-unread {
+            background: #faf5ff;
+        }
+
+        body.dark-mode .notification-unread {
+            background: #4c1d95;
+        }
+
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto !important;
+                width: 65vw !important;
+                max-width: 320px;
+            }
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars text-gray-400 hover:text-white text-xl"></i>
+                </div>
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Sinh viên</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nhóm 1: HỌC TẬP -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="study">
+                <span>📚 HỌC TẬP</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="study">
+                <div class="nav-item" onclick="window.location.href='/'">
+                    <i class="fas fa-home"></i><span>Trang chủ</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/documents'">
+                    <i class="fas fa-folder-open"></i><span>Kho tài liệu</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/favorites'">
+                    <i class="fas fa-heart"></i><span>Tài liệu yêu thích</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/assignments/student'">
+                    <i class="fas fa-tasks"></i><span>Bài tập của tôi</span>
+                </div>
+                <div class="nav-item active" onclick="window.location.href='/student/my-classes'">
+                    <i class="fas fa-chalkboard"></i><span>Lớp học của tôi</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nhóm 2: TƯƠNG TÁC & AI -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="interact">
+                <span>🤖 TƯƠNG TÁC & AI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="interact">
+                <div class="nav-item" onclick="window.location.href='/forum'">
+                    <i class="fas fa-comments"></i><span>Diễn đàn</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/quiz'">
+                    <i class="fas fa-gamepad"></i><span>Flashcard & Ôn tập</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/suggest-documents'">
+                    <i class="fas fa-lightbulb"></i><span>Gợi ý & Tải tài liệu</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nhóm 3: THEO DÕI -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="track">
+                <span>📊 THEO DÕI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="track">
+                <div class="nav-item" onclick="window.location.href='/student/learning-journey'">
+                    <i class="fas fa-chart-line"></i><span>Hành trình học tập</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/student/transcript'">
+                    <i class="fas fa-graduation-cap"></i><span>Bảng điểm</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nhóm 4: CÀI ĐẶT -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="settings">
+                <span>⚙️ CÀI ĐẶT</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="settings">
+                <div class="nav-item" onclick="window.location.href='/student/settings'">
+                    <i class="fas fa-cog"></i><span>Cài đặt chung</span>
+                </div>
+                <div class="nav-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                    <span id="theme-text-sidebar">Chế độ tối</span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-chalkboard text-white text-lg"></i>
+                            </div>
+                            <h1 class="text-base sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                Lớp học của tôi
+                            </h1>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <!-- Nút thông báo -->
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 transition">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300 text-base sm:text-lg"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y">
+                                        <div class="p-4 text-center text-gray-500">Đang tải...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="loadMyClasses()" class="bg-blue-500 hover:bg-blue-600 text-white px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm">
+                                <i class="fas fa-sync-alt"></i> Tải lại
+                            </button>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300 text-base sm:text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                <!-- Thống kê nhanh -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+                    <div class="bg-white rounded-xl shadow-md p-3 sm:p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-xs sm:text-sm">Số lớp đang học</p>
+                                <p class="text-xl sm:text-2xl font-bold text-gray-800" id="total-classes">0</p>
+                            </div>
+                            <i class="fas fa-chalkboard text-2xl sm:text-3xl text-purple-400"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-3 sm:p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-xs sm:text-sm">Tổng tài liệu</p>
+                                <p class="text-xl sm:text-2xl font-bold text-blue-600" id="total-documents">0</p>
+                            </div>
+                            <i class="fas fa-file-alt text-2xl sm:text-3xl text-blue-400"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-3 sm:p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-xs sm:text-sm">Bài tập cần làm</p>
+                                <p class="text-xl sm:text-2xl font-bold text-green-600" id="pending-assignments">0</p>
+                            </div>
+                            <i class="fas fa-tasks text-2xl sm:text-3xl text-green-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danh sách lớp học -->
+                <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 transition-colors">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                        <h2 class="text-base sm:text-lg font-bold text-gray-800">
+                            <i class="fas fa-list-check text-purple-600 mr-2"></i>Danh sách lớp học
+                        </h2>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <input type="text" id="search-input" placeholder="Tìm kiếm lớp..." 
+                                   class="flex-1 sm:w-64 border border-gray-300 rounded-lg px-3 py-1.5 text-sm dark:bg-gray-800 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div id="classes-list" class="space-y-3 max-h-[500px] overflow-y-auto">
+                        <div class="text-center text-gray-500 py-8 text-sm">
+                            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                            <p>Đang tải danh sách lớp...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== HỆ THỐNG NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; starCtx.lineWidth = 2; starCtx.beginPath(); starCtx.moveTo(m.x, m.y); starCtx.lineTo(m.x - m.len, m.y - m.len); starCtx.stroke(); 
+                    m.x += m.speed; m.y += m.speed; 
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { if (starCanvas && isStarSystemActive) { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; initStarsPro(); } }); 
+            setInterval(() => { if (isStarSystemActive) { let c = Math.floor(Math.random() * 2) + 3; for (let i = 0; i < c; i++) createMeteorPro(); } }, 1500); 
+            initStarsPro(); drawStarsPro(); 
+        }
+
+        let isDarkModeActive = false;
+
+        function toggleTheme() { 
+            const body = document.body, starCanvasElem = document.getElementById('star-canvas-background'),
+                  themeIconSidebar = document.getElementById('theme-icon-sidebar'), themeTextSidebar = document.getElementById('theme-text-sidebar');
+            isDarkModeActive = !isDarkModeActive; 
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); body.classList.add('dark-mode'); 
+                if (themeIconSidebar) { themeIconSidebar.classList.remove('fa-moon'); themeIconSidebar.classList.add('fa-sun'); }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (starCanvasElem) { starCanvasElem.style.display = 'block'; if (!starCtx) { isStarSystemActive = true; initStarfieldPro(); } else { isStarSystemActive = true; if (!starAnimationId) { function restartDraw() { if (starCtx && starCanvas && isStarSystemActive) drawStarsPro(); } restartDraw(); } } } 
+            } else { 
+                body.classList.remove('dark-mode'); body.classList.add('light-mode'); 
+                if (themeIconSidebar) { themeIconSidebar.classList.remove('fa-sun'); themeIconSidebar.classList.add('fa-moon'); }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; isStarSystemActive = false; if (starAnimationId) { cancelAnimationFrame(starAnimationId); starAnimationId = null; } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { setTimeout(() => { toggleTheme(); }, 20); } 
+        else { const canvasBg = document.getElementById('star-canvas-background'); if (canvasBg) canvasBg.style.display = 'none'; }
+
+        // ==================== SIDEBAR ====================
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') group.classList.add('collapsed');
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('leftSidebar');
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                sidebar.style.transform = '';
+            } else {
+                sidebar.classList.add('open');
+                sidebar.style.transform = 'translateX(0)';
+            }
+        }
+
+        async function logout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                const res = await fetch('/api/logout', { method: 'POST' });
+                if (res.ok) window.location.href = '/login';
+                else alert('Đăng xuất thất bại');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Chưa có';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    renderNotifications(data.notifications);
+                    updateNotificationBadge(data.unread_count);
+                }
+            } catch (error) { console.error(error); }
+        }
+
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notifications-list');
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-gray-500">Chưa có thông báo</div>';
+                return;
+            }
+            container.innerHTML = notifications.map(notif => `
+                <div class="notification-item ${notif.is_read ? '' : 'notification-unread'} p-3" onclick="viewNotification(${notif.id}, '${notif.link || ''}')">
+                    <div class="flex gap-3">
+                        <div>${notif.type === 'assignment' ? '<i class="fas fa-tasks text-purple-500"></i>' : '<i class="fas fa-info-circle text-blue-500"></i>'}</div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium">${escapeHtml(notif.title)}</p>
+                            <p class="text-xs text-gray-500">${escapeHtml(notif.content.substring(0, 100))}</p>
+                            <p class="text-xs text-gray-400">${formatDate(notif.created_at)}</p>
+                        </div>
+                        ${!notif.is_read ? '<div class="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notification-badge');
+            if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.classList.remove('hidden'); } 
+            else { badge.classList.add('hidden'); }
+        }
+
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) loadNotifications();
+        }
+
+        async function viewNotification(notificationId, link) {
+            await fetch(`/api/notifications/mark-read/${notificationId}`, { method: 'POST' });
+            loadNotifications();
+            loadUnreadCount();
+            if (link) window.location.href = link;
+        }
+
+        async function markAllNotificationsRead() {
+            await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+            loadNotifications();
+            loadUnreadCount();
+            showToast('Đã đánh dấu tất cả thông báo');
+        }
+
+        async function loadUnreadCount() {
+            try {
+                const res = await fetch('/api/notifications?limit=1');
+                const data = await res.json();
+                updateNotificationBadge(data.unread_count);
+            } catch (error) { console.error(error); }
+        }
+
+        // ==================== LẤY LỚP HỌC CỦA SINH VIÊN ====================
+        let currentClassId = null;
+        let allMyClasses = [];
+
+        async function loadMyClasses() {
+            try {
+                const res = await fetch('/api/student/my-classes');
+                const data = await res.json();
+                if (data.success && data.classes) {
+                    allMyClasses = data.classes;
+                    renderClasses(allMyClasses);
+                    await updateStats(allMyClasses);
+                } else {
+                    document.getElementById('classes-list').innerHTML = `
+                        <div class="text-center text-gray-500 py-8 text-sm">
+                            <i class="fas fa-folder-open text-4xl mb-2 opacity-50"></i>
+                            <p>Bạn chưa tham gia lớp học nào</p>
+                            <p class="text-xs mt-1">Hãy đợi giáo viên thêm bạn vào lớp</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Lỗi tải danh sách lớp', 'error');
+            }
+        }
+
+        function renderClasses(classes) {
+            const container = document.getElementById('classes-list');
+            const searchTerm = document.getElementById('search-input')?.value.toLowerCase() || '';
+            let filtered = classes.filter(c => c.name?.toLowerCase().includes(searchTerm) || c.code?.toLowerCase().includes(searchTerm) || c.major?.toLowerCase().includes(searchTerm));
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-8 text-sm"><i class="fas fa-search text-4xl mb-2 opacity-50"></i><p>Không tìm thấy lớp học</p></div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(cls => `
+                <div class="class-card bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-start flex-wrap gap-2">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="font-semibold text-gray-800 dark:text-white text-base">${escapeHtml(cls.name)}</h3>
+                                <span class="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">${escapeHtml(cls.code)}</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">
+                                <i class="fas fa-user-tie mr-1"></i>Giáo viên: ${escapeHtml(cls.teacher_name || 'Chưa có')}
+                            </p>
+                            <p class="text-xs text-gray-400 mt-1">
+                                <i class="fas fa-graduation-cap mr-1"></i>${escapeHtml(cls.major || 'Chưa phân loại')}
+                            </p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="viewClassDetail(${cls.id}, '${escapeHtml(cls.name)}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm">
+                                <i class="fas fa-eye"></i> Xem lớp
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function updateStats(classes) {
+            document.getElementById('total-classes').textContent = classes.length;
+            let totalDocs = 0;
+            let pendingAssignments = 0;
+
+            for (let cls of classes) {
+                try {
+                    const res = await fetch(`/api/student/class-documents/${cls.id}`);
+                    const data = await res.json();
+                    if (data.success) totalDocs += data.documents?.length || 0;
+                } catch(e) {}
+            }
+
+            try {
+                const res = await fetch('/api/student/pending-assignments');
+                const data = await res.json();
+                if (data.success) pendingAssignments = data.assignments?.length || 0;
+            } catch(e) {}
+
+            document.getElementById('total-documents').textContent = totalDocs;
+            document.getElementById('pending-assignments').textContent = pendingAssignments;
+        }
+
+        // ==================== XEM CHI TIẾT LỚP ====================
+        async function viewClassDetail(classId, className) {
+            currentClassId = classId;
+
+            // Lấy thông tin chi tiết lớp từ API
+            let classInfo = {
+                code: '...',
+                major: 'Chưa phân loại',
+                teacher_name: 'Chưa có',
+                created_at: null
+            };
+            
+            try {
+                const res = await fetch(`/api/classes/${classId}/info`);
+                const data = await res.json();
+                if (data.success) {
+                    classInfo = data;
+                }
+            } catch(e) {
+                console.error('Lỗi tải thông tin lớp:', e);
+            }
+
+            // Load shared documents
+            await loadSharedDocuments(classId);
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay fade-in';
+            modal.innerHTML = `
+                <div class="modal-content p-4 sm:p-6 max-w-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg sm:text-xl font-bold">🏫 ${escapeHtml(className)}</h2>
+                        <button onclick="this.closest('.modal-overlay').remove()" class="text-gray-500 text-xl">&times;</button>
+                    </div>
+
+                    <div class="flex border-b mb-4">
+                        <button class="tab-btn active px-4 py-2 text-sm" data-tab="documents">📄 Tài liệu lớp</button>
+                        <button class="tab-btn px-4 py-2 text-sm" data-tab="assignments">📋 Bài tập</button>
+                        <button class="tab-btn px-4 py-2 text-sm" data-tab="info">ℹ️ Thông tin</button>
+                    </div>
+
+                    <div id="tab-documents" class="tab-content">
+                        <div id="shared-docs-list" class="space-y-2 max-h-96 overflow-y-auto">
+                            <div class="text-center text-gray-500 py-4 text-sm"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>
+                        </div>
+                    </div>
+
+                    <div id="tab-assignments" class="tab-content hidden">
+                        <div id="assignments-list" class="space-y-2 max-h-96 overflow-y-auto">
+                            <div class="text-center text-gray-500 py-4 text-sm"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>
+                        </div>
+                    </div>
+
+                    <div id="tab-info" class="tab-content hidden">
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-sm">
+                            <p><strong>📌 Mã lớp:</strong> <span id="class-code">${escapeHtml(classInfo.code || '...')}</span></p>
+                            <p class="mt-2"><strong>📚 Chuyên ngành:</strong> <span id="class-major">${escapeHtml(classInfo.major || 'Chưa phân loại')}</span></p>
+                            <p class="mt-2"><strong>👨‍🏫 Giáo viên:</strong> <span id="class-teacher">${escapeHtml(classInfo.teacher_name || 'Chưa có')}</span></p>
+                            <p class="mt-2"><strong>📅 Ngày tạo:</strong> <span id="class-created">${formatDate(classInfo.created_at)}</span></p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="this.closest('.modal-overlay').remove()" class="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm">Đóng</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Load assignments
+            await loadAssignments(classId);
+
+            // Tab switching
+            const tabs = modal.querySelectorAll('.tab-btn');
+            tabs.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabs.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const tabName = btn.getAttribute('data-tab');
+                    modal.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+                    modal.querySelector(`#tab-${tabName}`).classList.remove('hidden');
+                    if (tabName === 'documents') loadSharedDocuments(classId);
+                    if (tabName === 'assignments') loadAssignments(classId);
+                });
+            });
+        }
+
+        // ==================== TÀI LIỆU LỚP (SHARED_DOCUMENTS) ====================
+        async function loadSharedDocuments(classId) {
+            const container = document.getElementById('shared-docs-list');
+            if (!container) return;
+            try {
+                const res = await fetch(`/api/student/class-documents/${classId}`);
+
+                const data = await res.json();
+                if (data.success && data.documents && data.documents.length > 0) {
+                    container.innerHTML = data.documents.map(doc => `
+                        <div class="doc-item flex justify-between items-center p-3 border rounded-lg dark:border-gray-700">
+                            <div class="flex-1">
+                                <p class="font-medium text-sm">${escapeHtml(doc.document_name)}</p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <i class="fas fa-user"></i> ${escapeHtml(doc.teacher_name)} | 
+                                    <i class="fas fa-calendar"></i> ${formatDate(doc.uploaded_at)}
+                                    ${doc.file_size ? `| <i class="fas fa-database"></i> ${doc.file_size} MB` : ''}
+                                </p>
+                                ${doc.description ? `<p class="text-xs text-gray-400 mt-1">📝 ${escapeHtml(doc.description)}</p>` : ''}
+                            </div>
+                            <div class="flex gap-2">
+                                <a href="${doc.s3_key ? '/api/view-pdf/' + doc.s3_key.split('/').pop() : '#'}" target="_blank" class="text-blue-500 hover:text-blue-700" title="Xem trực tiếp">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="${doc.s3_key ? '/api/download/' + doc.s3_key.split('/').pop() : '#'}" class="text-green-500 hover:text-green-700" title="Tải về">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `<div class="text-center text-gray-500 py-4 text-sm"><i class="fas fa-folder-open text-2xl mb-2"></i><p>Chưa có tài liệu nào được chia sẻ</p></div>`;
+                }
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `<div class="text-center text-red-500 py-4 text-sm">Lỗi tải tài liệu</div>`;
+            }
+        }
+
+        // ==================== BÀI TẬP ====================
+        async function loadAssignments(classId) {
+            const container = document.getElementById('assignments-list');
+            if (!container) return;
+            try {
+                const res = await fetch('/api/student/pending-assignments');
+                const data = await res.json();
+                if (data.success && data.assignments) {
+                    const classAssignments = data.assignments.filter(a => a.class_id === classId);
+                    if (classAssignments.length > 0) {
+                        container.innerHTML = classAssignments.map(ass => `
+                            <div class="p-3 border rounded-lg dark:border-gray-700">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-medium text-sm">${escapeHtml(ass.title)}</p>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            <i class="fas fa-clock"></i> Hạn nộp: ${formatDate(ass.deadline)}
+                                        </p>
+                                    </div>
+                                    <a href="/take-quiz?assignment_id=${ass.id}" class="bg-purple-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-purple-600">
+                                        <i class="fas fa-play"></i> Làm bài
+                                    </a>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = `<div class="text-center text-gray-500 py-4 text-sm"><i class="fas fa-check-circle text-2xl mb-2"></i><p>Chưa có bài tập nào</p></div>`;
+                    }
+                } else {
+                    container.innerHTML = `<div class="text-center text-gray-500 py-4 text-sm">Chưa có bài tập nào</div>`;
+                }
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `<div class="text-center text-red-500 py-4 text-sm">Lỗi tải bài tập</div>`;
+            }
+        }
+
+        // ==================== KHỞI TẠO ====================
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCollapsibleGroups();
+            loadMyClasses();
+            loadUnreadCount();
+            setInterval(loadMyClasses, 30000);
+            setInterval(loadUnreadCount, 30000);
+
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) searchInput.addEventListener('keyup', () => renderClasses(allMyClasses));
+        });
+
+        // Global functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.loadMyClasses = loadMyClasses;
+        window.viewClassDetail = viewClassDetail;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+    </script>
+</body>
+</html>

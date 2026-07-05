@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Quản lý phê duyệt tài liệu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; transition: background 0.2s ease; min-height: 100vh; }
+        body.light-mode { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); color: #1f2937; }
+        body.dark-mode { background: transparent; color: #f3f4f6; }
+        
+        #star-canvas-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        body.light-mode #star-canvas-background { display: none; }
+        .content-wrapper { position: relative; z-index: 10; width: 100%; }
+        
+        body.dark-mode .bg-white, body.dark-mode .bg-gray-50, body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important; border-color: #334155 !important;
+        }
+        body.dark-mode .text-gray-600, body.dark-mode .text-gray-700, body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+        
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+        body.dark-mode .left-sidebar-dark { background: #030712; }
+        
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 16px; margin: 4px 12px;
+            border-radius: 10px; transition: all 0.2s ease; color: #9ca3af; cursor: pointer;
+        }
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+            width: auto;
+        }
+        
+        .collapsible-group { margin-bottom: 4px; }
+        .nav-group-toggle {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+        .group-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+        .collapsible-group.collapsed .group-icon { transform: rotate(-90deg); }
+        .collapsible-group.collapsed .nav-group-items { display: none; }
+        
+        .sidebar-menu-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+        }
+        .sidebar-menu-btn:hover { background: rgba(0,0,0,0.05); }
+        body.dark-mode .sidebar-menu-btn:hover { background: rgba(255,255,255,0.1); }
+        
+        .sidebar-close-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+            color: #9ca3af;
+        }
+        .sidebar-close-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn { display: block !important; }
+            .sidebar-close-btn { display: block !important; }
+            .left-sidebar-dark { transform: translateX(-100%); }
+            .left-sidebar-dark.open { transform: translateX(0) !important; }
+            .main-container { margin-left: 0; width: 100%; }
+        }
+        
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn { display: none !important; }
+            .sidebar-close-btn { display: none !important; }
+            .left-sidebar-dark { transform: translateX(0) !important; }
+            .main-container { margin-left: 280px; }
+        }
+        
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .stat-card { transition: all 0.3s ease; cursor: pointer; }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .badge-approved { background: #d1fae5; color: #065f46; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-rejected { background: #fee2e2; color: #991b1b; }
+        .badge-public { background: #dbeafe; color: #1e40af; }
+        .badge-private { background: #e0e7ff; color: #3730a3; }
+        body.dark-mode .badge-approved { background: #064e3b; color: #a7f3d0; }
+        body.dark-mode .badge-pending { background: #78350f; color: #fde68a; }
+        body.dark-mode .badge-rejected { background: #7f1d1d; color: #fecaca; }
+        body.dark-mode .badge-public { background: #1e3a8a; color: #bfdbfe; }
+        body.dark-mode .badge-private { background: #312e81; color: #c7d2fe; }
+        
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            left: auto;
+            top: 100%;
+            margin-top: 0.5rem;
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+        body.dark-mode .notification-dropdown { background: #1e293b; border: 1px solid #334155; }
+        
+        .notification-item {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .notification-item:hover { background: #f3f4f6; }
+        body.dark-mode .notification-item:hover { background: #334155; }
+        .notification-unread { background: #faf5ff; }
+        body.dark-mode .notification-unread { background: #4c1d95; }
+        
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto !important;
+                width: 65vw !important;
+                max-width: 320px;
+                min-width: 200px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+        }
+        
+        .pagination-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .pagination-btn:hover:not(:disabled) { background: #e5e7eb; }
+        body.dark-mode .pagination-btn:hover:not(:disabled) { background: #334155; }
+        .pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination-active { background: #8b5cf6; color: white; }
+        
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 85vh;
+            overflow: hidden;
+            margin: 16px;
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        body.dark-mode .modal-content {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+        
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        body.dark-mode .modal-header {
+            background: #1e293b;
+            border-bottom-color: #334155;
+        }
+        
+        .modal-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        body.dark-mode .modal-header h3 {
+            color: #f3f4f6;
+        }
+        
+        .modal-header button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #9ca3af;
+            padding: 0 6px;
+            border-radius: 6px;
+        }
+        
+        .modal-header button:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        /* Form styles */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+        body.dark-mode .form-label {
+            color: #e5e7eb;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+        }
+        body.dark-mode .form-input,
+        body.dark-mode .form-select,
+        body.dark-mode .form-textarea {
+            background-color: #0f172a;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+        
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        body.dark-mode .profile-header { background: #0f172a; }
+        .profile-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        .profile-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+        .profile-info p { font-size: 11px; color: #6b7280; }
+        body.dark-mode .profile-info p { color: #94a3b8; }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .info-card {
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        body.dark-mode .info-card { background: #0f172a; }
+        .info-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        body.dark-mode .info-label { color: #94a3b8; }
+        .info-value {
+            font-size: 12px;
+            font-weight: 500;
+            color: #1f2937;
+            word-break: break-word;
+        }
+        body.dark-mode .info-value { color: #f1f5f9; }
+        
+        .section { margin-bottom: 16px; }
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        body.dark-mode .section-title { border-bottom-color: #334155; }
+        
+        @media (max-width: 480px) {
+            .info-grid { grid-template-columns: 1fr; gap: 8px; }
+            .modal-content { max-width: 95%; }
+        }
+        
+        /* DARK MODE - Input và Select */
+        body.dark-mode input,
+        body.dark-mode select,
+        body.dark-mode textarea {
+            background-color: #ffffff !important;
+            color: #1f2937 !important;
+            border: 1px solid #d1d5db !important;
+        }
+        body.dark-mode input::placeholder { color: #9ca3af !important; }
+        body.dark-mode select option {
+            background-color: #ffffff !important;
+            color: #1f2937 !important;
+        }
+        body.dark-mode input:focus,
+        body.dark-mode select:focus {
+            border-color: #8b5cf6 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+        }
+        
+        /* HOVER fixes */
+        body.dark-mode table tbody tr:hover {
+            background: #e5e7eb !important;
+        }
+        body.dark-mode table tbody tr:hover td {
+            color: #1f2937 !important;
+        }
+        body.dark-mode .pagination-btn:hover:not(:disabled) {
+            background: #e5e7eb !important;
+            color: #1f2937 !important;
+        }
+        
+        /* Nút sửa */
+        .edit-btn {
+            color: #eab308;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .edit-btn:hover {
+            color: #ca8a04;
+            transform: scale(1.1);
+        }
+        
+        /* Nút xem */
+        .view-btn {
+            color: #3b82f6;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .view-btn:hover {
+            color: #2563eb;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar -->
+     <!-- Sidebar - KHÔNG CÓ NÚT 3 GẠCH BÊN TRONG -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <!-- ĐÃ XÓA NÚT 3 GẠCH Ở ĐÂY -->
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Quản trị viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 1: TỔNG QUAN -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="overview">
+                <span>📊 TỔNG QUAN</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="overview">
+                <div class="nav-item" onclick="window.location.href='/'">
+                    <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 2: QUẢN LÝ & BÁO CÁO NGƯỜI DÙNG (GỘP) -->
+        <div class="collapsible-group">
+    <div class="nav-group-title nav-group-toggle" data-group="users">
+        <span>👥 QUẢN LÝ & BÁO CÁO NGƯỜI DÙNG</span><i class="fas fa-chevron-down group-icon"></i>
+    </div>
+    <div class="nav-group-items" data-group="users">
+        <div class="nav-item" onclick="window.location.href='/admin/users'">
+            <i class="fas fa-users-cog"></i><span>Quản lý người dùng</span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='/admin/teachers'">
+            <i class="fas fa-chalkboard-user"></i><span>Quản lý giáo viên</span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='/admin/students'">
+            <i class="fas fa-user-graduate"></i><span>Quản lý sinh viên</span>
+        </div>
+    </div>
+</div>
+        
+        <!-- Nhóm 3: QUẢN LÝ NỘI DUNG -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="content">
+                <span>📚 QUẢN LÝ NỘI DUNG</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="content">
+                <div class="nav-item" onclick="window.location.href='/admin/documents'">
+                    <i class="fas fa-folder-open"></i><span>Kho tài liệu</span>
+                </div>
+                <div class="nav-item active" onclick="window.location.href='/admin/document-approvals'">
+            <i class="fas fa-file-signature"></i><span>Phê duyệt tài liệu</span>
+        </div>
+                
+            </div>
+        </div>
+        
+        <!-- Nhóm 4: QUẢN LÝ HỌC TẬP -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="learning">
+                <span>🏫 QUẢN LÝ HỌC TẬP</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="learning">
+                <div class="nav-item" onclick="window.location.href='/admin/classes'">
+                    <i class="fas fa-chalkboard"></i><span>Lớp học</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Nhóm 5: CÀI ĐẶT HỆ THỐNG -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="system">
+                <span>⚙️ CÀI ĐẶT HỆ THỐNG</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="system">
+               <div class="nav-item" onclick="window.location.href='/admin/settings'">
+    <i class="fas fa-cog"></i><span>Cài đặt chung</span>
+</div>
+                <div class="nav-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                    <span id="theme-text-sidebar">Chế độ tối</span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                📄 Quản lý phê duyệt tài liệu
+                            </h1>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y"><div class="p-4 text-center">Đang tải...</div></div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <!-- Bộ lọc -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6">
+                    <div class="flex flex-wrap gap-3 items-center">
+                        <div class="flex-1 min-w-[180px]">
+                            <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm..." 
+                                   class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600">
+                        </div>
+                        <select id="statusFilter" class="px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600">
+                            <option value="all">📊 Tất cả</option>
+                            <option value="approved">✅ Đã duyệt</option>
+                            <option value="pending">⏳ Chờ duyệt</option>
+                            <option value="rejected">❌ Từ chối</option>
+                        </select>
+                        <select id="privacyFilter" class="px-3 py-2 border rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600">
+                            <option value="all">🔓 Tất cả</option>
+                            <option value="public">🌍 Công khai</option>
+                            <option value="private">🔒 Riêng tư</option>
+                        </select>
+                        <button onclick="resetFilters()" class="px-3 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600">
+                            <i class="fas fa-undo-alt mr-1"></i> Làm mới
+                        </button>
+                        <button onclick="exportToExcel()" class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">
+                            <i class="fas fa-file-excel mr-1"></i> Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Thống kê nhanh -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="stat-card bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-3 text-white">
+                        <p class="text-xs opacity-90">Tổng tài liệu</p>
+                        <p id="totalDocs" class="text-xl font-bold">0</p>
+                    </div>
+                    <div class="stat-card bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-3 text-white">
+                        <p class="text-xs opacity-90">Đã duyệt</p>
+                        <p id="approvedCount" class="text-xl font-bold">0</p>
+                    </div>
+                    <div class="stat-card bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl p-3 text-white">
+                        <p class="text-xs opacity-90">Chờ duyệt</p>
+                        <p id="pendingCount" class="text-xl font-bold">0</p>
+                    </div>
+                    <div class="stat-card bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-3 text-white">
+                        <p class="text-xs opacity-90">Công khai</p>
+                        <p id="publicCount" class="text-xl font-bold">0</p>
+                    </div>
+                </div>
+
+                <!-- Biểu đồ -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                        <h3 class="font-semibold text-gray-800 dark:text-white mb-3 text-sm">📊 Thống kê trạng thái</h3>
+                        <canvas id="statusChart" height="180"></canvas>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                        <h3 class="font-semibold text-gray-800 dark:text-white mb-3 text-sm">👨‍🏫 Top giáo viên phê duyệt</h3>
+                        <div id="topApprovers" class="space-y-2 max-h-56 overflow-y-auto">
+                            <div class="text-center text-gray-400 py-4 text-sm">Đang tải...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 dark:bg-gray-700 border-b">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tên tài liệu</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sinh viên</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Chế độ</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Người duyệt</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mã giảng viên</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Người từ chối</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mã người từ chối</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documents-table-body">
+                                <tr><td colspan="10" class="text-center py-8 text-gray-400">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="flex justify-between items-center px-3 py-2 border-t dark:border-gray-700 text-sm">
+                        <p id="paginationInfo" class="text-gray-500">Hiển thị 0/0</p>
+                        <div class="flex gap-1">
+                            <button id="prevPage" onclick="changePage(-1)" class="pagination-btn px-3 py-1 text-sm" disabled>◀ Trước</button>
+                            <span id="pageNumbers" class="flex gap-1"></span>
+                            <button id="nextPage" onclick="changePage(1)" class="pagination-btn px-3 py-1 text-sm" disabled>Sau ▶</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chi tiết -->
+    <div id="detailModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="detailTitle"><i class="fas fa-file-alt text-purple-500"></i> Chi tiết tài liệu</h3>
+                <button onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div id="detailContent" class="modal-body">
+                <div class="text-center py-8"><i class="fas fa-spinner fa-spin text-purple-500"></i><p class="mt-2 text-gray-500 text-sm">Đang tải...</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Sửa tài liệu -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit text-yellow-500"></i> Chỉnh sửa thông tin tài liệu</h3>
+                <button onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editDocId">
+                <div class="form-group">
+                    <label class="form-label">Tên tài liệu</label>
+                    <input type="text" id="editDocName" class="form-input" placeholder="Nhập tên tài liệu">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Chuyên ngành</label>
+                    <select id="editMajor" class="form-select">
+                        <option value="Công nghệ thông tin">💻 Công nghệ thông tin</option>
+                        <option value="Khoa học máy tính">🖥️ Khoa học máy tính</option>
+                        <option value="Kỹ thuật phần mềm">⚙️ Kỹ thuật phần mềm</option>
+                        <option value="Toán học">📐 Toán học</option>
+                        <option value="Kinh tế">📊 Kinh tế</option>
+                        <option value="Ngoại ngữ">🌍 Ngoại ngữ</option>
+                        <option value="Luật">⚖️ Luật</option>
+                        <option value="Y khoa">🏥 Y khoa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mô tả</label>
+                    <textarea id="editDescription" rows="4" class="form-textarea" placeholder="Nhập mô tả tài liệu..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3 mt-4">
+                    <button onclick="closeEditModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600">Hủy</button>
+                    <button onclick="saveEditDocument()" class="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm hover:bg-yellow-600">
+                        <i class="fas fa-save mr-1"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 800; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.6, alpha: Math.random() * 0.5 + 0.3, speed: Math.random() * 0.2 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 3, len: Math.random() * 200 + 80, speed: Math.random() * 6 + 3, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.04; s.alpha = Math.max(0.2, Math.min(0.8, s.alpha)); 
+                    s.y += s.speed; if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,0.8)"); g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; starCtx.lineWidth = 1.5; 
+                    starCtx.beginPath(); starCtx.moveTo(m.x, m.y); starCtx.lineTo(m.x - m.len, m.y - m.len); starCtx.stroke(); 
+                    m.x += m.speed; m.y += m.speed; 
+                    if (m.x > starCanvas.width || m.y > starCanvas.height) meteorsArray.splice(i,1);
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { if (starCanvas && isStarSystemActive) { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; initStarsPro(); } }); 
+            setInterval(() => { if (isStarSystemActive && Math.random() > 0.7) createMeteorPro(); }, 2000); 
+            initStarsPro(); drawStarsPro(); 
+        }
+
+        // ==================== THEME ====================
+        let isDarkModeActive = false;
+        
+        function toggleTheme() { 
+            const body = document.body, starCanvasElem = document.getElementById('star-canvas-background'),
+                  themeIconSidebar = document.getElementById('theme-icon-sidebar'), themeTextSidebar = document.getElementById('theme-text-sidebar');
+            isDarkModeActive = !isDarkModeActive; 
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); body.classList.add('dark-mode'); 
+                if (themeIconSidebar) { themeIconSidebar.classList.remove('fa-moon'); themeIconSidebar.classList.add('fa-sun'); }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (starCanvasElem) { starCanvasElem.style.display = 'block'; if (!starCtx) { isStarSystemActive = true; initStarfieldPro(); } else { isStarSystemActive = true; if (!starAnimationId) { function restartDraw() { if (starCtx && starCanvas && isStarSystemActive) drawStarsPro(); } restartDraw(); } } } 
+            } else { 
+                body.classList.remove('dark-mode'); body.classList.add('light-mode'); 
+                if (themeIconSidebar) { themeIconSidebar.classList.remove('fa-sun'); themeIconSidebar.classList.add('fa-moon'); }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; isStarSystemActive = false; if (starAnimationId) { cancelAnimationFrame(starAnimationId); starAnimationId = null; } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { setTimeout(() => { toggleTheme(); }, 20); } 
+        else { const canvasBg = document.getElementById('star-canvas-background'); if (canvasBg) canvasBg.style.display = 'none'; }
+
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') group.classList.add('collapsed');
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() { document.getElementById('leftSidebar').classList.toggle('open'); }
+        async function logout() { if (confirm('Đăng xuất?')) { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; } }
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        function formatTime(timestamp) { if (!timestamp) return ''; const date = new Date(timestamp); const now = new Date(); const diff = Math.floor((now - date) / 1000); if (diff < 60) return 'Vừa xong'; if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`; if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`; if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`; return date.toLocaleDateString('vi-VN'); }
+        function showToast(message, type = 'success') { const toast = document.createElement('div'); toast.className = `fixed bottom-4 right-4 px-3 py-1.5 rounded-lg shadow-lg text-white z-50 fade-in text-xs ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`; toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-1"></i>${message}`; document.body.appendChild(toast); setTimeout(() => toast.remove(), 2500); }
+
+        // ==================== SỬA TÀI LIỆU ====================
+        let editDocId = null;
+
+        function openEditModal(docId) {
+            const doc = allDocuments.find(d => d.id === docId);
+            if (!doc) return;
+            
+            editDocId = docId;
+            document.getElementById('editDocId').value = docId;
+            document.getElementById('editDocName').value = doc.document_name || '';
+            document.getElementById('editMajor').value = doc.major || 'Công nghệ thông tin';
+            document.getElementById('editDescription').value = doc.description || '';
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            editDocId = null;
+        }
+
+        async function saveEditDocument() {
+            if (!editDocId) return;
+            
+            const newName = document.getElementById('editDocName').value.trim();
+            const newMajor = document.getElementById('editMajor').value;
+            const newDescription = document.getElementById('editDescription').value.trim();
+            
+            if (!newName) {
+                showToast('Vui lòng nhập tên tài liệu', 'error');
+                return;
+            }
+            
+            showToast('Đang lưu...', 'warning');
+            
+            try {
+                const formData = new FormData();
+                formData.append('document_name', newName);
+                formData.append('major', newMajor);
+                formData.append('description', newDescription);
+                
+                const response = await fetch(`/api/admin/update-document/${editDocId}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('✅ Đã cập nhật thông tin tài liệu', 'success');
+                    closeEditModal();
+                    loadDocuments(); // Refresh danh sách
+                } else {
+                    showToast(data.message || 'Cập nhật thất bại', 'error');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showToast('Lỗi kết nối đến server', 'error');
+            }
+        }
+
+        // ==================== XUẤT EXCEL ====================
+        function exportToExcel() {
+            if (filteredDocuments.length === 0) {
+                showToast('Không có dữ liệu để xuất', 'error');
+                return;
+            }
+            
+            function formatTeacherCode(id) {
+                if (!id || id === '---') return '---';
+                return `GV${String(id).padStart(3, '0')}`;
+            }
+            
+            let csvContent = "\uFEFFSTT,ID,Tên tài liệu,Sinh viên,Email,Mã số SV,Chuyên ngành,Chế độ,Trạng thái,Người duyệt,Mã giảng viên,Người từ chối,Mã người từ chối,Ngày tải lên\n";
+            
+            filteredDocuments.forEach((doc, index) => {
+                const row = [
+                    index + 1,
+                    doc.id,
+                    (doc.document_name || '').replace(/"/g, '""'),
+                    (doc.student_name_display || doc.student_name || 'Unknown').replace(/"/g, '""'),
+                    (doc.student_email || '').replace(/"/g, '""'),
+                    (doc.student_code || '').replace(/"/g, '""'),
+                    (doc.major || 'Chưa phân loại').replace(/"/g, '""'),
+                    doc.privacy_mode === 'public' ? 'Công khai' : 'Riêng tư',
+                    doc.status === 'approved' ? 'Đã duyệt' : (doc.status === 'pending' ? 'Chờ duyệt' : 'Từ chối'),
+                    (doc.approver_name || 'Chưa có').replace(/"/g, '""'),
+                    (doc.approver_code || '---').replace(/"/g, '""'),
+                    (doc.rejector_name || '---').replace(/"/g, '""'),
+                    (doc.rejector_code || '---').replace(/"/g, '""'),
+                    doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleString('vi-VN') : ''
+                ].map(cell => `"${cell}"`).join(',');
+                csvContent += row + "\n";
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.setAttribute('download', `danh_sach_phe_duyet_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast(`Đã xuất ${filteredDocuments.length} dòng`, 'success');
+        }
+
+        // ==================== DỮ LIỆU ====================
+        let allDocuments = [];
+        let filteredDocuments = [];
+        let currentPage = 1;
+        const rowsPerPage = 8;
+        let statusChart = null;
+
+        function formatTeacherCode(id) {
+            if (!id || id === '---') return '---';
+            return `GV${String(id).padStart(3, '0')}`;
+        }
+
+        async function loadDocuments() {
+            try {
+                const res = await fetch('/api/admin/documents/all');
+                const data = await res.json();
+                if (data.success) {
+                    allDocuments = data.documents;
+                    filteredDocuments = [...allDocuments];
+                    updateStats();
+                    updateCharts();
+                    renderTable();
+                    updatePagination();
+                    loadTopApprovers();
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function updateStats() {
+            const approved = allDocuments.filter(d => d.status === 'approved').length;
+            const pending = allDocuments.filter(d => d.status === 'pending').length;
+            const publicDocs = allDocuments.filter(d => d.privacy_mode === 'public').length;
+            document.getElementById('totalDocs').textContent = allDocuments.length;
+            document.getElementById('approvedCount').textContent = approved;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('publicCount').textContent = publicDocs;
+        }
+
+        function updateCharts() {
+            const statusCount = {
+                'Đã duyệt': allDocuments.filter(d => d.status === 'approved').length,
+                'Chờ duyệt': allDocuments.filter(d => d.status === 'pending').length,
+                'Từ chối': allDocuments.filter(d => d.status === 'rejected').length
+            };
+            if (statusChart) statusChart.destroy();
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCount),
+                    datasets: [{ data: Object.values(statusCount), backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+            });
+        }
+
+        async function loadTopApprovers() {
+            try {
+                const res = await fetch('/api/admin/top-approvers');
+                const data = await res.json();
+                if (data.success && data.approvers.length > 0) {
+                    document.getElementById('topApprovers').innerHTML = data.approvers.map((a, i) => `
+                        <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center text-purple-600 text-xs font-bold">${i+1}</span>
+                                <span class="font-medium">${escapeHtml(a.approver_name)}</span>
+                            </div>
+                            <span class="font-bold text-purple-600">${a.count}</span>
+                            <span class="text-xs text-gray-400 ml-2">(${a.approver_code || '---'})</span>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('topApprovers').innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">Chưa có dữ liệu</div>';
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function filterDocuments() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const privacy = document.getElementById('privacyFilter').value;
+            
+            filteredDocuments = allDocuments.filter(d => {
+                const matchSearch = !search || (d.document_name && d.document_name.toLowerCase().includes(search)) || 
+                    (d.student_name_display && d.student_name_display.toLowerCase().includes(search));
+                const matchStatus = status === 'all' || d.status === status;
+                const matchPrivacy = privacy === 'all' || d.privacy_mode === privacy;
+                return matchSearch && matchStatus && matchPrivacy;
+            });
+            currentPage = 1;
+            renderTable();
+            updatePagination();
+        }
+
+        function renderTable() {
+            const start = (currentPage - 1) * rowsPerPage;
+            const pageDocs = filteredDocuments.slice(start, start + rowsPerPage);
+            const tbody = document.getElementById('documents-table-body');
+            if (pageDocs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-gray-400">Không có tài liệu</td></td>';
+            } else {
+                tbody.innerHTML = pageDocs.map(d => {
+                    let statusClass = '', statusText = '';
+                    if (d.status === 'approved') { statusClass = 'badge-approved'; statusText = '✅ Đã duyệt'; }
+                    else if (d.status === 'pending') { statusClass = 'badge-pending'; statusText = '⏳ Chờ duyệt'; }
+                    else { statusClass = 'badge-rejected'; statusText = '❌ Từ chối'; }
+                    let privacyClass = d.privacy_mode === 'public' ? 'badge-public' : 'badge-private';
+                    let privacyText = d.privacy_mode === 'public' ? '🌍 Công khai' : '🔒 Riêng tư';
+                    
+                    // Xử lý hiển thị người từ chối
+                    let rejectorDisplay = d.rejector_name || '---';
+                    let rejectorCodeDisplay = d.rejector_code || '---';
+                    if (d.status !== 'rejected') {
+                        rejectorDisplay = '---';
+                        rejectorCodeDisplay = '---';
+                    }
+                    
+                    return `<tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm">
+                        <td class="px-3 py-2">${d.id}</td>
+                        <td class="px-3 py-2 font-medium">${escapeHtml((d.document_name || '').substring(0, 35))}</td>
+                        <td class="px-3 py-2">${escapeHtml(d.student_name_display || d.student_name || 'Unknown')}</td>
+                        <td class="px-3 py-2"><span class="badge ${privacyClass}">${privacyText}</span></td>
+                        <td class="px-3 py-2"><span class="badge ${statusClass}">${statusText}</span></td>
+                        <td class="px-3 py-2">${escapeHtml(d.approver_name || '---')}</td>
+                        <td class="px-3 py-2"><span class="font-mono text-xs font-semibold text-purple-600">${d.approver_code || '---'}</span></td>
+                        <td class="px-3 py-2">${escapeHtml(rejectorDisplay)}</td>
+                        <td class="px-3 py-2"><span class="font-mono text-xs">${rejectorCodeDisplay}</span></td>
+                        <td class="px-3 py-2">
+                            <div class="flex gap-2">
+                                <button onclick="viewDetail(${d.id})" class="view-btn" title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="openEditModal(${d.id})" class="edit-btn" title="Chỉnh sửa thông tin">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                      </tr>`;
+                }).join('');
+            }
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredDocuments.length / rowsPerPage);
+            document.getElementById('paginationInfo').textContent = `Hiển thị ${filteredDocuments.length > 0 ? (currentPage-1)*rowsPerPage+1 : 0}-${Math.min(currentPage*rowsPerPage, filteredDocuments.length)}/${filteredDocuments.length}`;
+            document.getElementById('prevPage').disabled = currentPage <= 1;
+            document.getElementById('nextPage').disabled = currentPage >= totalPages;
+            let pageHtml = '';
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+            for (let i = startPage; i <= endPage; i++) {
+                pageHtml += `<button onclick="goToPage(${i})" class="pagination-btn px-2 py-1 text-sm ${i === currentPage ? 'pagination-active' : ''}">${i}</button>`;
+            }
+            document.getElementById('pageNumbers').innerHTML = pageHtml;
+        }
+
+        function goToPage(page) { currentPage = page; renderTable(); }
+        function changePage(delta) { goToPage(currentPage + delta); }
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('privacyFilter').value = 'all';
+            filterDocuments();
+        }
+
+        async function viewDetail(id) {
+            try {
+                const res = await fetch(`/api/admin/document-approval/${id}`);
+                const data = await res.json();
+                if (data.success) {
+                    const d = data.document;
+                    const statusBadge = d.status === 'approved' ? 'badge-approved' : (d.status === 'pending' ? 'badge-pending' : 'badge-rejected');
+                    const statusText = d.status === 'approved' ? '✅ Đã duyệt' : (d.status === 'pending' ? '⏳ Chờ duyệt' : '❌ Từ chối');
+                    const privacyBadge = d.privacy_mode === 'public' ? 'badge-public' : 'badge-private';
+                    const privacyText = d.privacy_mode === 'public' ? '🌍 Công khai' : '🔒 Riêng tư';
+                    
+                    document.getElementById('detailTitle').innerHTML = `<i class="fas fa-file-pdf text-red-500 mr-1"></i>${escapeHtml((d.document_name || 'Chi tiết').substring(0, 35))}`;
+                    document.getElementById('detailContent').innerHTML = `
+                        <div class="profile-header">
+                            <div class="profile-avatar"><i class="fas fa-file-pdf text-xl"></i></div>
+                            <div class="profile-info">
+                                <h4>${escapeHtml(d.document_name || 'Không có tên')}</h4>
+                                <p><i class="fas fa-user-graduate mr-1"></i> ${escapeHtml(d.student_name_display || d.student_name || 'Unknown')}</p>
+                                <p><i class="fas fa-id-card mr-1"></i> ${d.student_code || 'Chưa có'}</p>
+                            </div>
+                        </div>
+                        <div class="info-grid">
+                            <div class="info-card"><div class="info-label"><i class="fas fa-envelope"></i> Email</div><div class="info-value text-xs">${escapeHtml(d.student_email || 'Chưa có')}</div></div>
+                            <div class="info-card"><div class="info-label"><i class="fas fa-calendar"></i> Ngày đăng ký</div><div class="info-value">${new Date(d.uploaded_at).toLocaleDateString('vi-VN')}</div></div>
+                            <div class="info-card"><div class="info-label"><i class="fas fa-graduation-cap"></i> Chuyên ngành</div><div class="info-value">${escapeHtml(d.major || 'Chưa phân loại')}</div></div>
+                            <div class="info-card"><div class="info-label"><i class="fas fa-chart-line"></i> Điểm TB</div><div class="info-value">${d.avg_score || 0}</div></div>
+                            <div class="info-card"><div class="info-label"><i class="fas fa-globe"></i> Chế độ</div><div class="info-value"><span class="badge ${privacyBadge}">${privacyText}</span></div></div>
+                            <div class="info-card"><div class="info-label"><i class="fas fa-check-circle"></i> Trạng thái</div><div class="info-value"><span class="badge ${statusBadge}">${statusText}</span></div></div>
+                            <div class="info-card"><div class="info-label"><i class="fas fa-user-check"></i> Người duyệt</div><div class="info-value">${escapeHtml(d.approver_name || 'Chưa có')}</div></div>
+                            <div class="info-card"><div class="info-label"><i class="fas fa-id-card"></i> Mã giảng viên</div><div class="info-value"><span class="font-mono font-bold text-purple-600">${d.approver_code || '---'}</span></div></div>
+                            ${d.status === 'rejected' ? `
+                            <div class="info-card"><div class="info-label"><i class="fas fa-user-times text-red-500"></i> Người từ chối</div><div class="info-value">${escapeHtml(d.rejector_name || '---')}</div></div>
+                            <div class="info-card"><div class="info-label"><i class="fas fa-id-card"></i> Mã người từ chối</div><div class="info-value">${d.rejector_code || '---'}</div></div>
+                            ` : ''}
+                            <div class="info-card"><div class="info-label"><i class="fas fa-clock"></i> Thời gian duyệt</div><div class="info-value">${d.approved_at ? new Date(d.approved_at).toLocaleString('vi-VN') : '---'}</div></div>
+                        </div>
+                        ${d.reject_reason ? `<div class="section"><div class="section-title"><i class="fas fa-comment-dots text-red-500"></i> Lý do từ chối</div><div class="info-card"><div class="info-value text-red-600 text-xs">${escapeHtml(d.reject_reason)}</div></div></div>` : ''}
+                        <div class="flex justify-end gap-2 mt-3 pt-2 border-t dark:border-gray-700">
+                            ${d.privacy_mode === 'public' && d.status === 'pending' ? `
+                            <button onclick="approveDocument(${d.id}, 'approved')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700"><i class="fas fa-check mr-1"></i> Duyệt</button>
+                            <button onclick="approveDocument(${d.id}, 'rejected')" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700"><i class="fas fa-times mr-1"></i> Từ chối</button>
+                            ` : ''}
+                            <button onclick="closeDetailModal()" class="px-3 py-1.5 bg-gray-500 text-white rounded-lg text-xs hover:bg-gray-600"><i class="fas fa-times mr-1"></i> Đóng</button>
+                            <button onclick="openEditModal(${d.id})" class="px-3 py-1.5 bg-yellow-500 text-white rounded-lg text-xs hover:bg-yellow-600"><i class="fas fa-edit mr-1"></i> Sửa</button>
+                        </div>
+                    `;
+                    document.getElementById('detailModal').style.display = 'flex';
+                }
+            } catch(e) { console.error(e); alert('Lỗi tải chi tiết'); }
+        }
+
+        function closeDetailModal() { document.getElementById('detailModal').style.display = 'none'; }
+
+        async function approveDocument(docId, action) {
+            const reason = action === 'rejected' ? prompt('Nhập lý do từ chối:') : '';
+            if (action === 'rejected' && !reason) return;
+            try {
+                const formData = new FormData();
+                formData.append('approval_id', 1);
+                formData.append('document_id', docId);
+                formData.append('action', action);
+                if (reason) formData.append('teacher_note', reason);
+                const res = await fetch('/api/teacher/approve-document', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) { showToast(action === 'approved' ? 'Đã duyệt' : 'Đã từ chối'); closeDetailModal(); loadDocuments(); }
+                else { alert(data.message || 'Thất bại'); }
+            } catch(e) { alert('Lỗi'); }
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=5');
+                const data = await res.json();
+                if (data.success) {
+                    const container = document.getElementById('notifications-list');
+                    if (!data.notifications?.length) container.innerHTML = '<div class="p-3 text-center text-gray-500 text-sm">Chưa có thông báo</div>';
+                    else container.innerHTML = data.notifications.map(n => `<div class="notification-item ${n.is_read ? '' : 'notification-unread'} p-2 text-sm" onclick="viewNotification(${n.id}, '${n.link || ''}')"><div class="flex gap-2"><i class="fas fa-bell text-purple-500 text-xs mt-1"></i><div><p class="font-medium text-xs">${escapeHtml(n.title)}</p><p class="text-gray-500 text-xs">${escapeHtml(n.content.substring(0, 60))}</p><p class="text-gray-400 text-xs mt-1">${formatTime(n.created_at)}</p></div></div></div>`).join('');
+                    document.getElementById('notification-badge').textContent = data.unread_count || '';
+                    document.getElementById('notification-badge').classList.toggle('hidden', !data.unread_count);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function toggleNotificationDropdown() { const d = document.getElementById('notification-dropdown'); d.classList.toggle('hidden'); if (!d.classList.contains('hidden')) loadNotifications(); }
+        async function viewNotification(id, link) { await fetch(`/api/notifications/mark-read/${id}`, { method: 'POST' }); loadNotifications(); if (link) window.location.href = link; }
+        async function markAllNotificationsRead() { await fetch('/api/notifications/mark-all-read', { method: 'POST' }); loadNotifications(); showToast('Đã đánh dấu đã đọc'); }
+
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.add('hidden');
+        });
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar'); const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuBtn.contains(event.target)) sidebar.classList.remove('open');
+        });
+        document.getElementById('searchInput').addEventListener('input', filterDocuments);
+        document.getElementById('statusFilter').addEventListener('change', filterDocuments);
+        document.getElementById('privacyFilter').addEventListener('change', filterDocuments);
+
+        document.addEventListener('DOMContentLoaded', function() { initCollapsibleGroups(); loadDocuments(); loadNotifications(); setInterval(loadNotifications, 30000); });
+        
+        window.toggleSidebar = toggleSidebar; window.toggleTheme = toggleTheme; window.logout = logout;
+        window.resetFilters = resetFilters; window.exportToExcel = exportToExcel; window.viewDetail = viewDetail;
+        window.closeDetailModal = closeDetailModal; window.goToPage = goToPage; window.changePage = changePage;
+        window.toggleNotificationDropdown = toggleNotificationDropdown; window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead; window.approveDocument = approveDocument;
+        window.openEditModal = openEditModal;
+        window.closeEditModal = closeEditModal;
+        window.saveEditDocument = saveEditDocument;
+    </script>
+</body>
+</html>

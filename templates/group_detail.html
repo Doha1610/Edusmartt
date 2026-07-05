@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Chi tiết nhóm - Kho Tài Liệu Sinh Viên</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+
+<header class="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <a href="/forum" class="text-white hover:text-blue-200">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <h1 class="text-2xl font-bold text-white" id="group-name">Chi tiết nhóm</h1>
+            </div>
+            <a href="/forum" class="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium">
+                <i class="fas fa-comments mr-2"></i>Về Forum
+            </a>
+        </div>
+    </div>
+</header>
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div id="group-detail" class="bg-white rounded-xl shadow-md p-6">
+        <div class="text-center py-8">
+            <i class="fas fa-spinner fa-spin text-4xl text-purple-500"></i>
+            <p class="mt-2 text-gray-500">Đang tải thông tin nhóm...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const groupId = window.location.pathname.split('/').pop();
+    
+    async function loadGroupDetail() {
+        try {
+            const res = await fetch(`/api/groups/${groupId}`);
+            const data = await res.json();
+            
+            if (data.success) {
+                renderGroupDetail(data);
+            } else {
+                document.getElementById('group-detail').innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-circle text-4xl text-red-500"></i>
+                        <p class="mt-2 text-gray-500">Không tìm thấy nhóm</p>
+                        <a href="/forum" class="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded-lg">Quay lại Forum</a>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            console.error('Lỗi:', err);
+            document.getElementById('group-detail').innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-circle text-4xl text-red-500"></i>
+                    <p class="mt-2 text-gray-500">Lỗi tải thông tin nhóm</p>
+                </div>
+            `;
+        }
+    }
+    
+    function renderGroupDetail(data) {
+        const group = data.group;
+        document.getElementById('group-name').textContent = group.name;
+        
+        const membersHtml = data.members.map(m => `
+            <div class="flex items-center justify-between p-2 border-b">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">😀</span>
+                    <span class="font-medium">${escapeHtml(m.username)}</span>
+                </div>
+                <span class="text-xs px-2 py-1 rounded-full ${m.role === 'owner' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}">
+                    ${m.role === 'owner' ? '👑 Chủ nhóm' : m.role === 'admin' ? '🛡️ Quản trị' : '👤 Thành viên'}
+                </span>
+            </div>
+        `).join('');
+        
+        document.getElementById('group-detail').innerHTML = `
+            <div class="space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">${escapeHtml(group.name)}</h2>
+                    <p class="text-gray-500 mt-1">${group.major || 'Chưa phân loại'} • ${group.subject || 'Chưa có môn'}</p>
+                    <p class="text-gray-600 mt-2">${escapeHtml(group.description || 'Chưa có mô tả')}</p>
+                    <div class="mt-3 flex gap-3">
+                        <span class="text-xs bg-gray-100 px-2 py-1 rounded">
+                            <i class="fas fa-key mr-1"></i>Mã mời: ${group.invite_code}
+                        </span>
+                        <span class="text-xs bg-gray-100 px-2 py-1 rounded">
+                            <i class="fas fa-calendar mr-1"></i>Tạo: ${new Date(group.created_at).toLocaleDateString('vi-VN')}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <h3 class="font-semibold text-lg mb-3">
+                        <i class="fas fa-users mr-2 text-purple-500"></i>
+                        Thành viên (${data.members.length})
+                    </h3>
+                    <div class="space-y-2 max-h-96 overflow-y-auto">
+                        ${membersHtml}
+                    </div>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <a href="/forum" class="text-blue-500 hover:text-blue-700">
+                        <i class="fas fa-arrow-left mr-1"></i> Quay lại Forum
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    loadGroupDetail();
+</script>
+</body>
+</html>

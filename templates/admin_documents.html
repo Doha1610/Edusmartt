@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Admin | Kho tài liệu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.2s ease;
+            margin: 0;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        body.light-mode {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1f2937;
+        }
+        
+        body.dark-mode {
+            background: transparent;
+            color: #f3f4f6;
+        }
+        
+        #star-canvas-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        
+        body.light-mode #star-canvas-background {
+            display: none;
+        }
+        
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        body.dark-mode .bg-white,
+        body.dark-mode .bg-gray-50,
+        body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        body.dark-mode .border-gray-200,
+        body.dark-mode .border-gray-300 {
+            border-color: #334155 !important;
+        }
+
+        /* Sidebar */
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+
+        body.dark-mode .left-sidebar-dark {
+            background: #030712;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 4px 12px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+            width: auto;
+        }
+
+        .collapsible-group {
+            margin-bottom: 4px;
+        }
+
+        .nav-group-toggle {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+
+        .group-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible-group.collapsed .group-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-group.collapsed .nav-group-items {
+            display: none;
+        }
+
+        .sidebar-menu-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .sidebar-menu-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn {
+                display: block !important;
+            }
+            .left-sidebar-dark { 
+                transform: translateX(-100%);
+            }
+            .left-sidebar-dark.open { 
+                transform: translateX(0) !important;
+            }
+            .main-container { 
+                margin-left: 0; 
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn {
+                display: none !important;
+            }
+            .left-sidebar-dark {
+                transform: translateX(0) !important;
+            }
+            .main-container {
+                margin-left: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .p-4, .p-6 {
+                padding: 12px !important;
+            }
+            h1.text-2xl {
+                font-size: 1.25rem !important;
+            }
+            .grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+                gap: 8px !important;
+            }
+            .flex.gap-2 {
+                flex-wrap: wrap !important;
+            }
+            button.text-xs {
+                font-size: 0.65rem !important;
+                padding: 4px 6px !important;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .document-card {
+            transition: all 0.3s ease;
+        }
+        .document-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .major-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 500;
+            background: #e9d5ff;
+            color: #6b21a5;
+        }
+        
+        body.dark-mode .major-badge {
+            background: #5b21b6;
+            color: #e9d5ff;
+        }
+        
+        .custom-tab {
+            padding: 10px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .custom-tab.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+        .custom-tab:hover:not(.active) {
+            background: #e2e8f0;
+        }
+        body.dark-mode .custom-tab:hover:not(.active) {
+            background: #334155;
+        }
+
+        .delete-request-card {
+            transition: all 0.2s;
+            border-left: 4px solid #eab308;
+        }
+        .delete-request-card:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.5rem;
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+        body.dark-mode .notification-dropdown {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+        .notification-item {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
+        body.dark-mode .notification-item:hover {
+            background: #334155;
+        }
+        .notification-unread {
+            background: #faf5ff;
+        }
+        body.dark-mode .notification-unread {
+            background: #4c1d95;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        body.dark-mode .modal-content {
+            background: #1e293b;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-approved { background: #d1fae5; color: #065f46; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        
+        body.dark-mode .status-pending { background: #78350f; color: #fde68a; }
+        body.dark-mode .status-approved { background: #064e3b; color: #a7f3d0; }
+        body.dark-mode .status-rejected { background: #7f1d1d; color: #fecaca; }
+
+        .btn-direct-delete {
+            background-color: #dc2626;
+        }
+        .btn-direct-delete:hover {
+            background-color: #b91c1c;
+        }
+        .btn-request-delete {
+            background-color: #eab308;
+        }
+        .btn-request-delete:hover {
+            background-color: #ca8a04;
+        }
+        /* Fix màu chữ dropdown chuyên ngành trong modal thêm tài liệu */
+#add-doc-major,
+#add-doc-major option {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+
+/* Dark mode vẫn giữ chữ đen nền trắng */
+body.dark-mode #add-doc-major,
+body.dark-mode #add-doc-major option {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+/* Fix màu chữ trong ô input đổi tên tài liệu */
+#rename-doc-name,
+#rename-doc-name:focus {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+
+/* Dark mode vẫn giữ chữ đen nền trắng */
+body.dark-mode #rename-doc-name,
+body.dark-mode #rename-doc-name:focus {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Quản trị viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 1: TỔNG QUAN -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="overview">
+                <span>📊 TỔNG QUAN</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="overview">
+                <div class="nav-item" onclick="window.location.href='/'">
+                    <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 2: QUẢN LÝ & BÁO CÁO NGƯỜI DÙNG -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="users">
+                <span>👥 QUẢN LÝ & BÁO CÁO NGƯỜI DÙNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="users">
+                <div class="nav-item" onclick="window.location.href='/admin/users'">
+                    <i class="fas fa-users-cog"></i><span>Quản lý người dùng</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/admin/teachers'">
+                    <i class="fas fa-chalkboard-user"></i><span>Quản lý giáo viên</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/admin/students'">
+                    <i class="fas fa-user-graduate"></i><span>Quản lý sinh viên</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 3: QUẢN LÝ NỘI DUNG -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="content">
+                <span>📚 QUẢN LÝ NỘI DUNG</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="content">
+                <div class="nav-item active" onclick="window.location.href='/admin/documents'">
+                    <i class="fas fa-folder-open"></i><span>Kho tài liệu</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/admin/document-approvals'">
+                    <i class="fas fa-file-signature"></i><span>Phê duyệt tài liệu</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 4: QUẢN LÝ HỌC TẬP -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="learning">
+                <span>🏫 QUẢN LÝ HỌC TẬP</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="learning">
+                <div class="nav-item" onclick="window.location.href='/admin/classes'">
+                    <i class="fas fa-chalkboard"></i><span>Lớp học</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Nhóm 5: CÀI ĐẶT HỆ THỐNG -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="system">
+                <span>⚙️ CÀI ĐẶT HỆ THỐNG</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="system">
+                <div class="nav-item" onclick="window.location.href='/admin/settings'">
+    <i class="fas fa-cog"></i><span>Cài đặt chung</span>
+</div>
+                <div class="nav-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                    <span id="theme-text-sidebar">Chế độ tối</span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-folder-open text-white text-lg"></i>
+                            </div>
+                            <h1 class="text-base sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                Kho tài liệu - Admin
+                            </h1>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 transition">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300 text-base sm:text-lg"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y">
+                                        <div class="p-4 text-center text-gray-500">Đang tải...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                
+                <!-- Tabs -->
+                <div class="flex gap-2 sm:gap-3 mb-6 border-b pb-2 overflow-x-auto">
+                    <div class="custom-tab active text-sm sm:text-base whitespace-nowrap" onclick="switchTab('documents')">
+                        📚 Danh sách tài liệu
+                    </div>
+                    <div class="custom-tab text-sm sm:text-base whitespace-nowrap" onclick="switchTab('delete-requests')">
+                        🗑️ Yêu cầu xóa tài liệu
+                        <span id="delete-requests-badge" class="ml-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 hidden">0</span>
+                    </div>
+                </div>
+
+                <!-- Tab Danh sách tài liệu -->
+                <div id="documents-tab" class="main-tab-content">
+                    <!-- Thống kê nhanh -->
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6 mb-6 fade-in">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 text-white">
+                            <div class="flex items-center justify-between">
+                                <div><p class="text-blue-100 text-xs">Tổng tài liệu</p><p id="total-docs" class="text-2xl font-bold mt-1">0</p></div>
+                                <i class="fas fa-file-pdf text-3xl opacity-50"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-4 text-white">
+                            <div class="flex items-center justify-between">
+                                <div><p class="text-green-100 text-xs">Tổng dung lượng</p><p id="total-size" class="text-2xl font-bold mt-1">0 MB</p></div>
+                                <i class="fas fa-database text-3xl opacity-50"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-4 text-white">
+                            <div class="flex items-center justify-between">
+                                <div><p class="text-yellow-100 text-xs">Chờ phê duyệt</p><p id="pending-docs" class="text-2xl font-bold mt-1">0</p></div>
+                                <i class="fas fa-clock text-3xl opacity-50"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg p-4 text-white cursor-pointer" onclick="switchTab('delete-requests')">
+                            <div class="flex items-center justify-between">
+                                <div><p class="text-purple-100 text-xs">Yêu cầu xóa</p><p id="delete-requests-count" class="text-2xl font-bold mt-1">0</p></div>
+                                <i class="fas fa-flag text-3xl opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search và Filter -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6 fade-in">
+                        <div class="flex flex-col md:flex-row gap-3">
+                            <div class="flex-1 relative">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="text" id="search-input" placeholder="Tìm kiếm tài liệu..." 
+                                       class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 dark:text-white text-sm">
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <select id="major-filter" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 dark:text-white text-sm">
+                                    <option value="all">📁 Tất cả ngành</option>
+                                </select>
+                                <button onclick="refreshDocuments()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm">
+                                    <i class="fas fa-sync-alt mr-1"></i> Làm mới
+                                </button>
+                                <button onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm">
+                                    <i class="fas fa-file-excel mr-1"></i> Xuất Excel
+                                </button>
+                                <button onclick="openAddDocumentModal()" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg text-sm">
+                                    <i class="fas fa-plus mr-1"></i> Thêm tài liệu
+                                </button>
+                                <button onclick="deleteAllDocuments()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm">
+                                    <i class="fas fa-trash-alt mr-1"></i> Xóa tất cả
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thống kê theo ngành -->
+                    <div class="mb-6">
+                        <h3 class="text-base font-semibold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
+                            <i class="fas fa-chart-pie text-purple-500"></i> Thống kê theo ngành
+                        </h3>
+                        <div id="majors-stats" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                            <div class="text-center py-4 text-gray-500 text-sm">Đang tải...</div>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách tài liệu -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                        <h3 class="font-bold text-gray-800 dark:text-white mb-4"><i class="fas fa-list mr-2"></i>Danh sách tài liệu</h3>
+                        <div id="documents-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="col-span-full text-center py-8">
+                                <i class="fas fa-spinner fa-spin text-3xl text-purple-500 mb-4"></i>
+                                <p class="text-gray-500">Đang tải danh sách tài liệu...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Yêu cầu xóa tài liệu -->
+                <div id="deletereq-tab" class="main-tab-content" style="display: none;">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6">
+                        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                            <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2">
+                                <i class="fas fa-flag text-yellow-500"></i> Yêu cầu xóa tài liệu
+                            </h2>
+                            <div class="flex gap-2">
+                                <button onclick="refreshDeleteRequests()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm">
+                                    <i class="fas fa-sync-alt mr-1"></i> Làm mới
+                                </button>
+                                <select id="delete-req-filter" onchange="filterDeleteRequests()" class="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700">
+                                    <option value="all">Tất cả</option>
+                                    <option value="pending">⏳ Chờ xử lý</option>
+                                    <option value="approved">✅ Đã xóa</option>
+                                    <option value="rejected">❌ Từ chối</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 text-xs sm:text-sm mb-4">
+                            Các yêu cầu xóa tài liệu từ giáo viên. Admin có thể xác nhận xóa hoặc từ chối yêu cầu.
+                        </p>
+                        <div id="delete-requests-list" class="space-y-3">
+                            <div class="text-center text-gray-500 py-8">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <p>Đang tải danh sách yêu cầu...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal xác nhận xóa trực tiếp -->
+    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 mx-4">
+            <h3 class="text-lg font-bold mb-4 dark:text-white">🗑️ Xác nhận xóa trực tiếp</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-4">Bạn có chắc muốn xóa tài liệu này?</p>
+            <p id="delete-doc-name" class="text-sm text-gray-500 dark:text-gray-400 mb-4 break-all"></p>
+            <input type="hidden" id="delete-file-name">
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm">Hủy</button>
+                <button onclick="confirmDeleteDocument()" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm">Xóa ngay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal sửa tên tài liệu -->
+    <div id="rename-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 mx-4">
+            <h3 class="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
+                <i class="fas fa-pen text-yellow-500"></i> Đổi tên tài liệu
+            </h3>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Tên mới:</label>
+                <input type="text" id="rename-doc-name" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="Nhập tên mới cho tài liệu">
+                <p class="text-xs text-gray-500 mt-1">⚠️ Lưu ý: Tên sẽ được cập nhật trên hệ thống</p>
+            </div>
+            <input type="hidden" id="rename-file-name">
+            <input type="hidden" id="rename-doc-id">
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeRenameModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm">Hủy</button>
+                <button onclick="confirmRenameDocument()" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm">
+                    <i class="fas fa-save mr-1"></i> Lưu thay đổi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal thêm tài liệu mới -->
+    <div id="add-document-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 mx-4">
+            <h3 class="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
+                <i class="fas fa-upload text-purple-500"></i> Thêm tài liệu mới
+            </h3>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Chọn file PDF:</label>
+                <input type="file" id="add-doc-file" accept=".pdf" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Chuyên ngành:</label>
+                <select id="add-doc-major" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm">
+                    <option value="Công nghệ thông tin">💻 Công nghệ thông tin</option>
+                    <option value="Toán học">📐 Toán học</option>
+                    <option value="Kinh tế">📊 Kinh tế</option>
+                    <option value="Ngoại ngữ">🌍 Ngoại ngữ</option>
+                    <option value="Kỹ thuật phần mềm">⚙️ Kỹ thuật phần mềm</option>
+                </select>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeAddDocumentModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm">Hủy</button>
+                <button onclick="uploadNewDocument()" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-sm">
+                    <i class="fas fa-cloud-upload-alt mr-1"></i> Tải lên
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal yêu cầu xóa (gửi admin khác) -->
+    <div id="request-delete-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 mx-4">
+            <div class="flex items-center gap-3 mb-4">
+                <i class="fas fa-flag text-yellow-500 text-2xl"></i>
+                <h3 class="text-lg font-bold dark:text-white">Gửi yêu cầu xóa</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-300 mb-3" id="request-delete-doc-name"></p>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Lý do yêu cầu xóa:</label>
+                <textarea id="request-delete-reason" rows="3" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="VD: Tài liệu trùng lặp, nội dung không phù hợp, vi phạm bản quyền..."></textarea>
+            </div>
+            <input type="hidden" id="request-delete-file-name">
+            <input type="hidden" id="request-delete-doc-id">
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeRequestDeleteModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm">Hủy</button>
+                <button onclick="submitDeleteRequest()" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm">
+                    <i class="fas fa-paper-plane mr-1"></i> Gửi yêu cầu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal xem chi tiết yêu cầu xóa -->
+    <div id="request-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-lg p-6 mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold dark:text-white flex items-center gap-2">
+                    <i class="fas fa-flag text-yellow-500"></i> Chi tiết yêu cầu xóa
+                </h3>
+                <button onclick="closeRequestDetailModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="request-detail-content">
+                <!-- Nội dung sẽ được điền bằng JS -->
+            </div>
+            <div class="flex gap-3 justify-end mt-6">
+                <button onclick="closeRequestDetailModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm">Đóng</button>
+                <button id="reject-request-btn" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm hidden" onclick="rejectDeleteRequest()">Từ chối</button>
+                <button id="approve-request-btn" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm hidden" onclick="approveDeleteRequest()">Xác nhận xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+    <script>
+        // ==================== HỆ THỐNG NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); 
+                    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; 
+                    starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; 
+                    s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; 
+                    if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); 
+                    g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; 
+                    starCtx.lineWidth = 2; 
+                    starCtx.beginPath(); 
+                    starCtx.moveTo(m.x, m.y); 
+                    starCtx.lineTo(m.x - m.len, m.y - m.len); 
+                    starCtx.stroke(); 
+                    m.x += m.speed; 
+                    m.y += m.speed; 
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { 
+                if (starCanvas && isStarSystemActive) { 
+                    starCanvas.width = window.innerWidth; 
+                    starCanvas.height = window.innerHeight; 
+                    initStarsPro(); 
+                } 
+            }); 
+            setInterval(() => { 
+                if (isStarSystemActive) { 
+                    let c = Math.floor(Math.random() * 2) + 3; 
+                    for (let i = 0; i < c; i++) createMeteorPro(); 
+                } 
+            }, 1500); 
+            initStarsPro(); 
+            drawStarsPro(); 
+        }
+        
+        let isDarkModeActive = false;
+        let documents = [];
+        let deleteRequests = [];
+        let currentTab = 'documents';
+        let currentDeleteRequestFilter = 'all';
+        
+        function toggleTheme() { 
+            const body = document.body, 
+                  starCanvasElem = document.getElementById('star-canvas-background'),
+                  themeIconSidebar = document.getElementById('theme-icon-sidebar'),
+                  themeTextSidebar = document.getElementById('theme-text-sidebar');
+                  
+            isDarkModeActive = !isDarkModeActive; 
+            
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); 
+                body.classList.add('dark-mode'); 
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-moon');
+                    themeIconSidebar.classList.add('fa-sun');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (starCanvasElem) { 
+                    starCanvasElem.style.display = 'block'; 
+                    if (!starCtx) { 
+                        isStarSystemActive = true; 
+                        initStarfieldPro(); 
+                    } else { 
+                        isStarSystemActive = true; 
+                        if (!starAnimationId) { 
+                            function restartDraw() { 
+                                if (starCtx && starCanvas && isStarSystemActive) drawStarsPro(); 
+                            } 
+                            restartDraw(); 
+                        } 
+                    } 
+                } 
+            } else { 
+                body.classList.remove('dark-mode'); 
+                body.classList.add('light-mode'); 
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-sun');
+                    themeIconSidebar.classList.add('fa-moon');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; 
+                isStarSystemActive = false; 
+                if (starAnimationId) { 
+                    cancelAnimationFrame(starAnimationId); 
+                    starAnimationId = null; 
+                } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { 
+            setTimeout(() => { toggleTheme(); }, 20); 
+        } else { 
+            const canvasBg = document.getElementById('star-canvas-background'); 
+            if (canvasBg) canvasBg.style.display = 'none'; 
+        }
+
+        // ==================== COLLAPSIBLE SIDEBAR ====================
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') group.classList.add('collapsed');
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, 
+                        group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('leftSidebar');
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                sidebar.style.transform = '';
+            } else {
+                sidebar.classList.add('open');
+                sidebar.style.transform = 'translateX(0)';
+            }
+        }
+
+        // ==================== HÀM TIỆN ÍCH ====================
+        async function logout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                const res = await fetch('/api/logout', { method: 'POST' });
+                if (res.ok) window.location.href = '/login';
+                else alert('Đăng xuất thất bại');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'Vừa xong';
+            if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`;
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        // ==================== CHUYỂN TAB ====================
+        function switchTab(tabName) {
+            currentTab = tabName;
+            const tabs = document.querySelectorAll('.custom-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            if (tabName === 'documents') {
+                tabs[0].classList.add('active');
+                document.getElementById('documents-tab').style.display = 'block';
+                document.getElementById('deletereq-tab').style.display = 'none';
+                loadDocuments();
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('documents-tab').style.display = 'none';
+                document.getElementById('deletereq-tab').style.display = 'block';
+                loadDeleteRequests();
+            }
+        }
+
+        // ==================== TÀI LIỆU ====================
+        async function loadDocuments() {
+            try {
+                const response = await fetch('/api/documents');
+                const data = await response.json();
+                if (data.success) {
+                    documents = data.documents;
+                    document.getElementById('total-docs').textContent = data.total;
+                    document.getElementById('total-size').textContent = data.total_size_mb + ' MB';
+                    
+                    const pendingCount = documents.filter(d => d.status === 'pending').length;
+                    document.getElementById('pending-docs').textContent = pendingCount;
+                    
+                    updateMajorStats();
+                    renderDocuments();
+                } else { showToast('Không thể tải danh sách tài liệu', 'error'); }
+            } catch (error) { console.error('Error:', error); showToast('Lỗi kết nối đến server', 'error'); }
+        }
+
+        function updateMajorStats() {
+            const majorCounts = {};
+            documents.forEach(doc => { const major = doc.major || 'Khác'; majorCounts[major] = (majorCounts[major] || 0) + 1; });
+            const majorsList = Object.keys(majorCounts).sort();
+            const statsContainer = document.getElementById('majors-stats');
+            if (majorsList.length === 0) { statsContainer.innerHTML = '<div class="col-span-full text-center py-2 text-gray-500 text-sm">Chưa có tài liệu</div>'; return; }
+            statsContainer.innerHTML = majorsList.map(major => `
+                <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-2 text-white text-center cursor-pointer hover:opacity-90 transition"
+                     onclick="filterByMajor('${major}')">
+                    <p class="text-xs opacity-90 truncate">${escapeHtml(major)}</p>
+                    <p class="text-base font-bold">${majorCounts[major]}</p>
+                </div>
+            `).join('');
+            const filterSelect = document.getElementById('major-filter');
+            filterSelect.innerHTML = '<option value="all">📁 Tất cả ngành</option>' + 
+                majorsList.map(major => `<option value="${major}" ${currentMajorFilter === major ? 'selected' : ''}>${major}</option>`).join('');
+        }
+        
+        let currentMajorFilter = 'all';
+        function filterByMajor(major) {
+            currentMajorFilter = major;
+            document.getElementById('major-filter').value = major;
+            updateMajorStats();
+            renderDocuments();
+        }
+
+        function renderDocuments() {
+            const container = document.getElementById('documents-container');
+            const searchTerm = document.getElementById('search-input')?.value.toLowerCase() || '';
+            const majorFilter = document.getElementById('major-filter')?.value || 'all';
+            
+            let filteredDocs = documents.filter(doc => {
+                const matchSearch = (doc.original_name || doc.name).toLowerCase().includes(searchTerm);
+                const matchMajor = majorFilter === 'all' || doc.major === majorFilter;
+                return matchSearch && matchMajor;
+            });
+            
+            if (filteredDocs.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-8"><i class="fas fa-folder-open text-4xl text-gray-300 mb-4"></i><p class="text-gray-500">Không tìm thấy tài liệu nào</p></div>`;
+                return;
+            }
+            
+            container.innerHTML = filteredDocs.map(doc => `
+                <div class="document-card bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all fade-in">
+                    <div class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 p-3 border-b dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="major-badge text-xs">${escapeHtml(doc.major || 'Khác')}</span>
+                            <span class="text-xs text-gray-400">${doc.last_modified_display}</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-file-pdf text-red-500 text-2xl"></i>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-semibold text-gray-900 dark:text-white truncate text-sm" title="${escapeHtml(doc.original_name || doc.name)}">
+                                    ${escapeHtml(doc.original_name || doc.name)}
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-1">${doc.size_mb} MB</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="viewDocument('${doc.name}')" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded-lg text-xs">
+                                <i class="fas fa-eye mr-1"></i> Xem
+                            </button>
+                            <button onclick="downloadDocument('${doc.name}')" class="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded-lg text-xs">
+                                <i class="fas fa-download mr-1"></i> Tải
+                            </button>
+                            <button onclick="openRenameModal('${doc.name}', '${escapeHtml(doc.original_name || doc.name)}', ${doc.id || 0})" 
+                                    class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded-lg text-xs">
+                                <i class="fas fa-pen mr-1"></i> Sửa
+                            </button>
+                            <button onclick="openDeleteModal('${doc.name}', '${escapeHtml(doc.original_name || doc.name)}')" 
+                                    class="btn-direct-delete text-white px-2 py-1.5 rounded-lg text-xs" 
+                                    title="Xóa trực tiếp (không cần phê duyệt)">
+                                <i class="fas fa-trash-alt mr-1"></i> Xóa ngay
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function viewDocument(fileName) {
+            try { window.open(`/api/view/${fileName}`, '_blank'); } 
+            catch (error) { showToast('Lỗi khi xem tài liệu', 'error'); }
+        }
+
+        function downloadDocument(fileName) { 
+            window.open(`/api/download/${fileName}`, '_blank'); 
+            showToast(`⬇️ Đang tải...`, 'success'); 
+        }
+
+        function refreshDocuments() { loadDocuments(); showToast('Đã làm mới danh sách', 'success'); }
+
+        // ==================== SỬA TÊN TÀI LIỆU ====================
+        let renameFileName = null;
+        let renameDisplayName = null;
+        let renameDocumentId = null;
+
+        function openRenameModal(fileName, displayName, documentId) {
+            renameFileName = fileName;
+            renameDisplayName = displayName;
+            renameDocumentId = documentId;
+            document.getElementById('rename-doc-name').value = displayName;
+            document.getElementById('rename-file-name').value = fileName;
+            document.getElementById('rename-doc-id').value = documentId;
+            document.getElementById('rename-modal').style.display = 'flex';
+        }
+
+        function closeRenameModal() {
+            document.getElementById('rename-modal').style.display = 'none';
+            renameFileName = null;
+            renameDisplayName = null;
+            renameDocumentId = null;
+        }
+
+        async function confirmRenameDocument() {
+            const newName = document.getElementById('rename-doc-name').value.trim();
+            if (!newName) {
+                showToast('Vui lòng nhập tên mới', 'warning');
+                return;
+            }
+            
+            if (newName === renameDisplayName) {
+                closeRenameModal();
+                return;
+            }
+            
+            showToast('Đang cập nhật tên...', 'warning');
+            
+            try {
+                const response = await fetch(`/api/admin/rename-document`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        file_name: renameFileName,
+                        new_name: newName,
+                        document_id: renameDocumentId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('✅ Đã đổi tên tài liệu thành công!', 'success');
+                    closeRenameModal();
+                    loadDocuments();
+                } else {
+                    showToast(data.message || 'Đổi tên thất bại', 'error');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showToast('Lỗi kết nối đến server', 'error');
+            }
+        }
+
+        // ==================== THÊM TÀI LIỆU MỚI ====================
+        function openAddDocumentModal() {
+            document.getElementById('add-doc-file').value = '';
+            document.getElementById('add-doc-major').value = 'Công nghệ thông tin';
+            document.getElementById('add-document-modal').style.display = 'flex';
+        }
+
+        function closeAddDocumentModal() {
+            document.getElementById('add-document-modal').style.display = 'none';
+        }
+
+        async function uploadNewDocument() {
+            const fileInput = document.getElementById('add-doc-file');
+            const major = document.getElementById('add-doc-major').value;
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showToast('Vui lòng chọn file PDF', 'warning');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showToast('Chỉ chấp nhận file PDF', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('major', major);
+            
+            showToast('Đang tải lên...', 'warning');
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.message && data.message.includes('thành công')) {
+                    showToast('✅ Đã thêm tài liệu mới!', 'success');
+                    closeAddDocumentModal();
+                    loadDocuments();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showToast(data.detail || 'Tải lên thất bại', 'error');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showToast('Lỗi kết nối đến server', 'error');
+            }
+        }
+
+        // ==================== XÓA TRỰC TIẾP (NHANH) ====================
+        let deleteFileName = null;
+        let deleteDisplayName = null;
+
+        function openDeleteModal(fileName, displayName) {
+            deleteFileName = fileName;
+            deleteDisplayName = displayName;
+            document.getElementById('delete-doc-name').textContent = displayName;
+            document.getElementById('delete-file-name').value = fileName;
+            document.getElementById('delete-modal').style.display = 'flex';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').style.display = 'none';
+            deleteFileName = null;
+        }
+
+        async function confirmDeleteDocument() {
+            if (!deleteFileName) return;
+            
+            if (!confirm(`⚠️ Bạn có chắc muốn xóa NGAY tài liệu "${deleteDisplayName}"?\nHành động này KHÔNG thể hoàn tác!`)) return;
+            
+            showToast('Đang xóa...', 'warning');
+            
+            try {
+                const response = await fetch(`/api/documents/${deleteFileName}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (data.success) {
+                    showToast(`✅ Đã xóa "${deleteDisplayName}"`, 'success');
+                    closeDeleteModal();
+                    loadDocuments();
+                    loadDeleteRequests();
+                } else {
+                    showToast(data.error || 'Xóa thất bại', 'error');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showToast('Lỗi khi xóa tài liệu', 'error');
+            }
+        }
+
+        async function deleteAllDocuments() {
+            if (!confirm('⚠️ Bạn có chắc muốn xóa TẤT CẢ tài liệu? Hành động này không thể hoàn tác!')) return;
+            try {
+                const response = await fetch('/delete-all-documents', { method: 'DELETE' });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('✅ Đã xóa tất cả tài liệu', 'success');
+                    loadDocuments();
+                    loadDeleteRequests();
+                } else {
+                    showToast('Xóa thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi khi xóa tài liệu', 'error');
+            }
+        }
+
+        // ==================== YÊU CẦU XÓA (GỬI ADMIN KHÁC) ====================
+        function openRequestDeleteModal(fileName, displayName, documentId) {
+            document.getElementById('request-delete-doc-name').innerHTML = `📄 ${displayName}`;
+            document.getElementById('request-delete-file-name').value = fileName;
+            document.getElementById('request-delete-doc-id').value = documentId;
+            document.getElementById('request-delete-reason').value = '';
+            document.getElementById('request-delete-modal').style.display = 'flex';
+        }
+
+        function closeRequestDeleteModal() {
+            document.getElementById('request-delete-modal').style.display = 'none';
+        }
+
+        async function submitDeleteRequest() {
+            const fileName = document.getElementById('request-delete-file-name').value;
+            const displayName = document.getElementById('request-delete-doc-name').innerHTML.replace('📄 ', '');
+            const documentId = document.getElementById('request-delete-doc-id').value;
+            const reason = document.getElementById('request-delete-reason').value.trim() || 'Không có lý do cụ thể';
+            
+            try {
+                const response = await fetch('/api/teacher/request-delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        document_id: parseInt(documentId),
+                        reason: reason
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('✅ Đã gửi yêu cầu xóa đến admin!', 'success');
+                    closeRequestDeleteModal();
+                    loadDeleteRequests();
+                } else {
+                    showToast(data.message || '⚠️ Không thể gửi yêu cầu', 'warning');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showToast('⚠️ Lỗi kết nối, vui lòng thử lại', 'error');
+            }
+        }
+
+        // ==================== QUẢN LÝ YÊU CẦU XÓA ====================
+        async function loadDeleteRequests() {
+            try {
+                const response = await fetch('/api/admin/delete-requests');
+                const data = await response.json();
+                if (data.success) {
+                    deleteRequests = data.requests;
+                    const pendingCount = deleteRequests.filter(r => r.status === 'pending').length;
+                    document.getElementById('delete-requests-count').textContent = pendingCount;
+                    document.getElementById('delete-requests-badge').textContent = pendingCount;
+                    if (pendingCount > 0) {
+                        document.getElementById('delete-requests-badge').classList.remove('hidden');
+                    } else {
+                        document.getElementById('delete-requests-badge').classList.add('hidden');
+                    }
+                    renderDeleteRequests();
+                }
+            } catch (error) {
+                console.error('Lỗi tải yêu cầu xóa:', error);
+                document.getElementById('delete-requests-list').innerHTML = '<div class="text-center text-red-500 py-8">❌ Lỗi tải dữ liệu</div>';
+            }
+        }
+
+        function filterDeleteRequests() {
+            currentDeleteRequestFilter = document.getElementById('delete-req-filter').value;
+            renderDeleteRequests();
+        }
+
+        function refreshDeleteRequests() {
+            loadDeleteRequests();
+            showToast('Đã làm mới danh sách', 'success');
+        }
+
+        function renderDeleteRequests() {
+            const container = document.getElementById('delete-requests-list');
+            if (!container) return;
+            
+            let filtered = deleteRequests;
+            if (currentDeleteRequestFilter !== 'all') {
+                filtered = deleteRequests.filter(r => r.status === currentDeleteRequestFilter);
+            }
+            
+            if (!filtered || filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-inbox text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">Không có yêu cầu xóa nào</p>
+                        <p class="text-xs text-gray-400 mt-1">Yêu cầu từ giáo viên sẽ hiển thị tại đây</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = filtered.map(req => {
+                let statusClass = '', statusText = '';
+                if (req.status === 'pending') {
+                    statusClass = 'status-pending';
+                    statusText = '⏳ Chờ xử lý';
+                } else if (req.status === 'approved') {
+                    statusClass = 'status-approved';
+                    statusText = '✅ Đã xóa';
+                } else {
+                    statusClass = 'status-rejected';
+                    statusText = '❌ Từ chối';
+                }
+                
+                const createdDate = new Date(req.created_at);
+                const timeStr = createdDate.toLocaleString('vi-VN');
+                
+                return `
+                    <div class="delete-request-card bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 border-yellow-500 mb-3">
+                        <div class="flex flex-wrap justify-between items-start gap-3">
+                            <div class="flex-1 min-w-[200px]">
+                                <div class="flex items-center gap-2 flex-wrap mb-2">
+                                    <i class="fas fa-file-pdf text-red-500"></i>
+                                    <h3 class="font-semibold text-gray-800 dark:text-white text-sm">${escapeHtml(req.document_name || 'Không xác định')}</h3>
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mb-1">
+                                    <i class="fas fa-user mr-1"></i> Giáo viên: ${escapeHtml(req.teacher_name || 'Unknown')}
+                                </p>
+                                <p class="text-xs text-gray-500 mb-1">
+                                    <i class="fas fa-tag mr-1"></i> Chuyên ngành: ${escapeHtml(req.major || 'Chưa phân loại')}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    <i class="fas fa-calendar mr-1"></i> Yêu cầu lúc: ${timeStr}
+                                </p>
+                                ${req.reason ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-2 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded"><i class="fas fa-comment mr-1"></i> Lý do: ${escapeHtml(req.reason)}</p>` : ''}
+                                ${req.status === 'rejected' && req.admin_note ? `<p class="text-xs text-red-500 mt-1">📝 Lý do từ chối: ${escapeHtml(req.admin_note)}</p>` : ''}
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="showRequestDetail(${req.id})" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs">
+                                    <i class="fas fa-eye mr-1"></i> Chi tiết
+                                </button>
+                                ${req.status === 'pending' ? `
+                                    <button onclick="showRequestDetail(${req.id})" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs">
+                                        <i class="fas fa-check mr-1"></i> Xử lý
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        let currentRequestId = null;
+
+        function showRequestDetail(requestId) {
+            currentRequestId = requestId;
+            const request = deleteRequests.find(r => r.id === requestId);
+            if (!request) return;
+            
+            const content = document.getElementById('request-detail-content');
+            content.innerHTML = `
+                <div class="space-y-3">
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                        <p class="text-xs text-gray-500">Tên tài liệu</p>
+                        <p class="font-medium dark:text-white">${escapeHtml(request.document_name)}</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                        <p class="text-xs text-gray-500">Giáo viên yêu cầu</p>
+                        <p class="font-medium dark:text-white">${escapeHtml(request.teacher_name)}</p>
+                        <p class="text-xs text-gray-400">Email: ${escapeHtml(request.teacher_email || 'N/A')}</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                        <p class="text-xs text-gray-500">Chuyên ngành</p>
+                        <p class="font-medium dark:text-white">${escapeHtml(request.major)}</p>
+                    </div>
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
+                        <p class="text-xs text-gray-500">Lý do yêu cầu xóa</p>
+                        <p class="text-sm dark:text-white">${escapeHtml(request.reason)}</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                        <p class="text-xs text-gray-500">Thời gian yêu cầu</p>
+                        <p class="text-sm dark:text-white">${formatTime(request.created_at)}</p>
+                    </div>
+                </div>
+            `;
+            
+            const approveBtn = document.getElementById('approve-request-btn');
+            const rejectBtn = document.getElementById('reject-request-btn');
+            
+            if (request.status === 'pending') {
+                approveBtn.classList.remove('hidden');
+                rejectBtn.classList.remove('hidden');
+            } else {
+                approveBtn.classList.add('hidden');
+                rejectBtn.classList.add('hidden');
+            }
+            
+            document.getElementById('request-detail-modal').style.display = 'flex';
+        }
+
+        function closeRequestDetailModal() {
+            document.getElementById('request-detail-modal').style.display = 'none';
+            currentRequestId = null;
+        }
+
+        async function approveDeleteRequest() {
+            if (!currentRequestId) return;
+            if (!confirm('⚠️ Bạn có chắc muốn xóa tài liệu này? Hành động không thể hoàn tác!')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/delete-requests/${currentRequestId}/approve`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('✅ Đã xóa tài liệu và xác nhận yêu cầu', 'success');
+                    closeRequestDetailModal();
+                    loadDeleteRequests();
+                    loadDocuments();
+                } else {
+                    showToast(data.message || 'Xóa thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi khi xử lý yêu cầu', 'error');
+            }
+        }
+
+        async function rejectDeleteRequest() {
+            if (!currentRequestId) return;
+            
+            const note = prompt('Nhập lý do từ chối yêu cầu xóa:');
+            if (note === null) return;
+            if (!note.trim()) {
+                showToast('Vui lòng nhập lý do từ chối', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/delete-requests/${currentRequestId}/reject`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note: note })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Đã từ chối yêu cầu xóa', 'success');
+                    closeRequestDetailModal();
+                    loadDeleteRequests();
+                } else {
+                    showToast(data.message || 'Từ chối thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi khi xử lý yêu cầu', 'error');
+            }
+        }
+
+        // ==================== XUẤT EXCEL ====================
+        function exportToExcel() {
+            if (!documents || documents.length === 0) {
+                showToast('Không có dữ liệu để xuất', 'error');
+                return;
+            }
+            
+            let csvContent = "STT,Tên tài liệu,Chuyên ngành,Kích thước (MB),Ngày tải lên\n";
+            documents.forEach((doc, index) => {
+                const row = [
+                    index + 1,
+                    doc.original_name || doc.name,
+                    doc.major || 'Chưa phân loại',
+                    doc.size_mb,
+                    doc.last_modified_display || ''
+                ].map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',');
+                csvContent += row + "\n";
+            });
+            
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.setAttribute('download', `danh_sach_tai_lieu_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast('Đã xuất danh sách tài liệu', 'success');
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) { renderNotifications(data.notifications); updateNotificationBadge(data.unread_count); }
+            } catch (error) { console.error('Lỗi tải thông báo:', error); }
+        }
+        
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notifications-list');
+            if (!notifications || notifications.length === 0) { container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Chưa có thông báo nào</div>'; return; }
+            container.innerHTML = notifications.map(notif => `
+                <div class="notification-item ${notif.is_read ? '' : 'notification-unread'} p-3 transition" onclick="viewNotification(${notif.id}, '${notif.link || ''}')">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0">${notif.type === 'delete_request' ? '<i class="fas fa-flag text-yellow-500"></i>' : '<i class="fas fa-info-circle text-blue-500"></i>'}</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium">${escapeHtml(notif.title)}</p>
+                            <p class="text-xs text-gray-500 mt-1">${escapeHtml(notif.content.substring(0, 100))}${notif.content.length > 100 ? '...' : ''}</p>
+                            <p class="text-xs text-gray-400 mt-1">${formatTime(notif.created_at)}</p>
+                        </div>
+                        ${!notif.is_read ? '<div class="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notification-badge');
+            if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.classList.remove('hidden'); } 
+            else { badge.classList.add('hidden'); }
+        }
+        
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) loadNotifications();
+        }
+        
+        async function viewNotification(notificationId, link) {
+            await fetch(`/api/notifications/mark-read/${notificationId}`, { method: 'POST' });
+            loadNotifications(); loadUnreadCount();
+            if (link) {
+                if (link.includes('delete-requests')) switchTab('delete-requests');
+                else window.location.href = link;
+            }
+        }
+        
+        async function markAllNotificationsRead() { 
+            await fetch('/api/notifications/mark-all-read', { method: 'POST' }); 
+            loadNotifications(); 
+            loadUnreadCount(); 
+        }
+        
+        async function loadUnreadCount() {
+            try {
+                const res = await fetch('/api/notifications?limit=1');
+                const data = await res.json();
+                updateNotificationBadge(data.unread_count);
+            } catch (error) { console.error(error); }
+        }
+
+        // Đóng dropdown khi click ra ngoài
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+        
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleGroups();
+            const searchInput = document.getElementById('search-input'); 
+            const majorFilter = document.getElementById('major-filter');
+            if (searchInput) searchInput.addEventListener('input', renderDocuments);
+            if (majorFilter) majorFilter.addEventListener('change', function(e) { currentMajorFilter = e.target.value; updateMajorStats(); renderDocuments(); });
+            loadDocuments(); 
+            loadDeleteRequests();
+            loadUnreadCount(); 
+            setInterval(loadUnreadCount, 30000);
+            setInterval(loadDeleteRequests, 30000);
+        });
+        
+        // Export functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.switchTab = switchTab;
+        window.viewDocument = viewDocument;
+        window.downloadDocument = downloadDocument;
+        window.refreshDocuments = refreshDocuments;
+        window.filterByMajor = filterByMajor;
+        window.openDeleteModal = openDeleteModal;
+        window.closeDeleteModal = closeDeleteModal;
+        window.confirmDeleteDocument = confirmDeleteDocument;
+        window.deleteAllDocuments = deleteAllDocuments;
+        window.exportToExcel = exportToExcel;
+        window.openRenameModal = openRenameModal;
+        window.closeRenameModal = closeRenameModal;
+        window.confirmRenameDocument = confirmRenameDocument;
+        window.openAddDocumentModal = openAddDocumentModal;
+        window.closeAddDocumentModal = closeAddDocumentModal;
+        window.uploadNewDocument = uploadNewDocument;
+        window.openRequestDeleteModal = openRequestDeleteModal;
+        window.closeRequestDeleteModal = closeRequestDeleteModal;
+        window.submitDeleteRequest = submitDeleteRequest;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+        window.loadDeleteRequests = loadDeleteRequests;
+        window.refreshDeleteRequests = refreshDeleteRequests;
+        window.filterDeleteRequests = filterDeleteRequests;
+        window.showRequestDetail = showRequestDetail;
+        window.closeRequestDetailModal = closeRequestDetailModal;
+        window.approveDeleteRequest = approveDeleteRequest;
+        window.rejectDeleteRequest = rejectDeleteRequest;
+    </script>
+</body>
+</html>

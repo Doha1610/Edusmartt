@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Nhóm học tập của tôi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.2s ease;
+            margin: 0;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body.light-mode {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1f2937;
+        }
+        
+        body.dark-mode {
+            background: transparent;
+            color: #f3f4f6;
+        }
+        
+        #star-canvas-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        
+        body.light-mode #star-canvas-background {
+            display: none;
+        }
+        
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+        }
+
+        body.dark-mode .bg-white,
+        body.dark-mode .bg-gray-50,
+        body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        body.dark-mode .border-gray-200,
+        body.dark-mode .border-gray-300 {
+            border-color: #334155 !important;
+        }
+
+        /* Sidebar */
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 40;
+            transition: all 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+
+        body.dark-mode .left-sidebar-dark {
+            background: #030712;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 4px 12px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+        }
+
+        @media (max-width: 1024px) {
+            .left-sidebar-dark { transform: translateX(-100%); position: fixed; z-index: 50; }
+            .left-sidebar-dark.mobile-open-left { transform: translateX(0); }
+            .main-container { margin-left: 0; }
+            .mobile-menu-btn { display: block; }
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 60;
+            background: #0a0c10;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Group Card */
+        .group-card {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .group-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        
+        /* Chat styles */
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+        }
+        .message-user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .message-other {
+            background: #f3f4f6;
+        }
+        body.dark-mode .message-other {
+            background: #374151;
+            color: #f3f4f6;
+        }
+        
+        .member-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+    
+    <div class="mobile-menu-btn" onclick="toggleMobileSidebar()">
+        <i class="fas fa-bars text-xl"></i>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Sinh viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-group-title">📚 HỌC TẬP</div>
+        <div class="nav-item" onclick="window.location.href='/'">
+            <i class="fas fa-home"></i><span>Trang chủ</span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='/student/documents'">
+            <i class="fas fa-folder-open"></i><span>Kho tài liệu</span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='/assignments/student'">
+            <i class="fas fa-tasks"></i><span>Bài tập của tôi</span>
+        </div>
+        
+        <div class="nav-group-title">🤖 TƯƠNG TÁC & AI</div>
+        <div class="nav-item" onclick="window.location.href='/forum'">
+            <i class="fas fa-comments"></i><span>Diễn đàn</span>
+        </div>
+        <div class="nav-item active" onclick="window.location.href='/my-groups'">
+            <i class="fas fa-users"></i><span>Nhóm học tập</span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='/student/quiz'">
+            <i class="fas fa-gamepad"></i><span>Flashcard & Ôn tập</span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='/student/suggest-documents'">
+            <i class="fas fa-lightbulb"></i><span>Gợi ý & Tải tài liệu</span>
+        </div>
+        
+        <div class="nav-group-title">📊 THEO DÕI</div>
+        <div class="nav-item" onclick="window.location.href='/student/transcript'">
+            <i class="fas fa-graduation-cap"></i><span>Bảng điểm</span>
+        </div>
+        
+        <div class="nav-group-title">⚙️ CÀI ĐẶT</div>
+        <div class="nav-item" onclick="window.location.href='/student/settings'">
+            <i class="fas fa-cog"></i><span>Cài đặt chung</span>
+        </div>
+        <div class="nav-item" onclick="toggleTheme()">
+            <i class="fas fa-moon" id="theme-icon"></i><span id="theme-text">Chế độ tối</span>
+        </div>
+        <div class="nav-item" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                👥 Nhóm học tập
+                            </h1>
+                            <p class="text-gray-500 text-sm mt-1">Cùng nhau học tập và trao đổi kiến thức</p>
+                        </div>
+                        <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                            <i class="fas fa-moon text-gray-600 dark:text-yellow-300"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div class="flex gap-6 flex-col lg:flex-row">
+                    
+                    <!-- CỘT TRÁI: Danh sách nhóm -->
+                    <div class="w-80 flex-shrink-0 space-y-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="font-bold text-gray-800 dark:text-white">
+                                    <i class="fas fa-users text-purple-500 mr-2"></i> Nhóm của tôi
+                                </h2>
+                                <button onclick="showCreateGroupModal()" 
+                                        class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1.5 rounded-lg text-xs">
+                                    <i class="fas fa-plus mr-1"></i> Tạo nhóm
+                                </button>
+                            </div>
+                            
+                            <div class="flex gap-2 mb-4">
+                                <input type="text" id="join-code-input" placeholder="Nhập mã mời" 
+                                       class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-700 dark:text-white">
+                                <button onclick="joinGroupByCode()" class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm">
+                                    <i class="fas fa-sign-in-alt"></i> Tham gia
+                                </button>
+                            </div>
+                            
+                            <div id="groups-list" class="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
+                                <div class="text-center text-gray-500 py-8 text-sm">
+                                    <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CỘT GIỮA: Chat nhóm -->
+                    <div class="flex-1">
+                        <div id="chat-panel" class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hidden">
+                            <div class="bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-3 flex justify-between items-center">
+                                <div>
+                                    <h3 id="chat-group-name" class="text-white font-semibold">Tên nhóm</h3>
+                                    <p id="chat-group-info" class="text-blue-100 text-xs">Đang tải...</p>
+                                </div>
+                                <button onclick="showGroupMembers()" class="text-white hover:text-blue-200 text-sm">
+                                    <i class="fas fa-users mr-1"></i> Thành viên
+                                </button>
+                            </div>
+                            
+                            <div id="chat-messages" class="chat-messages p-4 space-y-3">
+                                <div class="text-center text-gray-500 py-8">
+                                    <i class="fas fa-comments text-3xl mb-2 opacity-50"></i>
+                                    <p class="text-sm">Chọn một nhóm để bắt đầu chat</p>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t border-gray-200 p-3 bg-gray-50 dark:bg-gray-700">
+                                <div class="flex gap-2">
+                                    <input type="text" id="message-input" placeholder="Nhập tin nhắn..." 
+                                           class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white"
+                                           onkeypress="if(event.key === 'Enter') sendGroupMessage()">
+                                    <button onclick="sendGroupMessage()" 
+                                            class="bg-purple-500 hover:bg-purple-600 text-white px-4 rounded-lg transition">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="no-group-selected" class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-12 text-center">
+                            <i class="fas fa-users-slash text-5xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">Chưa chọn nhóm nào</p>
+                            <p class="text-sm text-gray-400">Hãy chọn một nhóm để bắt đầu chat</p>
+                        </div>
+                    </div>
+                    
+                    <!-- CỘT PHẢI: Thành viên (ẩn ban đầu) -->
+                    <div id="members-panel" class="w-72 flex-shrink-0 hidden">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sticky top-20">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-semibold text-gray-800 dark:text-white">
+                                    <i class="fas fa-user-friends text-purple-500 mr-2"></i> Thành viên
+                                </h3>
+                                <button onclick="hideMembersPanel()" class="text-gray-400 hover:text-gray-600">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div id="members-list" class="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+                                <div class="text-center text-gray-500 py-4 text-sm">Đang tải...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal tạo nhóm -->
+    <div id="create-group-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6">
+            <h3 class="text-xl font-bold mb-4 dark:text-white">➕ Tạo nhóm mới</h3>
+            <div class="space-y-3">
+                <input type="text" id="group-name" placeholder="Tên nhóm *" class="w-full p-2 border rounded-lg dark:bg-gray-700">
+                <textarea id="group-desc" rows="2" placeholder="Mô tả nhóm" class="w-full p-2 border rounded-lg dark:bg-gray-700"></textarea>
+                <select id="group-major" class="w-full p-2 border rounded-lg dark:bg-gray-700">
+                    <option value="">-- Chọn ngành --</option>
+                    <option value="Công nghệ thông tin">💻 Công nghệ thông tin</option>
+                    <option value="Kinh tế">💰 Kinh tế</option>
+                    <option value="Kỹ thuật">⚙️ Kỹ thuật</option>
+                    <option value="Ngoại ngữ">🌍 Ngoại ngữ</option>
+                    <option value="Toán học">📐 Toán học</option>
+                </select>
+                <input type="text" id="group-subject" placeholder="Môn học" class="w-full p-2 border rounded-lg dark:bg-gray-700">
+            </div>
+            <div class="flex gap-3 justify-end mt-5">
+                <button onclick="closeCreateGroupModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg">Hủy</button>
+                <button onclick="createGroup()" class="px-4 py-2 bg-purple-500 text-white rounded-lg">Tạo nhóm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== HỆ THỐNG NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); 
+                    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; 
+                    starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; 
+                    s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; 
+                    if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); 
+                    g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; 
+                    starCtx.lineWidth = 2; 
+                    starCtx.beginPath(); 
+                    starCtx.moveTo(m.x, m.y); 
+                    starCtx.lineTo(m.x - m.len, m.y - m.len); 
+                    starCtx.stroke(); 
+                    m.x += m.speed; 
+                    m.y += m.speed; 
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { 
+                if (starCanvas && isStarSystemActive) { 
+                    starCanvas.width = window.innerWidth; 
+                    starCanvas.height = window.innerHeight; 
+                    initStarsPro(); 
+                } 
+            }); 
+            setInterval(() => { 
+                if (isStarSystemActive) { 
+                    let c = Math.floor(Math.random() * 2) + 3; 
+                    for (let i = 0; i < c; i++) createMeteorPro(); 
+                } 
+            }, 1500); 
+            initStarsPro(); 
+            drawStarsPro(); 
+        }
+        
+        let isDarkModeActive = false;
+        let currentGroupId = null;
+        let currentGroupName = null;
+        let messageInterval = null;
+        
+        function toggleTheme() { 
+            const body = document.body, themeIcon = document.getElementById('theme-icon'), themeText = document.getElementById('theme-text'), starCanvasElem = document.getElementById('star-canvas-background'); 
+            isDarkModeActive = !isDarkModeActive; 
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); body.classList.add('dark-mode'); 
+                themeIcon.classList.remove('fa-moon'); themeIcon.classList.add('fa-sun'); themeText.textContent = 'Chế độ sáng'; 
+                if (starCanvasElem) { 
+                    starCanvasElem.style.display = 'block'; 
+                    if (!starCtx) { isStarSystemActive = true; initStarfieldPro(); } 
+                    else { isStarSystemActive = true; if (!starAnimationId) { function restartDraw() { if (starCtx && starCanvas && isStarSystemActive) drawStarsPro(); } restartDraw(); } } 
+                } 
+            } else { 
+                body.classList.remove('dark-mode'); body.classList.add('light-mode'); 
+                themeIcon.classList.remove('fa-sun'); themeIcon.classList.add('fa-moon'); themeText.textContent = 'Chế độ tối'; 
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; 
+                isStarSystemActive = false; 
+                if (starAnimationId) { cancelAnimationFrame(starAnimationId); starAnimationId = null; } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { setTimeout(() => { toggleTheme(); }, 20); } 
+        else { const canvasBg = document.getElementById('star-canvas-background'); if (canvasBg) canvasBg.style.display = 'none'; }
+
+        // ==================== HÀM TIỆN ÍCH ====================
+        function toggleMobileSidebar() { document.getElementById('leftSidebar').classList.toggle('mobile-open-left'); }
+
+        async function logout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login';
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleString('vi-VN');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-3 py-1.5 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-1"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ==================== DANH SÁCH NHÓM ====================
+        async function loadGroups() {
+            const container = document.getElementById('groups-list');
+            try {
+                const res = await fetch('/api/student/groups');
+                const data = await res.json();
+                
+                if (data.success && data.groups.length > 0) {
+                    container.innerHTML = data.groups.map(group => `
+                        <div class="group-card bg-gray-50 dark:bg-gray-700 rounded-lg p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                             onclick="selectGroup(${group.id}, '${escapeHtml(group.name)}')">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-users text-purple-500 text-sm"></i>
+                                        <span class="font-medium text-sm truncate">${escapeHtml(group.name)}</span>
+                                        ${group.role === 'owner' ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">Chủ nhóm</span>' : ''}
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">${group.member_count || 0} thành viên</p>
+                                    ${group.major ? `<p class="text-xs text-gray-400 mt-0.5">📖 ${escapeHtml(group.major)}</p>` : ''}
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-400">Mã: ${group.invite_code}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `<div class="text-center text-gray-500 py-8"><i class="fas fa-users-slash text-3xl mb-2 opacity-50"></i><p class="text-sm">Bạn chưa tham gia nhóm nào</p><p class="text-xs mt-1">Hãy tạo nhóm hoặc nhập mã mời</p></div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="text-center text-red-500 py-4 text-sm">❌ Lỗi tải danh sách</div>`;
+            }
+        }
+
+        // ==================== CHỌN NHÓM ====================
+        async function selectGroup(groupId, groupName) {
+            currentGroupId = groupId;
+            currentGroupName = groupName;
+            
+            document.getElementById('chat-panel').classList.remove('hidden');
+            document.getElementById('no-group-selected').classList.add('hidden');
+            document.getElementById('chat-group-name').textContent = groupName;
+            document.getElementById('chat-group-info').textContent = 'Đang tải tin nhắn...';
+            
+            await loadGroupMessages();
+            
+            if (messageInterval) clearInterval(messageInterval);
+            messageInterval = setInterval(loadGroupMessages, 5000);
+        }
+        
+        async function loadGroupMessages() {
+            if (!currentGroupId) return;
+            
+            try {
+                const res = await fetch(`/api/student/groups/${currentGroupId}/messages?limit=100`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    document.getElementById('chat-group-info').textContent = `${data.messages.length} tin nhắn`;
+                    renderMessages(data.messages);
+                }
+            } catch (error) {
+                console.error('Lỗi tải tin nhắn:', error);
+            }
+        }
+        
+        function renderMessages(messages) {
+            const container = document.getElementById('chat-messages');
+            
+            if (!messages || messages.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-8"><i class="fas fa-comments text-3xl mb-2 opacity-50"></i><p class="text-sm">Chưa có tin nhắn nào</p><p class="text-xs">Hãy là người đầu tiên gửi tin nhắn</p></div>`;
+                return;
+            }
+            
+            // Lấy tên user hiện tại từ localStorage hoặc API
+            const currentUser = { fullname: '{{ user.fullname }}' };
+            
+            container.innerHTML = messages.map(msg => {
+                const isCurrentUser = (msg.username === currentUser.fullname);
+                return `
+                    <div class="flex ${isCurrentUser ? 'justify-end' : 'justify-start'} fade-in">
+                        <div class="max-w-[70%]">
+                            ${!isCurrentUser ? `<p class="text-xs text-gray-500 mb-1 ml-1">${escapeHtml(msg.username)}</p>` : ''}
+                            <div class="${isCurrentUser ? 'message-user' : 'message-other'} rounded-2xl ${isCurrentUser ? 'rounded-tr-none' : 'rounded-tl-none'} px-3 py-2">
+                                <p class="text-sm break-words">${escapeHtml(msg.message)}</p>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1 ${isCurrentUser ? 'text-right' : 'text-left'}">${formatTime(msg.created_at)}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        async function sendGroupMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || !currentGroupId) return;
+            
+            const formData = new FormData();
+            formData.append('message', message);
+            
+            try {
+                const res = await fetch(`/api/student/groups/${currentGroupId}/send`, { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                if (data.success) {
+                    input.value = '';
+                    await loadGroupMessages();
+                } else {
+                    showToast(data.detail || 'Gửi tin nhắn thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối!', 'error');
+            }
+        }
+
+        // ==================== TẠO NHÓM ====================
+        function showCreateGroupModal() {
+            document.getElementById('create-group-modal').style.display = 'flex';
+        }
+        
+        function closeCreateGroupModal() {
+            document.getElementById('create-group-modal').style.display = 'none';
+            document.getElementById('group-name').value = '';
+            document.getElementById('group-desc').value = '';
+            document.getElementById('group-major').value = '';
+            document.getElementById('group-subject').value = '';
+        }
+        
+        async function createGroup() {
+            const name = document.getElementById('group-name').value.trim();
+            if (!name) {
+                showToast('Vui lòng nhập tên nhóm!', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('description', document.getElementById('group-desc').value);
+            formData.append('major', document.getElementById('group-major').value);
+            formData.append('subject', document.getElementById('group-subject').value);
+            
+            try {
+                const res = await fetch('/api/student/groups/create', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                if (data.success) {
+                    showToast(`✅ Tạo nhóm thành công! Mã mời: ${data.invite_code}`);
+                    closeCreateGroupModal();
+                    loadGroups();
+                } else {
+                    showToast(data.detail || 'Tạo nhóm thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối!', 'error');
+            }
+        }
+        
+        // ==================== THAM GIA NHÓM ====================
+        async function joinGroupByCode() {
+            const inviteCode = document.getElementById('join-code-input').value.trim();
+            if (!inviteCode) {
+                showToast('Vui lòng nhập mã mời!', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('invite_code', inviteCode);
+            
+            try {
+                const res = await fetch('/api/student/groups/join', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                if (data.success) {
+                    showToast(`✅ Đã tham gia nhóm "${data.group_name}"!`);
+                    document.getElementById('join-code-input').value = '';
+                    loadGroups();
+                } else {
+                    showToast(data.detail || 'Tham gia nhóm thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối!', 'error');
+            }
+        }
+        
+        // ==================== THÀNH VIÊN ====================
+        async function showGroupMembers() {
+            if (!currentGroupId) return;
+            
+            try {
+                const res = await fetch(`/api/student/groups/${currentGroupId}/members`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    const membersList = document.getElementById('members-list');
+                    membersList.innerHTML = data.members.map(member => {
+                        const avatarColor = member.role === 'owner' ? 'bg-yellow-500' : 'bg-purple-500';
+                        return `
+                            <div class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <div class="member-avatar ${avatarColor} text-xs">
+                                    ${member.fullname ? member.fullname.charAt(0).toUpperCase() : '?'}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium truncate">${escapeHtml(member.fullname)}</p>
+                                    <p class="text-xs text-gray-500">${member.role === 'owner' ? '👑 Chủ nhóm' : '👤 Thành viên'}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    document.getElementById('members-panel').classList.remove('hidden');
+                }
+            } catch (error) {
+                showToast('Lỗi tải danh sách thành viên', 'error');
+            }
+        }
+        
+        function hideMembersPanel() {
+            document.getElementById('members-panel').classList.add('hidden');
+        }
+
+        // Khởi tạo
+        loadGroups();
+        
+        window.toggleMobileSidebar = toggleMobileSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.selectGroup = selectGroup;
+        window.sendGroupMessage = sendGroupMessage;
+        window.showCreateGroupModal = showCreateGroupModal;
+        window.closeCreateGroupModal = closeCreateGroupModal;
+        window.createGroup = createGroup;
+        window.joinGroupByCode = joinGroupByCode;
+        window.showGroupMembers = showGroupMembers;
+        window.hideMembersPanel = hideMembersPanel;
+    </script>
+</body>
+</html>

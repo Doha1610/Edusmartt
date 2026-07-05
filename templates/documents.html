@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Kho tài liệu giáo viên</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.2s ease;
+            margin: 0;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        body.light-mode {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1f2937;
+        }
+        
+        body.dark-mode {
+            background: transparent;
+            color: #f3f4f6;
+        }
+        
+        #star-canvas-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        
+        body.light-mode #star-canvas-background {
+            display: none;
+        }
+        
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        body.dark-mode .bg-white,
+        body.dark-mode .bg-gray-50,
+        body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        body.dark-mode .border-gray-200,
+        body.dark-mode .border-gray-300 {
+            border-color: #334155 !important;
+        }
+
+        /* Sidebar */
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+
+        body.dark-mode .left-sidebar-dark {
+            background: #030712;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 4px 12px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+            width: auto;
+        }
+
+        /* Collapsible Group Styles */
+        .collapsible-group {
+            margin-bottom: 4px;
+        }
+
+        .nav-group-toggle {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+
+        .group-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible-group.collapsed .group-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-group.collapsed .nav-group-items {
+            display: none;
+        }
+
+        /* Nút 3 gạch - chỉ hiện trên mobile */
+        .sidebar-menu-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .sidebar-menu-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn {
+                display: block !important;
+            }
+            .left-sidebar-dark { 
+                transform: translateX(-100%);
+            }
+            .left-sidebar-dark.open { 
+                transform: translateX(0) !important;
+            }
+            .main-container { 
+                margin-left: 0; 
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn {
+                display: none !important;
+            }
+            .left-sidebar-dark {
+                transform: translateX(0) !important;
+            }
+            .main-container {
+                margin-left: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .p-4, .p-6 {
+                padding: 12px !important;
+            }
+            h1.text-2xl {
+                font-size: 1.25rem !important;
+            }
+            .text-sm {
+                font-size: 0.75rem !important;
+            }
+            .text-xs {
+                font-size: 0.65rem !important;
+            }
+            .grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+                gap: 12px !important;
+            }
+            .grid-cols-2.md\:grid-cols-4.lg\:grid-cols-5 {
+                gap: 8px !important;
+            }
+            .stat-card {
+                padding: 8px !important;
+            }
+            .stat-card .text-3xl {
+                font-size: 1.5rem !important;
+            }
+            .stat-card i {
+                font-size: 1.5rem !important;
+            }
+            .robot-button {
+                width: 120px !important;
+                height: 120px !important;
+                bottom: 10px !important;
+                right: 10px !important;
+            }
+            #lottie-robot {
+                width: 120px !important;
+                height: 120px !important;
+            }
+            .chat-widget {
+                width: calc(100vw - 32px) !important;
+                right: 16px !important;
+                left: 16px !important;
+                bottom: 130px !important;
+                height: 450px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 13px;
+            }
+            .fa-lg, .fa-xl {
+                font-size: 1rem !important;
+            }
+            .notification-dropdown {
+                width: calc(100vw - 32px) !important;
+                left: 16px !important;
+                right: 16px !important;
+            }
+            .custom-tab {
+                padding: 8px 16px !important;
+                font-size: 14px !important;
+            }
+            .flex.gap-3 {
+                flex-wrap: wrap !important;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Document Cards */
+        .document-card {
+            transition: all 0.3s ease;
+        }
+        .document-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .major-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 500;
+            background: #e9d5ff;
+            color: #6b21a5;
+        }
+        
+        body.dark-mode .major-badge {
+            background: #5b21b6;
+            color: #e9d5ff;
+        }
+        
+        /* Approval Card */
+        .approval-card {
+            transition: all 0.2s;
+        }
+        .approval-card:hover {
+            transform: translateX(3px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-approved { background: #d1fae5; color: #065f46; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        
+        body.dark-mode .status-pending { background: #78350f; color: #fde68a; }
+        body.dark-mode .status-approved { background: #064e3b; color: #a7f3d0; }
+        body.dark-mode .status-rejected { background: #7f1d1d; color: #fecaca; }
+
+        /* Tabs */
+        .custom-tab {
+            padding: 10px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .custom-tab.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+        .custom-tab:hover:not(.active) {
+            background: #e2e8f0;
+        }
+        body.dark-mode .custom-tab:hover:not(.active) {
+            background: #334155;
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.5rem;
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+        body.dark-mode .notification-dropdown {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+        .notification-item {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
+        body.dark-mode .notification-item:hover {
+            background: #334155;
+        }
+        .notification-unread {
+            background: #faf5ff;
+        }
+        body.dark-mode .notification-unread {
+            background: #4c1d95;
+        }
+
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto;
+                width: 65vw !important;
+                max-width: 320px;
+                min-width: 200px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto;
+                width: 65vw !important;
+                min-width: 180px;
+                max-width: 280px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .notification-dropdown {
+                width: 70vw !important;
+                min-width: 160px;
+            }
+        }
+
+        /* Robot Button */
+        .robot-button {
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 30px !important;
+            width: 180px;
+            height: 180px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .robot-button:hover {
+            transform: scale(1.05);
+        }
+        
+        #lottie-robot {
+            width: 180px;
+            height: 180px;
+        }
+        
+        .chat-widget {
+            position: fixed;
+            bottom: 160px;
+            right: 30px;
+            width: 380px;
+            height: 500px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            z-index: 999;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        body.dark-mode .chat-widget {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f9fafb;
+        }
+        
+        body.dark-mode .chat-messages {
+            background: #0f172a;
+        }
+        
+        .chat-input-area {
+            padding: 15px;
+            border-top: 1px solid #e5e7eb;
+            background: white;
+            display: flex;
+            gap: 10px;
+        }
+        
+        body.dark-mode .chat-input-area {
+            background: #1e293b;
+            border-top-color: #334155;
+        }
+        
+        .message-user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 80%;
+            margin-left: auto;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+        
+        .message-bot {
+            background: #e5e7eb;
+            color: #1f2937;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 80%;
+            margin-right: auto;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+        
+        body.dark-mode .message-bot {
+            background: #334155;
+            color: #f1f5f9;
+        }
+        
+        /* Suggestion card trong chat */
+        .chat-suggestion-card {
+            background: #f9fafb;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .chat-suggestion-card:hover {
+            background: #f3f4f6;
+            transform: translateX(3px);
+        }
+        body.dark-mode .chat-suggestion-card {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        body.dark-mode .chat-suggestion-card:hover {
+            background: #334155;
+        }
+        .chat-btn-sm-view {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        .chat-btn-sm-view:hover {
+            background: #2563eb;
+        }
+        .chat-btn-sm-download {
+            background: #10b981;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        .chat-btn-sm-download:hover {
+            background: #059669;
+        }
+        
+        .typing-indicator {
+            display: inline-block;
+            padding: 8px 12px;
+            background: #e5e7eb;
+            border-radius: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .typing-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #6b7280;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-5px); opacity: 1; }
+        }
+
+        body.dark-mode select,
+        body.dark-mode select option {
+            background-color: #1e293b !important;
+            color: #f3f4f6 !important;
+            border-color: #475569 !important;
+        }
+        body.dark-mode input,
+        body.dark-mode textarea {
+            background-color: #1e293b !important;
+            color: #f3f4f6 !important;
+            border-color: #475569 !important;
+        }
+
+        /* Upload area */
+        .upload-zone {
+            border: 2px dashed #c4b5fd;
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #faf5ff;
+        }
+        .upload-zone:hover {
+            border-color: #7c3aed;
+            background: #f3e8ff;
+        }
+        .upload-zone.dragover {
+            border-color: #7c3aed;
+            background: #ede9fe;
+            transform: scale(1.02);
+        }
+        body.dark-mode .upload-zone {
+            background: #1e1b4b;
+            border-color: #4c1d95;
+        }
+        body.dark-mode .upload-zone:hover {
+            border-color: #7c3aed;
+            background: #2e1a5e;
+        }
+        .upload-zone i {
+            font-size: 48px;
+            color: #8b5cf6;
+        }
+        .upload-zone p {
+            margin-top: 10px;
+            color: #6b7280;
+        }
+        body.dark-mode .upload-zone p {
+            color: #a5b4fc;
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar với Collapsible Groups -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars text-gray-400 hover:text-white text-xl"></i>
+                </div>
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Giáo viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 1: QUẢN LÝ CHÍNH -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="manage">
+                <span>📋 QUẢN LÝ CHÍNH</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="manage">
+                <div class="nav-item" onclick="window.location.href='/'">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Trang chủ</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/classroom'">
+                    <i class="fas fa-chalkboard"></i>
+                    <span>Lớp học</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/assignments'">
+                    <i class="fas fa-tasks"></i>
+                    <span>Bài tập & Giao bài</span>
+                </div>
+                <div class="nav-item active" onclick="window.location.href='/documents'">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Kho tài liệu</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 2: QUẢN LÝ NGƯỜI DÙNG -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="users">
+                <span>👥 QUẢN LÝ NGƯỜI DÙNG</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="users">
+                <div class="nav-item" onclick="window.location.href='/students'">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Danh sách sinh viên</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/attendance'">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Điểm danh & Chuyên cần</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 3: ĐÁNH GIÁ & THEO DÕI -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="evaluate">
+                <span>📊 ĐÁNH GIÁ & THEO DÕI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-item" onclick="window.location.href='/teacher/approvals'">
+                <i class="fas fa-check-double"></i>
+                <span>Phê duyệt tài liệu</span>
+            </div>
+            <div class="nav-group-items" data-group="evaluate">
+                <div class="nav-item" onclick="window.location.href='/grades'">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Bảng điểm & Xếp loại</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/analytics'">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Phân tích tiến độ</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 4: TƯƠNG TÁC & AI -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="interact">
+                <span>🤖 TƯƠNG TÁC & AI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="interact">
+                <div class="nav-item" onclick="window.location.href='/forum'">
+                    <i class="fas fa-comments"></i>
+                    <span>Diễn đàn thảo luận</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/teacher/quiz'">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Quiz & Trò chơi học tập</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/suggest-documents'">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Gợi ý & Tải tài liệu</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 5: CÀI ĐẶT -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="settings">
+                <span>⚙️ CÀI ĐẶT</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="settings">
+                <div class="nav-item" onclick="window.location.href='/settings'">
+                    <i class="fas fa-cog"></i>
+                    <span>Cài đặt chung</span>
+                </div>
+                <div class="nav-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                    <span id="theme-text-sidebar">Chế độ tối</span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <!-- Header -->
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-base sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                    Kho tài liệu
+                                </h1>
+                                <p class="text-gray-500 text-xs sm:text-sm mt-1">Quản lý tài liệu và phê duyệt từ sinh viên</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <!-- Notification Bell -->
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 transition">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300 text-base sm:text-lg"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y">
+                                        <div class="p-4 text-center text-gray-500 text-sm">Đang tải...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300 text-base sm:text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                
+                <!-- Tabs -->
+                <div class="flex gap-2 sm:gap-3 mb-6 border-b pb-2 overflow-x-auto">
+                    <div class="custom-tab active text-sm sm:text-base whitespace-nowrap" onclick="switchTab('documents')">
+                        📚 Tài liệu chung
+                    </div>
+                    <div class="custom-tab text-sm sm:text-base whitespace-nowrap" onclick="switchTab('approvals')">
+                        📄 Phê duyệt tài liệu
+                        <span id="pending-count-badge" class="ml-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 hidden">0</span>
+                    </div>
+                    <div class="custom-tab text-sm sm:text-base whitespace-nowrap" onclick="switchTab('upload')">
+                        📤 Tải lên
+                    </div>
+                </div>
+
+                <!-- Tab Tài liệu chung -->
+                <div id="documents-tab" class="main-tab-content">
+                    <!-- Thống kê theo ngành -->
+                    <div class="mb-6">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
+                            <i class="fas fa-chart-pie text-purple-500"></i>
+                            Thống kê theo ngành
+                        </h3>
+                        <div id="majors-stats" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
+                            <div class="text-center py-4 text-gray-500 text-sm">Đang tải...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Search và Filter -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 mb-6 fade-in">
+                        <div class="flex flex-col md:flex-row gap-3 sm:gap-4">
+                            <div class="flex-1 relative">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="text" id="search-input" placeholder="Tìm kiếm tài liệu..." 
+                                       class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 dark:text-white text-sm">
+                            </div>
+                            <div class="flex flex-wrap gap-2 sm:gap-3">
+                                <select id="major-filter" class="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 dark:text-white text-sm">
+                                    <option value="all">📁 Tất cả ngành</option>
+                                </select>
+                                <select id="sort-select" class="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 dark:text-white text-sm">
+                                    <option value="newest">🕐 Mới nhất</option>
+                                    <option value="oldest">🕐 Cũ nhất</option>
+                                    <option value="name">🔤 Tên A-Z</option>
+                                    <option value="size">📦 Kích thước</option>
+                                </select>
+                                <button onclick="refreshDocuments()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg transition text-sm">
+                                    <i class="fas fa-sync-alt mr-1 sm:mr-2"></i> Làm mới
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thống kê nhanh -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 fade-in">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div><p class="text-blue-100 text-xs sm:text-sm">Tổng số tài liệu</p><p id="total-docs" class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">0</p></div>
+                                <i class="fas fa-file-pdf text-3xl sm:text-5xl opacity-50"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div><p class="text-green-100 text-xs sm:text-sm">Tổng dung lượng</p><p id="total-size" class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">0 MB</p></div>
+                                <i class="fas fa-database text-3xl sm:text-5xl opacity-50"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div><p class="text-purple-100 text-xs sm:text-sm">Chờ phê duyệt</p><p id="pending-count" class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">0</p></div>
+                                <i class="fas fa-clock text-3xl sm:text-5xl opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách tài liệu -->
+                    <div id="documents-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        <div class="col-span-full text-center py-8 sm:py-12">
+                            <i class="fas fa-spinner fa-spin text-3xl sm:text-4xl text-purple-500 mb-4"></i>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm">Đang tải danh sách tài liệu...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Phê duyệt tài liệu -->
+                <div id="approvals-tab" class="main-tab-content" style="display: none;">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6">
+                        <h2 class="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-file-pdf text-purple-500"></i> Tài liệu chờ phê duyệt
+                        </h2>
+                        <p class="text-gray-500 text-xs sm:text-sm mb-4">Các tài liệu sinh viên đã tải lên và yêu cầu phê duyệt theo chuyên ngành của bạn</p>
+                        <div id="approvals-list" class="space-y-4">
+                            <div class="text-center text-gray-500 py-8 text-sm">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <p>Đang tải danh sách...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Tải lên tài liệu -->
+                <div id="upload-tab" class="main-tab-content" style="display: none;">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6">
+                        <h2 class="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-upload text-purple-500"></i> Tải lên tài liệu
+                        </h2>
+                        <p class="text-gray-500 text-xs sm:text-sm mb-4">
+                            ⚠️ Chỉ được tải lên tài liệu thuộc <strong class="text-purple-600">ngành của bạn</strong>. 
+                            <span id="teacher-major-display" class="text-blue-500 font-medium"></span>
+                        </p>
+                        
+                        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p><strong>Kéo thả file PDF vào đây</strong><br>hoặc nhấn để chọn file</p>
+                            <p class="text-xs text-gray-400 mt-2">Chỉ hỗ trợ file PDF (tối đa 50MB)</p>
+                            <input type="file" id="file-input" accept=".pdf" class="hidden" onchange="handleFileSelect(event)">
+                        </div>
+                        
+                        <div id="file-info" class="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg hidden">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-file-pdf text-red-500 text-2xl"></i>
+                                    <div>
+                                        <p id="file-name-display" class="font-medium text-gray-800 dark:text-white text-sm"></p>
+                                        <p id="file-size-display" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                                    </div>
+                                </div>
+                                <button onclick="clearFileSelection()" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 flex gap-3">
+                            <button onclick="uploadTeacherDocument()" id="upload-btn" class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50 hidden">
+                                <i class="fas fa-upload mr-2"></i> Tải lên
+                            </button>
+                            <div id="upload-progress" class="hidden flex-1">
+                                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                    <div id="upload-progress-bar" class="bg-purple-600 h-2.5 rounded-full transition-all" style="width: 0%"></div>
+                                </div>
+                                <p id="upload-progress-text" class="text-xs text-gray-500 mt-1">Đang tải lên...</p>
+                            </div>
+                        </div>
+                        
+                        <div id="upload-status" class="mt-4 hidden">
+                            <div id="upload-result" class="p-3 rounded-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal xem PDF -->
+    <div id="pdf-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50" style="display: none;">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-11/12 h-5/6 flex flex-col">
+            <div class="flex justify-between items-center p-3 sm:p-4 border-b dark:border-gray-700">
+                <h3 id="modal-title" class="text-base sm:text-lg font-semibold text-gray-800 dark:text-white">Xem tài liệu</h3>
+                <button onclick="closePdfModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl sm:text-2xl"></i>
+                </button>
+            </div>
+            <div class="flex-1 p-2 sm:p-4 overflow-auto">
+                <iframe id="pdf-viewer" src="" class="w-full h-full border-0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal phê duyệt -->
+    <div id="approval-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-4 sm:p-6 mx-4">
+            <h3 class="text-lg sm:text-xl font-bold mb-4 dark:text-white">📄 Phê duyệt tài liệu</h3>
+            <p id="approval-doc-name" class="text-gray-600 dark:text-gray-400 mb-4 text-sm"></p>
+            <textarea id="reject-reason" rows="3" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 mb-4 hidden text-sm" placeholder="Nhập lý do từ chối..."></textarea>
+            <input type="hidden" id="approval-doc-id">
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeApprovalModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm">Hủy</button>
+                <button onclick="showRejectReason()" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm" id="reject-btn">Từ chối</button>
+                <button onclick="approveDocument()" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm">Phê duyệt</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal yêu cầu xóa tài liệu (gửi admin) -->
+    <div id="delete-request-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-4 sm:p-6 mx-4">
+            <div class="flex items-center gap-3 mb-4">
+                <i class="fas fa-flag text-yellow-500 text-2xl"></i>
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Yêu cầu xóa tài liệu</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-300 mb-3" id="delete-doc-name"></p>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Lý do yêu cầu xóa:</label>
+                <textarea id="delete-reason" rows="3" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="VD: Tài liệu trùng lặp, nội dung không phù hợp, vi phạm bản quyền..."></textarea>
+            </div>
+            <input type="hidden" id="delete-file-name">
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeDeleteRequestModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm">Hủy</button>
+                <button onclick="submitDeleteRequest()" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm">
+                    <i class="fas fa-paper-plane mr-1"></i> Gửi yêu cầu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Robot Button -->
+    <div id="robot-button" class="robot-button">
+        <div id="lottie-robot"></div>
+    </div>
+
+    <!-- Chat Widget -->
+    <div id="chat-widget" class="chat-widget">
+        <div class="chat-header">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-robot text-xl"></i>
+                <span class="font-semibold">Amy - Trợ lý AI</span>
+            </div>
+            <button onclick="toggleChat()" class="text-white hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="chat-messages" class="chat-messages">
+            <div class="message-bot">Xin chào! Mình là Amy - trợ lý AI của EduSmart. Mình có thể:<br>📖 Gợi ý tài liệu học tập<br>💬 Trò chuyện thông thường<br>📥 Xem và tải tài liệu<br>Bạn cần mình giúp gì ạ? ^^</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Nhập câu hỏi... (nhấn Enter để gửi)" 
+                   class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 dark:text-white text-sm">
+            <button onclick="sendMessage()" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:opacity-90">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== HỆ THỐNG NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); 
+                    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; 
+                    starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; 
+                    s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; 
+                    if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); 
+                    g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; 
+                    starCtx.lineWidth = 2; 
+                    starCtx.beginPath(); 
+                    starCtx.moveTo(m.x, m.y); 
+                    starCtx.lineTo(m.x - m.len, m.y - m.len); 
+                    starCtx.stroke(); 
+                    m.x += m.speed; 
+                    m.y += m.speed; 
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { 
+                if (starCanvas && isStarSystemActive) { 
+                    starCanvas.width = window.innerWidth; 
+                    starCanvas.height = window.innerHeight; 
+                    initStarsPro(); 
+                } 
+            }); 
+            setInterval(() => { 
+                if (isStarSystemActive) { 
+                    let c = Math.floor(Math.random() * 2) + 3; 
+                    for (let i = 0; i < c; i++) createMeteorPro(); 
+                } 
+            }, 1500); 
+            initStarsPro(); 
+            drawStarsPro(); 
+        }
+        
+        let isDarkModeActive = false;
+        let currentTab = 'documents';
+        let documents = [];
+        let currentMajorFilter = 'all';
+        let isProcessing = false;
+        let teacherMajors = [];
+        let selectedFile = null;
+        
+        function toggleTheme() { 
+            const body = document.body, 
+                  starCanvasElem = document.getElementById('star-canvas-background'),
+                  themeIconSidebar = document.getElementById('theme-icon-sidebar'),
+                  themeTextSidebar = document.getElementById('theme-text-sidebar');
+                  
+            isDarkModeActive = !isDarkModeActive; 
+            
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); 
+                body.classList.add('dark-mode'); 
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-moon');
+                    themeIconSidebar.classList.add('fa-sun');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (starCanvasElem) { 
+                    starCanvasElem.style.display = 'block'; 
+                    if (!starCtx) { 
+                        isStarSystemActive = true; 
+                        initStarfieldPro(); 
+                    } else { 
+                        isStarSystemActive = true; 
+                        if (!starAnimationId) { 
+                            function restartDraw() { 
+                                if (starCtx && starCanvas && isStarSystemActive) drawStarsPro(); 
+                            } 
+                            restartDraw(); 
+                        } 
+                    } 
+                } 
+            } else { 
+                body.classList.remove('dark-mode'); 
+                body.classList.add('light-mode'); 
+                if (themeIconSidebar) {
+                    themeIconSidebar.classList.remove('fa-sun');
+                    themeIconSidebar.classList.add('fa-moon');
+                }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; 
+                isStarSystemActive = false; 
+                if (starAnimationId) { 
+                    cancelAnimationFrame(starAnimationId); 
+                    starAnimationId = null; 
+                } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { 
+            setTimeout(() => { toggleTheme(); }, 20); 
+        } else { 
+            const canvasBg = document.getElementById('star-canvas-background'); 
+            if (canvasBg) canvasBg.style.display = 'none'; 
+        }
+
+        // ==================== COLLAPSIBLE SIDEBAR ====================
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') {
+                    group.classList.add('collapsed');
+                }
+                
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, 
+                        group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('leftSidebar');
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                sidebar.style.transform = '';
+            } else {
+                sidebar.classList.add('open');
+                sidebar.style.transform = 'translateX(0)';
+            }
+        }
+
+        // ==================== HÀM TIỆN ÍCH ====================
+        async function logout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                const res = await fetch('/api/logout', { method: 'POST' });
+                if (res.ok) window.location.href = '/login';
+                else alert('Đăng xuất thất bại');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'Vừa xong';
+            if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`;
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        // ==================== CHUYỂN TAB ====================
+        function switchTab(tabName) {
+            currentTab = tabName;
+            const tabs = document.querySelectorAll('.custom-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Tìm tab được click
+            const clickedTab = Array.from(tabs).find(tab => {
+                const onclickAttr = tab.getAttribute('onclick');
+                return onclickAttr && onclickAttr.includes(`'${tabName}'`);
+            });
+            if (clickedTab) clickedTab.classList.add('active');
+            
+            const documentsTab = document.getElementById('documents-tab');
+            const approvalsTab = document.getElementById('approvals-tab');
+            const uploadTab = document.getElementById('upload-tab');
+            
+            documentsTab.style.display = 'none';
+            approvalsTab.style.display = 'none';
+            uploadTab.style.display = 'none';
+            
+            if (tabName === 'documents') {
+                documentsTab.style.display = 'block';
+                loadDocuments();
+            } else if (tabName === 'approvals') {
+                approvalsTab.style.display = 'block';
+                loadPendingApprovals();
+            } else if (tabName === 'upload') {
+                uploadTab.style.display = 'block';
+                loadTeacherInfo();
+            }
+        }
+
+        // ==================== LẤY THÔNG TIN GIÁO VIÊN ====================
+        async function loadTeacherInfo() {
+            try {
+                const res = await fetch('/api/teacher/info');
+                const data = await res.json();
+                if (data.success && data.majors && data.majors.length > 0) {
+                    teacherMajors = data.majors;
+                    document.getElementById('teacher-major-display').textContent = 
+                        `(Ngành của bạn: ${teacherMajors.join(', ')})`;
+                } else {
+                    document.getElementById('teacher-major-display').textContent = 
+                        '(Chưa có ngành nào được gán. Vui lòng liên hệ admin.)';
+                }
+            } catch (error) {
+                console.error('Lỗi tải thông tin giáo viên:', error);
+            }
+        }
+
+        // ==================== TẢI LÊN TÀI LIỆU (GIÁO VIÊN) ====================
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Kiểm tra loại file
+            if (file.type !== 'application/pdf') {
+                showToast('⚠️ Chỉ hỗ trợ file PDF!', 'error');
+                e.target.value = '';
+                return;
+            }
+            
+            // Kiểm tra kích thước (50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                showToast('⚠️ File quá lớn. Tối đa 50MB!', 'error');
+                e.target.value = '';
+                return;
+            }
+            
+            selectedFile = file;
+            document.getElementById('file-info').classList.remove('hidden');
+            document.getElementById('file-name-display').textContent = file.name;
+            document.getElementById('file-size-display').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+            document.getElementById('upload-btn').classList.remove('hidden');
+            document.getElementById('upload-status').classList.add('hidden');
+        }
+
+        function clearFileSelection() {
+            selectedFile = null;
+            document.getElementById('file-info').classList.add('hidden');
+            document.getElementById('upload-btn').classList.add('hidden');
+            document.getElementById('file-input').value = '';
+            document.getElementById('upload-status').classList.add('hidden');
+        }
+
+        async function uploadTeacherDocument() {
+            if (!selectedFile) {
+                showToast('⚠️ Vui lòng chọn file', 'warning');
+                return;
+            }
+            
+            if (teacherMajors.length === 0) {
+                showToast('⚠️ Bạn chưa được gán ngành nào. Vui lòng liên hệ admin.', 'error');
+                return;
+            }
+            
+            // Chỉ cho phép upload theo ngành của giáo viên
+            const uploadBtn = document.getElementById('upload-btn');
+            const progressDiv = document.getElementById('upload-progress');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressText = document.getElementById('upload-progress-text');
+            
+            uploadBtn.disabled = true;
+            uploadBtn.classList.add('hidden');
+            progressDiv.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            progressText.textContent = 'Đang tải lên... 0%';
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            // Gửi tất cả ngành của giáo viên lên server
+            formData.append('majors', JSON.stringify(teacherMajors));
+            
+            try {
+                const xhr = new XMLHttpRequest();
+                
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        progressBar.style.width = percent + '%';
+                        progressText.textContent = `Đang tải lên... ${percent}%`;
+                    }
+                });
+                
+                const uploadPromise = new Promise((resolve, reject) => {
+                    xhr.onload = function() {
+                        try {
+                            const data = JSON.parse(xhr.responseText);
+                            resolve(data);
+                        } catch (e) {
+                            reject(new Error('Lỗi parse response'));
+                        }
+                    };
+                    xhr.onerror = function() {
+                        reject(new Error('Lỗi kết nối'));
+                    };
+                });
+                
+                xhr.open('POST', '/api/teacher/upload-document');
+                xhr.send(formData);
+                
+                const data = await uploadPromise;
+                
+                progressDiv.classList.add('hidden');
+                uploadBtn.classList.remove('hidden');
+                uploadBtn.disabled = false;
+                
+                if (data.success) {
+                    showToast('✅ Tải lên thành công!', 'success');
+                    const statusDiv = document.getElementById('upload-status');
+                    statusDiv.classList.remove('hidden');
+                    document.getElementById('upload-result').innerHTML = `
+                        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-green-700 dark:text-green-300">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <strong>Thành công!</strong> Đã tải lên tài liệu "${escapeHtml(selectedFile.name)}"
+                            <br><span class="text-xs opacity-75">Ngành: ${teacherMajors.join(', ')}</span>
+                        </div>
+                    `;
+                    clearFileSelection();
+                    setTimeout(() => loadDocuments(), 2000);
+                } else {
+                    showToast('❌ ' + (data.message || 'Tải lên thất bại'), 'error');
+                    const statusDiv = document.getElementById('upload-status');
+                    statusDiv.classList.remove('hidden');
+                    document.getElementById('upload-result').innerHTML = `
+                        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-red-700 dark:text-red-300">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <strong>Lỗi:</strong> ${escapeHtml(data.message || 'Không thể tải lên')}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Lỗi upload:', error);
+                showToast('❌ Lỗi kết nối server', 'error');
+                progressDiv.classList.add('hidden');
+                uploadBtn.classList.remove('hidden');
+                uploadBtn.disabled = false;
+            }
+        }
+
+        // ==================== TÀI LIỆU CHUNG ====================
+        function updateMajorStats() {
+            const majorCounts = {};
+            documents.forEach(doc => { const major = doc.major || 'Khác'; majorCounts[major] = (majorCounts[major] || 0) + 1; });
+            const majorsList = Object.keys(majorCounts).sort();
+            const statsContainer = document.getElementById('majors-stats');
+            if (majorsList.length === 0) { statsContainer.innerHTML = '<div class="col-span-full text-center py-2 text-gray-500 text-sm">Chưa có tài liệu</div>'; return; }
+            statsContainer.innerHTML = majorsList.map(major => `<div class="major-stat-card bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-2 sm:p-3 text-white text-center ${currentMajorFilter === major ? 'ring-2 ring-white ring-offset-2' : ''}" onclick="filterByMajor('${major}')"><p class="text-xs opacity-90 truncate">${escapeHtml(major)}</p><p class="text-base sm:text-xl font-bold">${majorCounts[major]}</p></div>`).join('');
+            const filterSelect = document.getElementById('major-filter');
+            filterSelect.innerHTML = '<option value="all">📁 Tất cả ngành</option>' + majorsList.map(major => `<option value="${major}" ${currentMajorFilter === major ? 'selected' : ''}>${major}</option>`).join('');
+        }
+        
+        function filterByMajor(major) {
+            currentMajorFilter = major;
+            document.getElementById('major-filter').value = major;
+            updateMajorStats();
+            renderDocuments();
+        }
+
+        async function loadDocuments() {
+            const container = document.getElementById('documents-container');
+            try {
+                const response = await fetch('/api/documents');
+                const data = await response.json();
+                if (data.success) {
+                    documents = data.documents;
+                    document.getElementById('total-docs').textContent = data.total;
+                    document.getElementById('total-size').textContent = data.total_size_mb + ' MB';
+                    updateMajorStats();
+                    renderDocuments();
+                } else { showToast('Không thể tải danh sách tài liệu', 'error'); }
+            } catch (error) { console.error('Error:', error); showToast('Lỗi kết nối đến server', 'error'); }
+        }
+
+        function renderDocuments() {
+            const container = document.getElementById('documents-container');
+            const searchTerm = document.getElementById('search-input')?.value.toLowerCase() || '';
+            const sortBy = document.getElementById('sort-select')?.value || 'newest';
+            const majorFilter = document.getElementById('major-filter')?.value || 'all';
+            let filteredDocs = documents.filter(doc => (doc.original_name || doc.name).toLowerCase().includes(searchTerm) && (majorFilter === 'all' || doc.major === majorFilter));
+            filteredDocs.sort((a, b) => {
+                switch(sortBy) {
+                    case 'newest': return new Date(b.last_modified) - new Date(a.last_modified);
+                    case 'oldest': return new Date(a.last_modified) - new Date(b.last_modified);
+                    case 'name': return (a.original_name || a.name).localeCompare(b.original_name || b.name);
+                    case 'size': return b.size - a.size;
+                    default: return 0;
+                }
+            });
+            if (filteredDocs.length === 0) { container.innerHTML = `<div class="col-span-full text-center py-8 sm:py-12"><i class="fas fa-folder-open text-4xl sm:text-6xl text-gray-300 dark:text-gray-600 mb-4"></i><p class="text-gray-500 dark:text-gray-400 text-sm">Không tìm thấy tài liệu nào</p></div>`; return; }
+            container.innerHTML = filteredDocs.map(doc => `<div class="document-card bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all fade-in"><div class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 p-3 sm:p-4 border-b dark:border-gray-700"><div class="flex items-center justify-between mb-2"><span class="major-badge text-xs">${escapeHtml(doc.major || 'Khác')}</span></div><div class="flex items-center space-x-3"><i class="fas fa-file-pdf text-red-500 text-2xl sm:text-3xl"></i><div class="flex-1 min-w-0"><h3 class="font-semibold text-gray-900 dark:text-white truncate text-sm sm:text-base" title="${escapeHtml(doc.original_name || doc.name)}">${escapeHtml(doc.original_name || doc.name)}</h3><p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${doc.size_mb} MB • ${doc.last_modified_display}</p></div></div></div><div class="p-3 sm:p-4"><div class="flex gap-2"><button onclick="viewDocument('${doc.name}')" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm"><i class="fas fa-eye mr-1"></i> Xem</button><button onclick="downloadDocument('${doc.name}')" class="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm"><i class="fas fa-download mr-1"></i> Tải về</button><button onclick="openDeleteRequestModal('${doc.name}', '${escapeHtml(doc.original_name || doc.name)}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm"><i class="fas fa-flag mr-1"></i> Yêu cầu xóa</button></div></div></div>`).join('');
+        }
+
+        async function viewDocument(fileName) {
+            try {
+                window.open(`/api/view/${fileName}`, '_blank');
+                showToast('📄 Đang mở tài liệu...', 'success');
+            } catch (error) { showToast('Lỗi khi xem tài liệu', 'error'); }
+        }
+
+        function downloadDocument(fileName) { 
+            window.open(`/api/download/${fileName}`, '_blank'); 
+            showToast(`⬇️ Đang tải...`, 'success'); 
+        }
+
+        function refreshDocuments() { loadDocuments(); showToast('Đã làm mới danh sách', 'success'); }
+        
+        function closePdfModal() { 
+            document.getElementById('pdf-modal').style.display = 'none'; 
+            document.getElementById('pdf-viewer').src = ''; 
+        }
+
+        // ==================== YÊU CẦU XÓA TÀI LIỆU (GỬI ADMIN) ====================
+        function openDeleteRequestModal(fileName, displayName) {
+            document.getElementById('delete-doc-name').innerHTML = `📄 ${displayName}`;
+            document.getElementById('delete-file-name').value = fileName;
+            document.getElementById('delete-reason').value = '';
+            document.getElementById('delete-request-modal').style.display = 'flex';
+        }
+
+        function closeDeleteRequestModal() {
+            document.getElementById('delete-request-modal').style.display = 'none';
+        }
+
+        async function submitDeleteRequest() {
+            const fileName = document.getElementById('delete-file-name').value;
+            const reason = document.getElementById('delete-reason').value.trim() || 'Không có lý do cụ thể';
+            
+            const doc = documents.find(d => d.name === fileName);
+            if (!doc) {
+                showToast('Không tìm thấy tài liệu', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/teacher/request-delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        document_id: doc.id,
+                        reason: reason
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('✅ Đã gửi yêu cầu xóa đến admin!', 'success');
+                    closeDeleteRequestModal();
+                } else {
+                    showToast(data.message || '⚠️ Không thể gửi yêu cầu', 'warning');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showToast('⚠️ Lỗi kết nối, vui lòng thử lại', 'error');
+            }
+        }
+
+        // ==================== PHÊ DUYỆT TÀI LIỆU ====================
+        let currentApprovalId = null;
+        let isRejectMode = false;
+
+        async function loadPendingApprovals() {
+            const container = document.getElementById('approvals-list');
+            try {
+                const res = await fetch('/api/teacher/pending-approvals');
+                const data = await res.json();
+                if (data.success && data.documents && data.documents.length > 0) {
+                    const pendingCount = data.documents.length;
+                    document.getElementById('pending-count-badge').textContent = pendingCount;
+                    document.getElementById('pending-count-badge').classList.remove('hidden');
+                    document.getElementById('pending-count').textContent = pendingCount;
+                    container.innerHTML = data.documents.map(doc => `<div class="approval-card bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 border-yellow-500"><div class="flex items-start justify-between flex-wrap gap-3"><div class="flex-1 min-w-[150px]"><div class="flex items-center gap-2 mb-2 flex-wrap"><i class="fas fa-file-pdf text-red-500"></i><h3 class="font-semibold text-gray-800 dark:text-white text-sm">${escapeHtml(doc.document_name)}</h3><span class="status-badge status-pending text-xs">⏳ Chờ duyệt</span></div><p class="text-xs text-gray-600 dark:text-gray-400 mb-2"><i class="fas fa-user mr-1"></i> ${escapeHtml(doc.student_name)} <span class="mx-1">•</span><i class="fas fa-envelope mr-1"></i> ${escapeHtml(doc.student_email)}<span class="mx-1">•</span><i class="fas fa-tag mr-1"></i> ${escapeHtml(doc.major)}</p><p class="text-xs text-gray-500"><i class="fas fa-calendar mr-1"></i> Tải lên: ${formatTime(doc.uploaded_at)}<span class="mx-1">•</span><i class="fas fa-file-alt mr-1"></i> ${doc.file_size ? doc.file_size.toFixed(1) : '?'} MB</p>${doc.description ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">📝 ${escapeHtml(doc.description)}</p>` : ''}</div><div class="flex gap-2"><button onclick="viewApprovalDocument('${doc.s3_key}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded-lg text-xs"><i class="fas fa-eye"></i> Xem</button><button onclick="showApprovalModal(${doc.id}, '${escapeHtml(doc.document_name)}')" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1.5 rounded-lg text-xs"><i class="fas fa-check-double"></i> Duyệt</button></div></div></div>`).join('');
+                } else {
+                    container.innerHTML = `<div class="text-center text-gray-500 py-8 sm:py-12 text-sm"><i class="fas fa-check-circle text-4xl mb-3 text-green-500"></i><p>Không có tài liệu nào chờ phê duyệt</p><p class="text-xs mt-2">Tất cả tài liệu đã được xử lý</p></div>`;
+                    document.getElementById('pending-count-badge').classList.add('hidden');
+                    document.getElementById('pending-count').textContent = '0';
+                }
+            } catch (error) { console.error('Lỗi tải danh sách phê duyệt:', error); container.innerHTML = `<div class="text-center text-red-500 py-8 text-sm">❌ Lỗi tải dữ liệu</div>`; }
+        }
+
+        async function viewApprovalDocument(s3Key) {
+            try {
+                const res = await fetch(`/api/student/view-doc/${encodeURIComponent(s3Key)}`);
+                const data = await res.json();
+                if (data.success) { document.getElementById('pdf-viewer').src = data.url; document.getElementById('modal-title').textContent = 'Xem tài liệu'; document.getElementById('pdf-modal').style.display = 'flex'; } 
+                else { alert('Không thể xem tài liệu'); }
+            } catch (error) { alert('Lỗi khi xem tài liệu'); }
+        }
+
+        function showApprovalModal(docId, docName) {
+            currentApprovalId = docId;
+            isRejectMode = false;
+            document.getElementById('approval-doc-name').textContent = docName;
+            document.getElementById('approval-doc-id').value = docId;
+            document.getElementById('reject-reason').classList.add('hidden');
+            document.getElementById('reject-btn').textContent = 'Từ chối';
+            document.getElementById('reject-btn').onclick = () => showRejectReason();
+            document.getElementById('approval-modal').style.display = 'flex';
+        }
+
+        function showRejectReason() {
+            if (!isRejectMode) {
+                isRejectMode = true;
+                document.getElementById('reject-reason').classList.remove('hidden');
+                document.getElementById('reject-btn').textContent = 'Xác nhận từ chối';
+                document.getElementById('reject-btn').onclick = () => rejectDocument();
+            } else { rejectDocument(); }
+        }
+
+        function closeApprovalModal() {
+            document.getElementById('approval-modal').style.display = 'none';
+            currentApprovalId = null;
+            isRejectMode = false;
+            document.getElementById('reject-reason').value = '';
+            document.getElementById('reject-reason').classList.add('hidden');
+        }
+
+        async function approveDocument() {
+            if (!currentApprovalId || isProcessing) { if (isProcessing) showToast('Đang xử lý, vui lòng chờ...', 'warning'); return; }
+            isProcessing = true;
+            const formData = new FormData(); formData.append('action', 'approve');
+            const approveBtn = document.querySelector('#approval-modal .bg-green-500');
+            const rejectBtn = document.querySelector('#approval-modal .bg-red-500');
+            if (approveBtn) { approveBtn.disabled = true; approveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Đang xử lý...'; }
+            if (rejectBtn) rejectBtn.disabled = true;
+            try {
+                const res = await fetch(`/api/teacher/approve-document/${currentApprovalId}`, { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('✅ Đã phê duyệt tài liệu thành công!');
+                    closeApprovalModal();
+                    await Promise.all([loadPendingApprovals(), loadDocuments()]);
+                    document.getElementById('pending-count-badge').classList.add('hidden');
+                    document.getElementById('pending-count').textContent = '0';
+                } else { showToast('Lỗi: ' + (data.detail || 'Phê duyệt thất bại'), 'error'); }
+            } catch (error) { console.error('Lỗi:', error); showToast('Lỗi kết nối server', 'error'); } 
+            finally { isProcessing = false; if (approveBtn) { approveBtn.disabled = false; approveBtn.innerHTML = 'Phê duyệt'; } if (rejectBtn) rejectBtn.disabled = false; }
+        }
+
+        async function rejectDocument() {
+            if (!currentApprovalId || isProcessing) { if (isProcessing) showToast('Đang xử lý, vui lòng chờ...', 'warning'); return; }
+            const reason = document.getElementById('reject-reason').value.trim();
+            if (!reason) { showToast('Vui lòng nhập lý do từ chối', 'error'); return; }
+            isProcessing = true;
+            const formData = new FormData(); formData.append('action', 'reject'); formData.append('reject_reason', reason);
+            const approveBtn = document.querySelector('#approval-modal .bg-green-500');
+            const rejectBtn = document.querySelector('#approval-modal .bg-red-500');
+            if (rejectBtn) { rejectBtn.disabled = true; rejectBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Đang xử lý...'; }
+            if (approveBtn) approveBtn.disabled = true;
+            try {
+                const res = await fetch(`/api/teacher/approve-document/${currentApprovalId}`, { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) { showToast('✅ Đã từ chối tài liệu'); closeApprovalModal(); await Promise.all([loadPendingApprovals(), loadDocuments()]); } 
+                else { showToast('Lỗi: ' + (data.detail || 'Từ chối thất bại'), 'error'); }
+            } catch (error) { console.error('Lỗi:', error); showToast('Lỗi kết nối server', 'error'); } 
+            finally { isProcessing = false; if (rejectBtn) { rejectBtn.disabled = false; rejectBtn.innerHTML = 'Từ chối'; } if (approveBtn) approveBtn.disabled = false; }
+        }
+
+        // ==================== CHAT AI ====================
+        function getNormalReply(message) {
+            const lowerMsg = message.toLowerCase().trim();
+            
+            if (lowerMsg.match(/^(chào|hi|hello|xin chào|chào bạn|chào cô|chào thầy)/i)) {
+                return "Xin chào bạn! Mình là Amy - trợ lý AI của EduSmart. Mình có thể giúp gì cho bạn hôm nay? 😊";
+            }
+            if (lowerMsg.includes('bạn là ai') || lowerMsg.includes('tên gì') || lowerMsg.includes('ai đây')) {
+                return "Mình là Amy - trợ lý AI của EduSmart. Mình được tạo ra để hỗ trợ giáo viên và sinh viên trong việc tìm kiếm, quản lý tài liệu học tập. Bạn cần mình giúp gì ạ? 📚";
+            }
+            if (lowerMsg.includes('cảm ơn') || lowerMsg.includes('thank you') || lowerMsg.includes('thanks')) {
+                return "Rất vui được giúp bạn! Nếu cần thêm gì, bạn cứ hỏi nhé. Chúc bạn một ngày làm việc hiệu quả! 🎓";
+            }
+            if (lowerMsg.includes('tạm biệt') || lowerMsg.includes('bye') || lowerMsg.includes('hẹn gặp lại')) {
+                return "Tạm biệt bạn! Hẹn gặp lại lần sau. Chúc bạn một ngày tốt lành! 👋";
+            }
+            if (lowerMsg.includes('giúp gì') || lowerMsg.includes('có thể làm gì') || lowerMsg.includes('chức năng')) {
+                return "Mình có thể giúp bạn:\n📖 Gợi ý tài liệu học tập theo chủ đề\n🔍 Tìm kiếm thông tin từ tài liệu có sẵn\n📥 Xem và tải tài liệu\n💬 Trò chuyện và giải đáp thắc mắc\n✅ Phê duyệt tài liệu (cho giáo viên)\n📤 Tải lên tài liệu (theo ngành của bạn)\nBạn muốn mình giúp gì ạ?";
+            }
+            return null;
+        }
+
+        function viewDocumentFromChat(fileName) {
+            window.open(`/api/view/${fileName}`, '_blank');
+            showToast('📄 Đang mở tài liệu...', 'success');
+        }
+
+        function downloadDocumentFromChat(fileName) {
+            window.open(`/api/download/${fileName}`, '_blank');
+            showToast('⬇️ Đang tải...', 'success');
+        }
+
+        async function suggestDocuments(question) {
+            try {
+                const res = await fetch('/suggest-documents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: question })
+                });
+                const data = await res.json();
+                return { answer: data.answer, suggestions: data.suggestions || [] };
+            } catch (err) {
+                console.error('Lỗi suggestion:', err);
+                return { answer: "Xin lỗi, không thể gợi ý tài liệu lúc này.", suggestions: [] };
+            }
+        }
+
+        async function askAI(question) {
+            try {
+                const res = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: question })
+                });
+                const data = await res.json();
+                return data.answer || "Xin lỗi, tôi chưa có câu trả lời cho câu hỏi này.";
+            } catch (err) {
+                console.error('Lỗi AI:', err);
+                return "Xin lỗi, tôi đang gặp sự cố kết nối. Vui lòng thử lại sau!";
+            }
+        }
+
+        function showTyping() {
+            const messagesDiv = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div'); 
+            typingDiv.className = 'typing-indicator'; 
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>`;
+            messagesDiv.appendChild(typingDiv); 
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideTyping() { 
+            const typingIndicator = document.getElementById('typing-indicator'); 
+            if (typingIndicator) typingIndicator.remove(); 
+        }
+
+        function toggleChat() {
+            const chatWidget = document.getElementById('chat-widget');
+            if (chatWidget.style.display === 'none' || chatWidget.style.display === '') { 
+                chatWidget.style.display = 'flex'; 
+            } else { 
+                chatWidget.style.display = 'none'; 
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input'); 
+            const message = input.value.trim();
+            if (!message) return;
+            
+            const messagesDiv = document.getElementById('chat-messages');
+            
+            const userMessageDiv = document.createElement('div'); 
+            userMessageDiv.className = 'message-user'; 
+            userMessageDiv.textContent = message;
+            messagesDiv.appendChild(userMessageDiv); 
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            input.value = ''; 
+            showTyping();
+            
+            try {
+                let normalReply = getNormalReply(message);
+                
+                if (normalReply) {
+                    hideTyping();
+                    const botMessageDiv = document.createElement('div'); 
+                    botMessageDiv.className = 'message-bot'; 
+                    botMessageDiv.textContent = normalReply;
+                    messagesDiv.appendChild(botMessageDiv);
+                }
+                else if (message.toLowerCase().includes('gợi ý') || message.toLowerCase().includes('tài liệu') || 
+                         message.toLowerCase().includes('nên đọc') || message.toLowerCase().includes('sách')) {
+                    const { answer, suggestions } = await suggestDocuments(message);
+                    hideTyping();
+                    const botMessageDiv = document.createElement('div'); 
+                    botMessageDiv.className = 'message-bot';
+                    let htmlContent = `<div>${escapeHtml(answer)}</div>`;
+                    if (suggestions && suggestions.length > 0) {
+                        htmlContent += `<div class="mt-2 pt-2 border-t border-gray-200"><p class="text-xs font-semibold mb-1">📖 Tài liệu gợi ý:</p>`;
+                        suggestions.forEach(doc => {
+                            htmlContent += `<div class="chat-suggestion-card"><div class="flex justify-between items-center"><div class="flex-1"><div class="text-sm font-medium">${escapeHtml(doc.original_name || doc.name)}</div><div class="text-xs text-gray-500">${escapeHtml(doc.major || 'Chưa phân loại')} • ${doc.size_mb || 0} MB</div></div><div class="flex gap-1"><button onclick="viewDocumentFromChat('${doc.name}')" class="chat-btn-sm-view"><i class="fas fa-eye"></i> Xem</button><button onclick="downloadDocumentFromChat('${doc.name}')" class="chat-btn-sm-download"><i class="fas fa-download"></i> Tải</button></div></div></div>`;
+                        });
+                        htmlContent += `</div>`;
+                    }
+                    botMessageDiv.innerHTML = htmlContent;
+                    messagesDiv.appendChild(botMessageDiv);
+                }
+                else {
+                    const aiAnswer = await askAI(message);
+                    hideTyping();
+                    const botMessageDiv = document.createElement('div'); 
+                    botMessageDiv.className = 'message-bot'; 
+                    botMessageDiv.textContent = aiAnswer;
+                    messagesDiv.appendChild(botMessageDiv);
+                }
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (error) {
+                console.error('Lỗi chat:', error);
+                hideTyping();
+                const errorDiv = document.createElement('div'); 
+                errorDiv.className = 'message-bot'; 
+                errorDiv.textContent = 'Xin lỗi, có lỗi xảy ra khi kết nối đến server.';
+                messagesDiv.appendChild(errorDiv); 
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        }
+
+        function initChatEvents() {
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput) {
+                chatInput.removeEventListener('keypress', chatInput._keypressHandler);
+                const keypressHandler = function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        sendMessage();
+                        return false;
+                    }
+                };
+                chatInput.addEventListener('keypress', keypressHandler);
+                chatInput._keypressHandler = keypressHandler;
+            }
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) { renderNotifications(data.notifications); updateNotificationBadge(data.unread_count); }
+            } catch (error) { console.error('Lỗi tải thông báo:', error); }
+        }
+        
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notifications-list');
+            if (!notifications || notifications.length === 0) { container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Chưa có thông báo nào</div>'; return; }
+            container.innerHTML = notifications.map(notif => {
+                let clickAction = '';
+                if (notif.type === 'approval' || (notif.content && notif.content.includes('phê duyệt'))) { clickAction = `onclick="goToApprovalsTab(${notif.id})"`; } 
+                else { clickAction = `onclick="viewNotification(${notif.id}, '${notif.link || ''}')"`; }
+                return `<div class="notification-item ${notif.is_read ? '' : 'notification-unread'}" ${clickAction}><div class="flex items-start gap-3"><div class="flex-shrink-0">${notif.type === 'approval' ? '<i class="fas fa-file-pdf text-yellow-500"></i>' : notif.type === 'assignment' ? '<i class="fas fa-tasks text-purple-500"></i>' : '<i class="fas fa-info-circle text-blue-500"></i>'}</div><div class="flex-1 min-w-0"><p class="text-sm font-medium">${escapeHtml(notif.title)}</p><p class="text-xs text-gray-500 mt-1">${escapeHtml(notif.content.substring(0, 100))}${notif.content.length > 100 ? '...' : ''}</p><p class="text-xs text-gray-400 mt-1">${formatTime(notif.created_at)}</p></div>${!notif.is_read ? '<div class="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>' : ''}</div></div>`;
+            }).join('');
+        }
+        
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notification-badge');
+            if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.classList.remove('hidden'); } 
+            else { badge.classList.add('hidden'); }
+        }
+        
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) loadNotifications();
+        }
+        
+        async function viewNotification(notificationId, link) {
+            await fetch(`/api/notifications/mark-read/${notificationId}`, { method: 'POST' });
+            loadNotifications(); loadUnreadCount();
+            if (link && link.includes('/documents')) { switchTab('approvals'); } 
+            else if (link) { window.location.href = link; }
+        }
+        
+        function goToApprovalsTab(notificationId) {
+            fetch(`/api/notifications/mark-read/${notificationId}`, { method: 'POST' });
+            const approvalsTab = document.querySelector('.custom-tab:last-child');
+            if (approvalsTab) approvalsTab.click();
+            setTimeout(() => loadPendingApprovals(), 500);
+        }
+        
+        async function markAllNotificationsRead() { await fetch('/api/notifications/mark-all-read', { method: 'POST' }); loadNotifications(); loadUnreadCount(); }
+        
+        async function loadUnreadCount() {
+            try {
+                const res = await fetch('/api/notifications?limit=1');
+                const data = await res.json();
+                updateNotificationBadge(data.unread_count);
+            } catch (error) { console.error(error); }
+        }
+
+        // ==================== LOTTIE ====================
+        let lottieAnimation = null;
+        function initLottie() {
+            const container = document.getElementById('lottie-robot');
+            if (!container) return;
+            try { lottieAnimation = lottie.loadAnimation({ container: container, renderer: 'svg', loop: true, autoplay: true, path: '/static/robot.json' }); } 
+            catch (err) { console.error('Lỗi load Lottie:', err); }
+        }
+
+        // Drag and Drop cho upload
+        function initDragAndDrop() {
+            const uploadZone = document.getElementById('upload-zone');
+            if (!uploadZone) return;
+            
+            uploadZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+            
+            uploadZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+            
+            uploadZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type !== 'application/pdf') {
+                        showToast('⚠️ Chỉ hỗ trợ file PDF!', 'error');
+                        return;
+                    }
+                    if (file.size > 50 * 1024 * 1024) {
+                        showToast('⚠️ File quá lớn. Tối đa 50MB!', 'error');
+                        return;
+                    }
+                    selectedFile = file;
+                    document.getElementById('file-info').classList.remove('hidden');
+                    document.getElementById('file-name-display').textContent = file.name;
+                    document.getElementById('file-size-display').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                    document.getElementById('upload-btn').classList.remove('hidden');
+                    document.getElementById('upload-status').classList.add('hidden');
+                    document.getElementById('file-input').files = files;
+                }
+            });
+        }
+
+        // Đóng dropdown khi click ra ngoài
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Đóng sidebar khi click ra ngoài trên mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+        
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleGroups();
+            const searchInput = document.getElementById('search-input'); 
+            const sortSelect = document.getElementById('sort-select'); 
+            const majorFilter = document.getElementById('major-filter');
+            if (searchInput) searchInput.addEventListener('input', renderDocuments);
+            if (sortSelect) sortSelect.addEventListener('change', renderDocuments);
+            if (majorFilter) majorFilter.addEventListener('change', function(e) { currentMajorFilter = e.target.value; updateMajorStats(); renderDocuments(); });
+            document.getElementById('pdf-modal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closePdfModal(); });
+            document.getElementById('robot-button').addEventListener('click', toggleChat);
+            
+            initChatEvents();
+            initDragAndDrop();
+            
+            loadDocuments(); 
+            loadPendingApprovals(); 
+            loadUnreadCount(); 
+            initLottie();
+            loadTeacherInfo();
+            setInterval(loadDocuments, 30000); 
+            setInterval(loadPendingApprovals, 30000); 
+            setInterval(loadUnreadCount, 30000);
+        });
+        
+        // Export functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.switchTab = switchTab;
+        window.filterByMajor = filterByMajor;
+        window.viewDocument = viewDocument;
+        window.downloadDocument = downloadDocument;
+        window.refreshDocuments = refreshDocuments;
+        window.closePdfModal = closePdfModal;
+        window.openDeleteRequestModal = openDeleteRequestModal;
+        window.closeDeleteRequestModal = closeDeleteRequestModal;
+        window.submitDeleteRequest = submitDeleteRequest;
+        window.viewApprovalDocument = viewApprovalDocument;
+        window.showApprovalModal = showApprovalModal;
+        window.closeApprovalModal = closeApprovalModal;
+        window.approveDocument = approveDocument;
+        window.rejectDocument = rejectDocument;
+        window.toggleChat = toggleChat;
+        window.sendMessage = sendMessage;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+        window.goToApprovalsTab = goToApprovalsTab;
+        window.viewDocumentFromChat = viewDocumentFromChat;
+        window.downloadDocumentFromChat = downloadDocumentFromChat;
+        window.handleFileSelect = handleFileSelect;
+        window.uploadTeacherDocument = uploadTeacherDocument;
+        window.clearFileSelection = clearFileSelection;
+    </script>
+</body>
+</html>

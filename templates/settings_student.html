@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Cài đặt tài khoản sinh viên</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; transition: background 0.2s ease; min-height: 100vh; }
+        body.light-mode { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); color: #1f2937; }
+        body.dark-mode { background: transparent; color: #f3f4f6; }
+        
+        #star-canvas-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        body.light-mode #star-canvas-background { display: none; }
+        .content-wrapper { position: relative; z-index: 10; width: 100%; }
+        
+        body.dark-mode .bg-white, body.dark-mode .bg-gray-50, body.dark-mode .bg-gray-100 { background-color: #1e293b !important; border-color: #334155 !important; }
+        body.dark-mode .text-gray-600, body.dark-mode .text-gray-700, body.dark-mode .text-gray-800 { color: #cbd5e1 !important; }
+        body.dark-mode .border-gray-200, body.dark-mode .border-gray-300 { border-color: #334155 !important; }
+        body.dark-mode input, body.dark-mode select, body.dark-mode textarea { background-color: #0f172a !important; color: #f1f5f9 !important; border-color: #475569 !important; }
+        body.dark-mode input:disabled, body.dark-mode input[readonly] { background-color: #1e293b !important; color: #94a3b8 !important; cursor: not-allowed; }
+        
+        /* Sidebar */
+        .left-sidebar-dark { background: #0a0c10; width: 280px; position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; transition: transform 0.3s ease; border-right: 1px solid rgba(255,255,255,0.08); overflow-y: auto; }
+        body.dark-mode .left-sidebar-dark { background: #030712; }
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; margin: 4px 12px; border-radius: 10px; transition: all 0.2s; color: #9ca3af; cursor: pointer; }
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+        
+        .nav-group-title { padding: 16px 20px 6px 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; }
+        .main-container { margin-left: 280px; transition: margin 0.3s ease; width: auto; }
+        
+        .collapsible-group { margin-bottom: 4px; }
+        .nav-group-toggle { display: flex !important; justify-content: space-between !important; align-items: center !important; cursor: pointer; }
+        .group-icon { font-size: 0.75rem; transition: transform 0.2s ease; }
+        .collapsible-group.collapsed .group-icon { transform: rotate(-90deg); }
+        .collapsible-group.collapsed .nav-group-items { display: none; }
+        
+        .sidebar-menu-btn { cursor: pointer; padding: 8px; border-radius: 8px; display: none; }
+        .sidebar-menu-btn:hover { background: rgba(255,255,255,0.1); }
+        
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn { display: block !important; }
+            .left-sidebar-dark { transform: translateX(-100%); }
+            .left-sidebar-dark.open { transform: translateX(0) !important; }
+            .main-container { margin-left: 0; width: 100%; }
+        }
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn { display: none !important; }
+            .left-sidebar-dark { transform: translateX(0) !important; }
+            .main-container { margin-left: 280px; }
+        }
+        @media (max-width: 768px) {
+            .p-4, .p-6 { padding: 12px !important; }
+            .avatar-preview { width: 80px !important; height: 80px !important; }
+        }
+        
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .settings-card { transition: all 0.2s; }
+        .avatar-container { position: relative; display: inline-block; }
+        .avatar-preview { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #8b5cf6; }
+        @media (min-width: 768px) { .avatar-preview { width: 120px; height: 120px; } }
+        .avatar-overlay { position: absolute; bottom: 0; right: 0; background: #8b5cf6; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        
+        /* Password wrapper */
+        .password-wrapper { position: relative; }
+        .password-wrapper input { padding-right: 40px; width: 100%; }
+        .toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #9ca3af; }
+        .toggle-password:hover { color: #8b5cf6; }
+        .password-wrapper input:disabled + .toggle-password { cursor: not-allowed; opacity: 0.5; }
+        
+        /* Notification */
+        .notification-dropdown { position: absolute; right: 0; left: auto; top: 100%; margin-top: 0.5rem; width: 380px; background: white; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); z-index: 1000; max-height: 400px; overflow-y: auto; }
+        body.dark-mode .notification-dropdown { background: #1e293b; border: 1px solid #334155; }
+        .notification-item { cursor: pointer; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+        .notification-item:hover { background: #f3f4f6; }
+        .notification-unread { background: #faf5ff; }
+        
+        @media (max-width: 768px) {
+            .notification-dropdown { position: fixed; top: 55px; right: 12px; width: 65vw !important; max-width: 320px; }
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars text-gray-400 hover:text-white text-xl"></i>
+                </div>
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Sinh viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="study">
+                <span>📚 HỌC TẬP</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="study">
+                <div class="nav-item" onclick="window.location.href='/'"><i class="fas fa-home"></i><span>Trang chủ</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/documents'"><i class="fas fa-folder-open"></i><span>Kho tài liệu</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/favorites'"><i class="fas fa-heart"></i><span>Tài liệu yêu thích</span></div>
+                <div class="nav-item" onclick="window.location.href='/assignments/student'"><i class="fas fa-tasks"></i><span>Bài tập của tôi</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/my-classes'">
+    <i class="fas fa-chalkboard"></i>
+    <span>Lớp học của tôi</span>
+</div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="interact">
+                <span>🤖 TƯƠNG TÁC & AI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="interact">
+                <div class="nav-item" onclick="window.location.href='/forum'"><i class="fas fa-comments"></i><span>Diễn đàn</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/quiz'"><i class="fas fa-gamepad"></i><span>Flashcard & Ôn tập</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/suggest-documents'"><i class="fas fa-lightbulb"></i><span>Gợi ý & Tải tài liệu</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="tracking">
+                <span>📊 THEO DÕI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="tracking">
+                <div class="nav-item" onclick="window.location.href='/student/learning-journey'"><i class="fas fa-chart-line"></i><span>Hành trình học tập</span></div>
+                <div class="nav-item" onclick="window.location.href='/student/transcript'"><i class="fas fa-graduation-cap"></i><span>Bảng điểm</span></div>
+            </div>
+        </div>
+        
+        
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="settings">
+                <span>⚙️ CÀI ĐẶT</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="settings">
+                <div class="nav-item active" onclick="window.location.href='/student/settings'"><i class="fas fa-cog"></i><span>Cài đặt chung</span></div>
+                <div class="nav-item" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon-sidebar"></i><span id="theme-text-sidebar">Chế độ tối</span></div>
+                <div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-cog text-white text-lg"></i>
+                            </div>
+                            <h1 class="text-base sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                Cài đặt tài khoản
+                            </h1>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2 sm:space-x-3">
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y">Đang tải...</div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                <div class="space-y-6">
+                    
+                    <!-- Avatar Section -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 settings-card">
+                        <h2 class="text-base sm:text-xl font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-user-circle text-purple-500"></i> Ảnh đại diện
+                        </h2>
+                        <div class="flex flex-col md:flex-row items-center gap-6">
+                            <div class="avatar-container">
+                                <img id="avatar-img" src="/static/default-avatar.png" alt="Avatar" class="avatar-preview">
+                                <div class="avatar-overlay" onclick="document.getElementById('avatar-input').click()">
+                                    <i class="fas fa-camera text-white text-sm"></i>
+                                </div>
+                                <input type="file" id="avatar-input" accept="image/*" class="hidden" onchange="uploadAvatar()">
+                            </div>
+                            <div class="flex-1 text-center md:text-left">
+                                <p class="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">Hỗ trợ: JPEG, PNG, GIF, WEBP (tối đa 2MB)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông tin cá nhân - EMAIL KHÔNG THỂ SỬA -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 settings-card">
+                        <h2 class="text-base sm:text-xl font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-id-card text-blue-500"></i> Thông tin cá nhân
+                        </h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Họ và tên</label>
+                                <input type="text" id="fullname" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                                    Email <span class="text-xs text-gray-400"></span>
+                                </label>
+                                <input type="email" id="email" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm bg-gray-100 dark:bg-gray-800 cursor-not-allowed" readonly disabled>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Mã số sinh viên</label>
+                                <input type="text" id="student-id" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm bg-gray-100 dark:bg-gray-800 cursor-not-allowed" readonly disabled>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Ngành học</label>
+                                <select id="major" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm">
+                                    <option value="Công nghệ thông tin">💻 Công nghệ thông tin</option>
+                                    <option value="Khoa học máy tính">🖥️ Khoa học máy tính</option>
+                                    <option value="Kỹ thuật phần mềm">⚙️ Kỹ thuật phần mềm</option>
+                                    <option value="Toán học">📐 Toán học</option>
+                                    <option value="Kinh tế">📊 Kinh tế</option>
+                                    <option value="Ngoại ngữ">🌍 Ngoại ngữ</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="updateProfile()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition text-sm">
+                                <i class="fas fa-save mr-2"></i> Lưu thay đổi
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Đổi mật khẩu - MẬT KHẨU HIỆN TẠI KHÔNG CHO SỬA, CHỈ XEM -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 settings-card">
+                        <h2 class="text-base sm:text-xl font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-lock text-red-500"></i> Đổi mật khẩu
+                        </h2>
+                        <div class="space-y-4">
+                            <!-- Mật khẩu hiện tại - KHÔNG cho sửa, chỉ xem -->
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                                    Mật khẩu hiện tại <span class="text-xs text-gray-400"></span>
+                                </label>
+                                <div class="password-wrapper">
+                                    <input type="password" id="current-password" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm pr-10 bg-gray-100 dark:bg-gray-800 cursor-not-allowed" disabled>
+                                </div>
+                            </div>
+                            
+                            <!-- Mật khẩu mới - CÓ THỂ SỬA -->
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Mật khẩu mới</label>
+                                <div class="password-wrapper">
+                                    <input type="password" id="new-password" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm pr-10">
+                                    <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('new-password', this)"></i>
+                                </div>
+                                <p class="text-[10px] text-gray-500 mt-1">Tối thiểu 6 ký tự</p>
+                            </div>
+                            
+                            <!-- Xác nhận mật khẩu mới - CÓ THỂ SỬA -->
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Xác nhận mật khẩu mới</label>
+                                <div class="password-wrapper">
+                                    <input type="password" id="confirm-password" class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm pr-10">
+                                    <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('confirm-password', this)"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="changePassword()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition text-sm">
+                                <i class="fas fa-key mr-2"></i> Đổi mật khẩu
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Thống kê -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6">
+                        <h2 class="text-base sm:text-xl font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-chart-simple text-green-500"></i> Thống kê tài khoản
+                        </h2>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                            <div class="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                                <p class="text-lg sm:text-2xl font-bold text-purple-600" id="joined-date">--/--/----</p>
+                                <p class="text-[10px] text-gray-500">Ngày tham gia</p>
+                            </div>
+                            <div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                                <p class="text-lg sm:text-2xl font-bold text-blue-600" id="doc-count">0</p>
+                                <p class="text-[10px] text-gray-500">Tài liệu đã tải</p>
+                            </div>
+                            <div class="p-2 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                                <p class="text-lg sm:text-2xl font-bold text-green-600" id="submission-count">0</p>
+                                <p class="text-[10px] text-gray-500">Bài tập đã nộp</p>
+                            </div>
+                            <div class="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
+                                <p class="text-lg sm:text-2xl font-bold text-orange-600" id="avg-score">0</p>
+                                <p class="text-[10px] text-gray-500">Điểm trung bình</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cài đặt thông báo -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6">
+                        <h2 class="text-base sm:text-xl font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-bell text-yellow-500"></i> Cài đặt thông báo
+                        </h2>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-sm">Thông báo bài tập mới</p>
+                                    <p class="text-xs text-gray-500">Nhận thông báo khi có bài tập được giao</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="notify-assignment" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-sm">Thông báo phê duyệt tài liệu</p>
+                                    <p class="text-xs text-gray-500">Nhận thông báo khi tài liệu được phê duyệt</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="notify-approval" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="saveNotificationSettings()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition text-sm">
+                                <i class="fas fa-save mr-2"></i> Lưu cài đặt
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Hệ thống nền sao (giữ nguyên)
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { if (starCanvas && isStarSystemActive) { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; initStarsPro(); } }); 
+            initStarsPro(); drawStarsPro(); 
+        }
+        
+        let isDarkModeActive = false;
+        
+        function toggleTheme() { 
+            const body = document.body, starCanvasElem = document.getElementById('star-canvas-background');
+            isDarkModeActive = !isDarkModeActive; 
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); body.classList.add('dark-mode'); 
+                if (starCanvasElem) { starCanvasElem.style.display = 'block'; if (!starCtx) { isStarSystemActive = true; initStarfieldPro(); } else { isStarSystemActive = true; if (!starAnimationId) drawStarsPro(); } } 
+            } else { 
+                body.classList.remove('dark-mode'); body.classList.add('light-mode'); 
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; 
+                isStarSystemActive = false; if (starAnimationId) { cancelAnimationFrame(starAnimationId); starAnimationId = null; } 
+            } 
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') setTimeout(() => toggleTheme(), 20);
+        else { const canvasBg = document.getElementById('star-canvas-background'); if (canvasBg) canvasBg.style.display = 'none'; }
+
+        // Sidebar
+        function initCollapsibleGroups() {
+            document.querySelectorAll('.collapsible-group').forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                if (localStorage.getItem(`sidebar_group_${groupId}`) === 'collapsed') group.classList.add('collapsed');
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('leftSidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Helper functions
+        async function logout() {
+            if (confirm('Bạn có chắc muốn đăng xuất?')) {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login';
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Toggle password visibility - hỗ trợ cho input disabled
+        function togglePasswordVisibility(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Notifications
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    const container = document.getElementById('notifications-list');
+                    if (!data.notifications || data.notifications.length === 0) {
+                        container.innerHTML = '<div class="p-4 text-center text-gray-500">Chưa có thông báo</div>';
+                    } else {
+                        container.innerHTML = data.notifications.map(n => `
+                            <div class="notification-item ${n.is_read ? '' : 'notification-unread'} p-3" onclick="viewNotification(${n.id}, '${n.link || ''}')">
+                                <p class="text-sm font-medium">${escapeHtml(n.title)}</p>
+                                <p class="text-xs text-gray-500 mt-1">${escapeHtml(n.content.substring(0, 80))}${n.content.length > 80 ? '...' : ''}</p>
+                                <p class="text-xs text-gray-400 mt-1">${new Date(n.created_at).toLocaleString('vi-VN')}</p>
+                            </div>
+                        `).join('');
+                    }
+                    const badge = document.getElementById('notification-badge');
+                    if (data.unread_count > 0) {
+                        badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+            } catch (error) { console.error(error); }
+        }
+
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) loadNotifications();
+        }
+
+        async function viewNotification(notificationId, link) {
+            await fetch(`/api/notifications/mark-read/${notificationId}`, { method: 'POST' });
+            loadNotifications();
+            if (link) window.location.href = link;
+        }
+
+        async function markAllNotificationsRead() {
+            await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+            loadNotifications();
+            showToast('Đã đánh dấu tất cả thông báo');
+        }
+
+        // Profile
+        async function loadProfile() {
+            try {
+                const res = await fetch('/api/student/profile');
+                const data = await res.json();
+                if (data.success) {
+                    const p = data.profile;
+                    document.getElementById('fullname').value = p.fullname || '';
+                    document.getElementById('email').value = p.email || '';
+                    document.getElementById('student-id').value = p.student_id || '';
+                    document.getElementById('major').value = p.major || 'Công nghệ thông tin';
+                    // Load mật khẩu hiện tại (chỉ hiển thị dạng ***, không lấy real password)
+                    document.getElementById('current-password').value = '********';
+                    if (p.avatar_url && p.avatar_url !== '/static/default-avatar.png') {
+                        document.getElementById('avatar-img').src = p.avatar_url;
+                    }
+                    document.getElementById('joined-date').textContent = p.joined_date ? new Date(p.joined_date).toLocaleDateString('vi-VN') : '--/--/----';
+                }
+            } catch (error) { console.error(error); }
+        }
+
+        async function updateProfile() {
+            const fullname = document.getElementById('fullname').value.trim();
+            const major = document.getElementById('major').value;
+            
+            if (!fullname) {
+                showToast('Vui lòng nhập họ tên!', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('fullname', fullname);
+            formData.append('major', major);
+            
+            try {
+                const res = await fetch('/api/student/profile', { method: 'PUT', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Cập nhật thành công!');
+                    await loadProfile();
+                } else {
+                    showToast(data.detail || 'Cập nhật thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối!', 'error');
+            }
+        }
+
+        // Avatar
+        async function uploadAvatar() {
+            const file = document.getElementById('avatar-input').files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('File ảnh không được quá 2MB!', 'error');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('avatar', file);
+            const avatarImg = document.getElementById('avatar-img');
+            avatarImg.style.opacity = '0.5';
+            try {
+                const res = await fetch('/api/student/upload-avatar', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    avatarImg.src = data.avatar_url + '?t=' + Date.now();
+                    showToast('Đã cập nhật ảnh đại diện!');
+                } else showToast('Upload thất bại', 'error');
+            } catch (error) { showToast('Lỗi kết nối!', 'error'); }
+            finally { avatarImg.style.opacity = '1'; }
+        }
+
+        // Change password - KHÔNG cần mật khẩu hiện tại
+        async function changePassword() {
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            // Nếu cả 2 đều trống thì không làm gì
+            if (!newPassword && !confirmPassword) {
+                showToast('Vui lòng nhập mật khẩu mới', 'error');
+                return;
+            }
+            
+            if (!newPassword || !confirmPassword) {
+                showToast('Vui lòng nhập đầy đủ mật khẩu mới và xác nhận!', 'error');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showToast('Mật khẩu mới không khớp!', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showToast('Mật khẩu mới phải có ít nhất 6 ký tự!', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('new_password', newPassword);
+            formData.append('confirm_password', confirmPassword);
+            
+            try {
+                const res = await fetch('/api/student/change-password-no-old', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Đổi mật khẩu thành công!');
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-password').value = '';
+                } else {
+                    showToast(data.detail || 'Đổi mật khẩu thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối!', 'error');
+            }
+        }
+
+        // Stats
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/student/stats');
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('submission-count').textContent = data.submitted_count || 0;
+                    document.getElementById('avg-score').textContent = data.avg_grade || 0;
+                }
+            } catch (error) { console.error(error); }
+            
+            try {
+                const docRes = await fetch('/api/student/my-documents');
+                const docData = await docRes.json();
+                if (docData.success) {
+                    document.getElementById('doc-count').textContent = docData.documents?.length || 0;
+                }
+            } catch (error) { console.error(error); }
+        }
+
+        // Notification settings
+        function saveNotificationSettings() {
+            localStorage.setItem('notify_assignment', document.getElementById('notify-assignment').checked);
+            localStorage.setItem('notify_approval', document.getElementById('notify-approval').checked);
+            showToast('Đã lưu cài đặt thông báo!');
+        }
+
+        function loadNotificationSettings() {
+            document.getElementById('notify-assignment').checked = localStorage.getItem('notify_assignment') !== 'false';
+            document.getElementById('notify-approval').checked = localStorage.getItem('notify_approval') !== 'false';
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCollapsibleGroups();
+            loadProfile();
+            loadStats();
+            loadNotificationSettings();
+        });
+
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.updateProfile = updateProfile;
+        window.uploadAvatar = uploadAvatar;
+        window.changePassword = changePassword;
+        window.saveNotificationSettings = saveNotificationSettings;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+        window.togglePasswordVisibility = togglePasswordVisibility;
+    </script>
+</body>
+</html>

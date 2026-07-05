@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Admin | Cài đặt hệ thống</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; transition: background 0.2s ease; min-height: 100vh; }
+        body.light-mode { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); color: #1f2937; }
+        body.dark-mode { background: transparent; color: #f3f4f6; }
+        
+        #star-canvas-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        body.light-mode #star-canvas-background { display: none; }
+        .content-wrapper { position: relative; z-index: 10; width: 100%; }
+
+        body.dark-mode .bg-white, body.dark-mode .bg-gray-50, body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important; border-color: #334155 !important;
+        }
+        body.dark-mode .text-gray-600, body.dark-mode .text-gray-700, body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        .left-sidebar-dark {
+            background: #0a0c10; width: 280px; position: fixed; left: 0; top: 0; bottom: 0;
+            z-index: 1000; transition: transform 0.3s ease; border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+        body.dark-mode .left-sidebar-dark { background: #030712; }
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 16px; margin: 4px 12px;
+            border-radius: 10px; transition: all 0.2s ease; color: #9ca3af; cursor: pointer;
+        }
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px; font-size: 0.7rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px; color: #6b7280;
+        }
+        .main-container { margin-left: 280px; transition: margin 0.3s ease; width: auto; }
+
+        .collapsible-group { margin-bottom: 4px; }
+        .nav-group-toggle { display: flex !important; justify-content: space-between !important; align-items: center !important; cursor: pointer; }
+        .group-icon { font-size: 0.75rem; transition: transform 0.2s ease; }
+        .collapsible-group.collapsed .group-icon { transform: rotate(-90deg); }
+        .collapsible-group.collapsed .nav-group-items { display: none; }
+
+        .sidebar-menu-btn { cursor: pointer; padding: 8px; border-radius: 8px; transition: all 0.2s; display: none; }
+        .sidebar-menu-btn:hover { background: rgba(0,0,0,0.05); }
+        body.dark-mode .sidebar-menu-btn:hover { background: rgba(255,255,255,0.1); }
+
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn { display: block !important; }
+            .left-sidebar-dark { transform: translateX(-100%); }
+            .left-sidebar-dark.open { transform: translateX(0) !important; }
+            .main-container { margin-left: 0; width: 100%; }
+        }
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn { display: none !important; }
+            .left-sidebar-dark { transform: translateX(0) !important; }
+            .main-container { margin-left: 280px; }
+        }
+
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .setting-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #8b5cf6;
+        }
+        .setting-card:hover { transform: translateX(5px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: 0.3s; border-radius: 34px;
+        }
+        .toggle-slider:before {
+            position: absolute; content: ""; height: 22px; width: 22px;
+            left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%;
+        }
+        input:checked + .toggle-slider { background-color: #8b5cf6; }
+        input:checked + .toggle-slider:before { transform: translateX(24px); }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 380px;
+            background: white; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000; max-height: 400px; overflow-y: auto; font-size: 13px;
+        }
+        body.dark-mode .notification-dropdown { background: #1e293b; border: 1px solid #334155; }
+        .notification-item { transition: all 0.2s; cursor: pointer; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+        .notification-item:hover { background: #f3f4f6; }
+        body.dark-mode .notification-item:hover { background: #334155; }
+        .notification-unread { background: #faf5ff; }
+        body.dark-mode .notification-unread { background: #4c1d95; }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; border-radius: 16px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;
+        }
+        body.dark-mode .modal-content { background: #1e293b; }
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Quản trị viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="overview">
+                <span>📊 TỔNG QUAN</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="overview">
+                <div class="nav-item" onclick="window.location.href='/'"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="users">
+                <span>👥 QUẢN LÝ & BÁO CÁO NGƯỜI DÙNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="users">
+                <div class="nav-item" onclick="window.location.href='/admin/users'"><i class="fas fa-users-cog"></i><span>Quản lý người dùng</span></div>
+                <div class="nav-item" onclick="window.location.href='/admin/teachers'"><i class="fas fa-chalkboard-user"></i><span>Quản lý giáo viên</span></div>
+                <div class="nav-item" onclick="window.location.href='/admin/students'"><i class="fas fa-user-graduate"></i><span>Quản lý sinh viên</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="content">
+                <span>📚 QUẢN LÝ NỘI DUNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="content">
+                <div class="nav-item" onclick="window.location.href='/admin/documents'"><i class="fas fa-folder-open"></i><span>Kho tài liệu</span></div>
+                <div class="nav-item" onclick="window.location.href='/admin/document-approvals'"><i class="fas fa-file-signature"></i><span>Phê duyệt tài liệu</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="learning">
+                <span>🏫 QUẢN LÝ HỌC TẬP</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="learning">
+                <div class="nav-item" onclick="window.location.href='/admin/groups'"><i class="fas fa-users-viewfinder"></i><span>Nhóm học tập</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="system">
+                <span>⚙️ CÀI ĐẶT HỆ THỐNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="system">
+                <div class="nav-item active" onclick="window.location.href='/settings'"><i class="fas fa-cog"></i><span>Cài đặt chung</span></div>
+                <div class="nav-item" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon-sidebar"></i><span id="theme-text-sidebar">Chế độ tối</span></div>
+                <div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-cog text-white text-lg"></i>
+                            </div>
+                            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                Cài đặt hệ thống
+                            </h1>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y"><div class="p-4 text-center">Đang tải...</div></div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <!-- Tabs cài đặt -->
+                <div class="flex flex-wrap gap-2 mb-6 border-b pb-2">
+                    <button onclick="showTab('general')" id="tab-general" class="px-4 py-2 rounded-lg text-sm font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
+                        <i class="fas fa-sliders-h mr-1"></i> Tổng quan
+                    </button>
+                    <button onclick="showTab('system')" id="tab-system" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+                        <i class="fas fa-server mr-1"></i> Hệ thống
+                    </button>
+                    <button onclick="showTab('email')" id="tab-email" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+                        <i class="fas fa-envelope mr-1"></i> Email
+                    </button>
+                    <button onclick="showTab('security')" id="tab-security" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+                        <i class="fas fa-shield-alt mr-1"></i> Bảo mật
+                    </button>
+                    <button onclick="showTab('backup')" id="tab-backup" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+                        <i class="fas fa-database mr-1"></i> Sao lưu
+                    </button>
+                </div>
+
+                <!-- Tab Tổng quan -->
+                <div id="general-tab" class="tab-content">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-info-circle text-purple-500"></i> Thông tin hệ thống</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="setting-card bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                                <p class="text-xs text-gray-500">Tên hệ thống</p>
+                                <p class="font-semibold">EduSmart - Hệ thống quản lý học tập</p>
+                            </div>
+                            <div class="setting-card bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                                <p class="text-xs text-gray-500">Phiên bản</p>
+                                <p class="font-semibold">v2.0.0</p>
+                            </div>
+                            <div class="setting-card bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                                <p class="text-xs text-gray-500">Số người dùng</p>
+                                <p id="system-total-users" class="font-semibold text-2xl">0</p>
+                            </div>
+                            <div class="setting-card bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                                <p class="text-xs text-gray-500">Số tài liệu</p>
+                                <p id="system-total-docs" class="font-semibold text-2xl">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mt-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-palette text-purple-500"></i> Giao diện</h2>
+                        <div class="flex justify-between items-center py-3 border-b dark:border-gray-700">
+                            <div>
+                                <p class="font-medium">Chế độ tối</p>
+                                <p class="text-xs text-gray-500">Chuyển đổi giữa chế độ sáng và tối</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="dark-mode-toggle" onchange="toggleThemeSetting()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mt-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-language text-purple-500"></i> Ngôn ngữ</h2>
+                        <div class="flex justify-between items-center py-3">
+                            <div>
+                                <p class="font-medium">Ngôn ngữ hiển thị</p>
+                                <p class="text-xs text-gray-500">Chọn ngôn ngữ cho giao diện</p>
+                            </div>
+                            <select id="language-select" class="px-3 py-1.5 border rounded-lg dark:bg-gray-700" onchange="changeLanguage()">
+                                <option value="vi">🇻🇳 Tiếng Việt</option>
+                                <option value="en">🇬🇧 English</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Hệ thống -->
+                <div id="system-tab" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-database text-purple-500"></i> Cấu hình hệ thống</h2>
+                        
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center py-3 border-b dark:border-gray-700">
+                                <div>
+                                    <p class="font-medium">Cho phép đăng ký mới</p>
+                                    <p class="text-xs text-gray-500">Bật/tắt chức năng đăng ký tài khoản mới</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="allow-registration" checked onchange="saveSetting('allow_registration', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex justify-between items-center py-3 border-b dark:border-gray-700">
+                                <div>
+                                    <p class="font-medium">Yêu cầu xác thực email</p>
+                                    <p class="text-xs text-gray-500">Người dùng phải xác thực email trước khi đăng nhập</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="require-email-verification" checked onchange="saveSetting('require_email_verification', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex justify-between items-center py-3 border-b dark:border-gray-700">
+                                <div>
+                                    <p class="font-medium">Chế độ bảo trì</p>
+                                    <p class="text-xs text-gray-500">Chỉ admin mới có thể truy cập khi bật</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="maintenance-mode" onchange="saveSetting('maintenance_mode', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mt-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-chart-line text-purple-500"></i> AI & Học tập</h2>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center py-3 border-b dark:border-gray-700">
+                                <div>
+                                    <p class="font-medium">Trợ lý AI (Amy)</p>
+                                    <p class="text-xs text-gray-500">Bật/tắt trợ lý ảo hỗ trợ học tập</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ai-assistant" checked onchange="saveSetting('ai_assistant', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex justify-between items-center py-3 border-b dark:border-gray-700">
+                                <div>
+                                    <p class="font-medium">Tự động gợi ý tài liệu</p>
+                                    <p class="text-xs text-gray-500">AI gợi ý tài liệu dựa trên sở thích</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="auto-suggest" checked onchange="saveSetting('auto_suggest', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Email -->
+                <div id="email-tab" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-envelope text-purple-500"></i> Cấu hình Email</h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">SMTP Server</label>
+                                <input type="text" id="smtp-host" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700" placeholder="smtp.gmail.com">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">SMTP Port</label>
+                                <input type="number" id="smtp-port" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700" placeholder="587">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Email gửi</label>
+                                <input type="email" id="smtp-user" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700" placeholder="admin@edusmart.com">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Mật khẩu ứng dụng</label>
+                                <input type="password" id="smtp-password" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700" placeholder="••••••••">
+                            </div>
+                            <div>
+                                <button onclick="testEmailConfig()" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm">
+                                    <i class="fas fa-paper-plane mr-1"></i> Gửi email test
+                                </button>
+                                <button onclick="saveEmailConfig()" class="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm ml-2">
+                                    <i class="fas fa-save mr-1"></i> Lưu cấu hình
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Bảo mật -->
+                <div id="security-tab" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-shield-alt text-purple-500"></i> Cài đặt bảo mật</h2>
+                        
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center py-3 border-b dark:border-gray-700">
+                                <div>
+                                    <p class="font-medium">Xác thực 2 lớp (2FA)</p>
+                                    <p class="text-xs text-gray-500">Yêu cầu mã OTP khi đăng nhập</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="two-factor-auth" onchange="saveSetting('two_factor_auth', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex justify-between items-center py-3 border-b dark:border-gray-700">
+                                <div>
+                                    <p class="font-medium">Giới hạn đăng nhập sai</p>
+                                    <p class="text-xs text-gray-500">Khóa tài khoản sau số lần đăng nhập sai</p>
+                                </div>
+                                <input type="number" id="max-login-attempts" value="5" class="w-20 px-2 py-1 border rounded-lg dark:bg-gray-700 text-center">
+                            </div>
+                            
+                            <div class="flex justify-between items-center py-3 border-b dark:border-gray-700">
+                                <div>
+                                    <p class="font-medium">Thời gian hết hạn session (giờ)</p>
+                                    <p class="text-xs text-gray-500">Tự động đăng xuất sau thời gian không hoạt động</p>
+                                </div>
+                                <input type="number" id="session-timeout" value="24" class="w-20 px-2 py-1 border rounded-lg dark:bg-gray-700 text-center">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t dark:border-gray-700">
+                            <button onclick="saveSecuritySettings()" class="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm">
+                                <i class="fas fa-save mr-1"></i> Lưu cài đặt bảo mật
+                            </button>
+                            <button onclick="clearAllSessions()" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm ml-2">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất tất cả thiết bị
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Sao lưu -->
+                <div id="backup-tab" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fas fa-database text-purple-500"></i> Sao lưu & Phục hồi</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-center">
+                                <i class="fas fa-download text-4xl text-green-500 mb-3"></i>
+                                <h3 class="font-semibold mb-2">Sao lưu dữ liệu</h3>
+                                <p class="text-xs text-gray-500 mb-3">Tạo bản sao lưu toàn bộ hệ thống</p>
+                                <button onclick="backupDatabase()" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm w-full">
+                                    <i class="fas fa-download mr-1"></i> Sao lưu ngay
+                                </button>
+                            </div>
+                            
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-center">
+                                <i class="fas fa-upload text-4xl text-blue-500 mb-3"></i>
+                                <h3 class="font-semibold mb-2">Phục hồi dữ liệu</h3>
+                                <p class="text-xs text-gray-500 mb-3">Khôi phục từ bản sao lưu</p>
+                                <input type="file" id="restore-file" accept=".sql,.zip" class="hidden" onchange="restoreDatabase(this)">
+                                <button onclick="document.getElementById('restore-file').click()" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm w-full">
+                                    <i class="fas fa-upload mr-1"></i> Chọn file phục hồi
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <h3 class="font-semibold mb-3">Lịch sử sao lưu</h3>
+                            <div id="backup-history" class="space-y-2">
+                                <div class="text-center text-gray-500 py-4">Chưa có bản sao lưu nào</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Star background
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; starCtx.lineWidth = 2; 
+                    starCtx.beginPath(); starCtx.moveTo(m.x, m.y); starCtx.lineTo(m.x - m.len, m.y - m.len); starCtx.stroke(); 
+                    m.x += m.speed; m.y += m.speed; 
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { if (starCanvas && isStarSystemActive) { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; initStarsPro(); } }); 
+            setInterval(() => { if (isStarSystemActive) { let c = Math.floor(Math.random() * 2) + 3; for (let i = 0; i < c; i++) createMeteorPro(); } }, 1500); 
+            initStarsPro(); drawStarsPro(); 
+        }
+
+        let isDarkModeActive = false;
+        
+        function toggleTheme() { 
+            const body = document.body, starCanvasElem = document.getElementById('star-canvas-background');
+            isDarkModeActive = !isDarkModeActive; 
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); body.classList.add('dark-mode'); 
+                document.getElementById('dark-mode-toggle').checked = true;
+                if (starCanvasElem) { starCanvasElem.style.display = 'block'; if (!starCtx) { isStarSystemActive = true; initStarfieldPro(); } else { isStarSystemActive = true; } } 
+            } else { 
+                body.classList.remove('dark-mode'); body.classList.add('light-mode'); 
+                document.getElementById('dark-mode-toggle').checked = false;
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; isStarSystemActive = false; if (starAnimationId) { cancelAnimationFrame(starAnimationId); starAnimationId = null; } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        function toggleThemeSetting() {
+            toggleTheme();
+            saveSetting('dark_mode', isDarkModeActive);
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { setTimeout(() => { toggleTheme(); }, 20); } 
+        else { const canvasBg = document.getElementById('star-canvas-background'); if (canvasBg) canvasBg.style.display = 'none'; }
+
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') group.classList.add('collapsed');
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() { document.getElementById('leftSidebar').classList.toggle('open'); }
+        
+        async function logout() { if (confirm('Đăng xuất?')) { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; } }
+        
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN');
+        }
+
+        // ==================== TAB ====================
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            
+            const buttons = document.querySelectorAll('[id^="tab-"]');
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-purple-100', 'text-purple-700', 'dark:bg-purple-900/50', 'dark:text-purple-300');
+                btn.classList.add('text-gray-600', 'dark:text-gray-400');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('bg-purple-100', 'text-purple-700', 'dark:bg-purple-900/50', 'dark:text-purple-300');
+            document.getElementById(`tab-${tabName}`).classList.remove('text-gray-600', 'dark:text-gray-400');
+        }
+
+        // ==================== SETTINGS API ====================
+        async function saveSetting(key, value) {
+            try {
+                const response = await fetch('/api/admin/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key, value })
+                });
+                const data = await response.json();
+                if (data.success) showToast(`Đã lưu cài đặt ${key}`, 'success');
+            } catch (error) { console.error('Lỗi:', error); }
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/admin/settings');
+                const data = await response.json();
+                if (data.success) {
+                    if (data.settings.dark_mode) document.getElementById('dark-mode-toggle').checked = true;
+                    if (data.settings.allow_registration) document.getElementById('allow-registration').checked = true;
+                    if (data.settings.require_email_verification) document.getElementById('require-email-verification').checked = true;
+                    if (data.settings.maintenance_mode) document.getElementById('maintenance-mode').checked = true;
+                    if (data.settings.ai_assistant) document.getElementById('ai-assistant').checked = true;
+                    if (data.settings.auto_suggest) document.getElementById('auto-suggest').checked = true;
+                    if (data.settings.two_factor_auth) document.getElementById('two-factor-auth').checked = true;
+                    if (data.settings.max_login_attempts) document.getElementById('max-login-attempts').value = data.settings.max_login_attempts;
+                    if (data.settings.session_timeout) document.getElementById('session-timeout').value = data.settings.session_timeout;
+                    if (data.settings.smtp_host) document.getElementById('smtp-host').value = data.settings.smtp_host;
+                    if (data.settings.smtp_port) document.getElementById('smtp-port').value = data.settings.smtp_port;
+                    if (data.settings.smtp_user) document.getElementById('smtp-user').value = data.settings.smtp_user;
+                }
+            } catch (error) { console.error('Lỗi tải settings:', error); }
+        }
+
+        async function loadSystemInfo() {
+            try {
+                const response = await fetch('/api/admin/stats');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('system-total-users').textContent = data.total_users || 0;
+                    document.getElementById('system-total-docs').textContent = data.total_documents || 0;
+                }
+            } catch (error) { console.error('Lỗi tải thông tin hệ thống:', error); }
+        }
+
+        function changeLanguage() {
+            const lang = document.getElementById('language-select').value;
+            saveSetting('language', lang);
+            showToast(`Đã chuyển sang ngôn ngữ ${lang === 'vi' ? 'Tiếng Việt' : 'English'}`, 'success');
+        }
+
+        async function testEmailConfig() {
+            const config = {
+                host: document.getElementById('smtp-host').value,
+                port: document.getElementById('smtp-port').value,
+                user: document.getElementById('smtp-user').value,
+                password: document.getElementById('smtp-password').value
+            };
+            showToast('Đang gửi email test...', 'warning');
+            try {
+                const response = await fetch('/api/admin/test-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                const data = await response.json();
+                if (data.success) showToast('✅ Email test đã được gửi!', 'success');
+                else showToast('❌ Gửi email thất bại: ' + data.message, 'error');
+            } catch (error) { showToast('Lỗi kết nối', 'error'); }
+        }
+
+        async function saveEmailConfig() {
+            const config = {
+                host: document.getElementById('smtp-host').value,
+                port: document.getElementById('smtp-port').value,
+                user: document.getElementById('smtp-user').value,
+                password: document.getElementById('smtp-password').value
+            };
+            try {
+                const response = await fetch('/api/admin/save-email-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                const data = await response.json();
+                if (data.success) showToast('Đã lưu cấu hình email', 'success');
+                else showToast('Lưu thất bại', 'error');
+            } catch (error) { showToast('Lỗi kết nối', 'error'); }
+        }
+
+        async function saveSecuritySettings() {
+            const settings = {
+                two_factor_auth: document.getElementById('two-factor-auth').checked,
+                max_login_attempts: document.getElementById('max-login-attempts').value,
+                session_timeout: document.getElementById('session-timeout').value
+            };
+            try {
+                const response = await fetch('/api/admin/save-security', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                const data = await response.json();
+                if (data.success) showToast('Đã lưu cài đặt bảo mật', 'success');
+                else showToast('Lưu thất bại', 'error');
+            } catch (error) { showToast('Lỗi kết nối', 'error'); }
+        }
+
+        async function clearAllSessions() {
+            if (!confirm('⚠️ Hành động này sẽ đăng xuất tất cả người dùng khỏi hệ thống! Bạn có chắc?')) return;
+            try {
+                const response = await fetch('/api/admin/clear-all-sessions', { method: 'POST' });
+                const data = await response.json();
+                if (data.success) showToast('Đã đăng xuất tất cả thiết bị', 'success');
+                else showToast('Thất bại', 'error');
+            } catch (error) { showToast('Lỗi kết nối', 'error'); }
+        }
+
+        async function backupDatabase() {
+            showToast('Đang tạo bản sao lưu...', 'warning');
+            window.open('/api/admin/backup', '_blank');
+        }
+
+        async function restoreDatabase(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('backup_file', file);
+            showToast('Đang phục hồi dữ liệu...', 'warning');
+            try {
+                const response = await fetch('/api/admin/restore', { method: 'POST', body: formData });
+                const data = await response.json();
+                if (data.success) showToast('✅ Phục hồi dữ liệu thành công!', 'success');
+                else showToast('❌ Phục hồi thất bại', 'error');
+            } catch (error) { showToast('Lỗi kết nối', 'error'); }
+            input.value = '';
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    const container = document.getElementById('notifications-list');
+                    if (!data.notifications?.length) container.innerHTML = '<div class="p-4 text-center text-gray-500">Chưa có thông báo</div>';
+                    else container.innerHTML = data.notifications.map(n => `<div class="notification-item ${n.is_read ? '' : 'notification-unread'} p-3" onclick="viewNotification(${n.id}, '${n.link || ''}')"><div class="flex gap-3"><div><i class="fas fa-bell text-purple-500"></i></div><div><p class="text-sm font-medium">${escapeHtml(n.title)}</p><p class="text-xs text-gray-500">${escapeHtml(n.content.substring(0, 80))}</p><p class="text-xs text-gray-400 mt-1">${formatTime(n.created_at)}</p></div></div></div>`).join('');
+                    document.getElementById('notification-badge').textContent = data.unread_count || '';
+                    document.getElementById('notification-badge').classList.toggle('hidden', !data.unread_count);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function toggleNotificationDropdown() { const d = document.getElementById('notification-dropdown'); d.classList.toggle('hidden'); if (!d.classList.contains('hidden')) loadNotifications(); }
+        async function viewNotification(id, link) { await fetch(`/api/notifications/mark-read/${id}`, { method: 'POST' }); loadNotifications(); if (link) window.location.href = link; }
+        async function markAllNotificationsRead() { await fetch('/api/notifications/mark-all-read', { method: 'POST' }); loadNotifications(); showToast('Đã đánh dấu tất cả thông báo'); }
+
+        // Event listeners
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.add('hidden');
+        });
+        
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleGroups();
+            loadSettings();
+            loadSystemInfo();
+            loadNotifications();
+            setInterval(loadNotifications, 30000);
+        });
+
+        // Export functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.showTab = showTab;
+        window.toggleThemeSetting = toggleThemeSetting;
+        window.saveSetting = saveSetting;
+        window.changeLanguage = changeLanguage;
+        window.testEmailConfig = testEmailConfig;
+        window.saveEmailConfig = saveEmailConfig;
+        window.saveSecuritySettings = saveSecuritySettings;
+        window.clearAllSessions = clearAllSessions;
+        window.backupDatabase = backupDatabase;
+        window.restoreDatabase = restoreDatabase;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+    </script>
+</body>
+</html>

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Đăng nhập - EduSmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1%, transparent 1%);
+            background-size: 50px 50px;
+            animation: moveDots 60s linear infinite;
+        }
+
+        @keyframes moveDots {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(100px, 100px); }
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .login-card, .forgot-card, .reset-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 420px;
+            transition: transform 0.3s ease;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-wrapper {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.4);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .input-field {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            background: #f9fafb;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+            background: white;
+        }
+
+        .btn-login, .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 14px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover, .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.5);
+        }
+
+        .demo-info {
+            background: #f3f4f6;
+            border-radius: 16px;
+            padding: 12px;
+            margin-top: 20px;
+        }
+
+        .demo-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .demo-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            padding: 6px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .demo-row:last-child {
+            border-bottom: none;
+        }
+
+        .demo-role {
+            font-weight: 600;
+            color: #8b5cf6;
+        }
+
+        .demo-account {
+            color: #4b5563;
+            font-family: monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .login-card, .forgot-card, .reset-card {
+                background: rgba(30, 41, 59, 0.98);
+            }
+            .input-label {
+                color: #cbd5e1;
+            }
+            .input-field {
+                background: #1e293b;
+                border-color: #334155;
+                color: #f3f4f6;
+            }
+            .demo-info {
+                background: #1e293b;
+            }
+            .demo-title, .demo-account {
+                color: #cbd5e1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-card, .forgot-card, .reset-card {
+                border-radius: 24px;
+                padding: 20px !important;
+            }
+            .logo-wrapper {
+                width: 60px;
+                height: 60px;
+            }
+            .otp-digit {
+                width: 45px !important;
+                height: 55px !important;
+                font-size: 24px !important;
+            }
+        }
+
+        .hidden-card {
+            display: none;
+        }
+
+        .link-text {
+            color: #8b5cf6;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .link-text:hover {
+            text-decoration: underline;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+            z-index: 9999;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        .toast.error { background: #ef4444; }
+        .toast.success { background: #10b981; }
+        .toast.info { background: #3b82f6; }
+
+        /* OTP Input Styles */
+        .otp-container {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .otp-digit {
+            width: 55px;
+            height: 65px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            background: #f9fafb;
+            transition: all 0.2s ease;
+        }
+        
+        .otp-digit:focus {
+            border-color: #8b5cf6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+            background: white;
+        }
+        
+        .otp-digit::-webkit-inner-spin-button,
+        .otp-digit::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .timer-text {
+            font-size: 13px;
+            color: #6b7280;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 480px) {
+            .otp-container {
+                gap: 8px;
+            }
+            .otp-digit {
+                width: 45px;
+                height: 55px;
+                font-size: 22px;
+            }
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .otp-digit {
+                background: #1e293b;
+                border-color: #334155;
+                color: #f3f4f6;
+            }
+            .otp-digit:focus {
+                background: #1e293b;
+                border-color: #8b5cf6;
+            }
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Pending approval banner */
+        .pending-banner {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pending-banner i {
+            color: #f59e0b;
+            font-size: 20px;
+        }
+        .pending-banner p {
+            color: #92400e;
+            font-size: 13px;
+            margin: 0;
+            flex: 1;
+        }
+        .dark .pending-banner {
+            background: #78350f;
+            border-left-color: #fbbf24;
+        }
+        .dark .pending-banner p {
+            color: #fde68a;
+        }
+
+        .verified-banner {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .verified-banner i {
+            color: #10b981;
+            font-size: 20px;
+        }
+        .verified-banner p {
+            color: #065f46;
+            font-size: 13px;
+            margin: 0;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+
+    <div class="login-container">
+        <!-- CARD ĐĂNG NHẬP -->
+        <div id="loginCard" class="login-card p-6 sm:p-8">
+            <div class="text-center">
+                <div class="logo-wrapper">
+                    <i class="fas fa-graduation-cap text-white text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">EduSmart</h1>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Đăng nhập để tiếp tục</p>
+            </div>
+
+            <!-- Banner thông báo từ URL -->
+            <div id="messageBanner" style="display: none;"></div>
+
+            <form id="loginForm" class="mt-6">
+                <div class="input-group">
+                    <label class="input-label"><i class="fas fa-envelope mr-1 text-purple-500"></i> Email hoặc Mã số</label>
+                    <input type="text" id="username" class="input-field" placeholder="VD: student@edusmart.com hoặc SV001" required>
+                </div>
+                <div class="input-group">
+                    <label class="input-label"><i class="fas fa-lock mr-1 text-purple-500"></i> Mật khẩu</label>
+                    <div class="relative">
+                        <input type="password" id="password" class="input-field" placeholder="Nhập mật khẩu" required>
+                        <button type="button" id="togglePassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-right mb-4">
+                    <span id="forgotPasswordLink" class="link-text text-sm"><i class="fas fa-key"></i> Quên mật khẩu?</span>
+                </div>
+                <button type="submit" id="submitBtn" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Đăng nhập</span>
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    Chưa có tài khoản? 
+                    <a href="/register" class="text-purple-600 font-medium">Đăng ký ngay</a>
+                </p>
+            </div>
+
+            <div class="demo-info">
+                <div class="demo-title"><i class="fas fa-info-circle mr-1"></i> Tài khoản demo</div>
+                <div class="demo-row"><span class="demo-role">🎓 Sinh viên</span><span class="demo-account">student@edusmart.com / 123456</span></div>
+                <div class="demo-row"><span class="demo-role">👨‍🏫 Giáo viên</span><span class="demo-account">teacher@edusmart.com / 123456</span></div>
+                <div class="demo-row"><span class="demo-role">👑 Admin</span><span class="demo-account">admin@edusmart.com / admin123</span></div>
+            </div>
+            <div class="mt-6 text-center"><p class="text-xs text-gray-400">© 2024 EduSmart - Học tập thông minh</p></div>
+        </div>
+
+        <!-- CARD QUÊN MẬT KHẨU (Nhập email) -->
+        <div id="forgotCard" class="forgot-card p-6 sm:p-8 hidden-card">
+            <div class="text-center">
+                <div class="logo-wrapper"><i class="fas fa-key text-white text-3xl"></i></div>
+                <h1 class="text-xl font-bold text-gray-800 dark:text-white">Khôi phục mật khẩu</h1>
+                <p class="text-gray-500 text-sm mt-1">Nhập email đã đăng ký</p>
+            </div>
+            <form id="forgotForm" class="mt-6">
+                <div class="input-group">
+                    <label class="input-label"><i class="fas fa-envelope mr-1"></i> Email đăng ký</label>
+                    <input type="email" id="resetEmail" class="input-field" placeholder="example@edusmart.com" required>
+                </div>
+                <button type="submit" id="sendOtpBtn" class="btn-primary"><i class="fas fa-paper-plane"></i> Gửi mã OTP</button>
+                <div class="text-center mt-4"><span id="backToLogin" class="link-text text-sm"><i class="fas fa-arrow-left"></i> Quay lại đăng nhập</span></div>
+            </form>
+        </div>
+
+        <!-- CARD NHẬP OTP VÀ ĐẶT LẠI MẬT KHẨU -->
+        <div id="resetCard" class="reset-card p-6 sm:p-8 hidden-card">
+            <div class="text-center">
+                <div class="logo-wrapper"><i class="fas fa-envelope-open-text text-white text-3xl"></i></div>
+                <h1 class="text-xl font-bold text-gray-800 dark:text-white">Xác thực OTP</h1>
+                <p class="text-gray-500 text-sm">Mã xác thực đã được gửi đến</p>
+                <p class="text-purple-600 font-medium text-sm" id="resetEmailDisplay"></p>
+            </div>
+
+            <!-- OTP Input Group -->
+            <div class="otp-container" id="otpContainer">
+                <input type="text" maxlength="1" class="otp-digit" id="otp0" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-digit" id="otp1" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-digit" id="otp2" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-digit" id="otp3" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-digit" id="otp4" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-digit" id="otp5" inputmode="numeric">
+            </div>
+
+            <div class="timer-text" id="timerText">⏰ Mã OTP có hiệu lực trong 05:00</div>
+            <div class="text-center mb-4">
+                <span id="resendOtpLink" class="link-text text-sm opacity-50" style="pointer-events: none;">📧 Gửi lại mã</span>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label"><i class="fas fa-lock mr-1"></i> Mật khẩu mới</label>
+                <input type="password" id="newPassword" class="input-field" placeholder="Ít nhất 6 ký tự">
+            </div>
+            <div class="input-group">
+                <label class="input-label"><i class="fas fa-check-circle mr-1"></i> Xác nhận mật khẩu</label>
+                <input type="password" id="confirmNewPassword" class="input-field" placeholder="Nhập lại mật khẩu">
+            </div>
+
+            <button id="resetPasswordBtn" class="btn-primary"><i class="fas fa-save"></i> Đặt lại mật khẩu</button>
+            <div class="text-center mt-4"><span id="backToLoginFromReset" class="link-text text-sm"><i class="fas fa-sign-in-alt"></i> Quay lại đăng nhập</span></div>
+        </div>
+    </div>
+
+    <script>
+    
+        // DOM elements
+        const loginCard = document.getElementById('loginCard');
+        const forgotCard = document.getElementById('forgotCard');
+        const resetCard = document.getElementById('resetCard');
+        
+        let currentResetEmail = null;
+        let otpTimer = null;
+        let timeLeft = 300;
+
+        function showCard(card) {
+            loginCard.classList.add('hidden-card');
+            forgotCard.classList.add('hidden-card');
+            resetCard.classList.add('hidden-card');
+            card.classList.remove('hidden-card');
+        }
+
+        function showToast(message, type = 'error') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'info' ? 'fa-info-circle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // ==================== HIỂN THỊ THÔNG BÁO TỪ URL ====================
+        function showMessageFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const message = urlParams.get('message');
+            const bannerDiv = document.getElementById('messageBanner');
+            
+            if (!bannerDiv) return;
+            
+            if (message === 'teacher_pending') {
+                bannerDiv.style.display = 'block';
+                bannerDiv.innerHTML = `
+                    <div class="pending-banner">
+                        <i class="fas fa-clock"></i>
+                        <p>✅ Xác thực email thành công! Tài khoản của bạn đang chờ admin phê duyệt. Khi được duyệt, chúng tôi sẽ gửi thông báo qua email.</p>
+                    </div>
+                `;
+                showToast('Vui lòng chờ admin phê duyệt tài khoản!', 'info');
+            } else if (message === 'verified') {
+                bannerDiv.style.display = 'block';
+                bannerDiv.innerHTML = `
+                    <div class="verified-banner">
+                        <i class="fas fa-check-circle"></i>
+                        <p>Xác thực thành công! Vui lòng đăng nhập để tiếp tục.</p>
+                    </div>
+                `;
+                showToast('Xác thực thành công! Vui lòng đăng nhập.', 'success');
+            } else if (message === 'pending') {
+                bannerDiv.style.display = 'block';
+                bannerDiv.innerHTML = `
+                    <div class="pending-banner">
+                        <i class="fas fa-hourglass-half"></i>
+                        <p>Tài khoản của bạn đang chờ admin phê duyệt. Vui lòng quay lại sau.</p>
+                    </div>
+                `;
+            }
+            
+            // Xóa message khỏi URL để không hiển thị lại khi refresh
+            if (message) {
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+        }
+
+        // Toggle password
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const pwd = document.getElementById('password');
+            const type = pwd.type === 'password' ? 'text' : 'password';
+            pwd.type = type;
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+
+        // Chuyển card
+        document.getElementById('forgotPasswordLink').addEventListener('click', () => showCard(forgotCard));
+        document.getElementById('backToLogin').addEventListener('click', () => showCard(loginCard));
+        document.getElementById('backToLoginFromReset').addEventListener('click', () => showCard(loginCard));
+
+        // ========== OTP XỬ LÝ ĐƠN GIẢN ==========
+        function initOtpInputs() {
+            const inputs = document.querySelectorAll('.otp-digit');
+            
+            inputs.forEach((input, index) => {
+                input.removeEventListener('input', handleInput);
+                input.removeEventListener('keydown', handleKeydown);
+                
+                input.addEventListener('input', handleInput);
+                input.addEventListener('keydown', handleKeydown);
+                
+                input.addEventListener('beforeinput', (e) => {
+                    if (e.inputType === 'insertText' && !/^\d$/.test(e.data)) {
+                        e.preventDefault();
+                    }
+                });
+            });
+            
+            const container = document.getElementById('otpContainer');
+            if (container) {
+                container.removeEventListener('paste', handlePaste);
+                container.addEventListener('paste', handlePaste);
+            }
+        }
+        
+        function handleInput(e) {
+            const input = e.target;
+            const value = input.value;
+            
+            if (value && !/^\d$/.test(value)) {
+                input.value = '';
+                return;
+            }
+            
+            if (value.length === 1) {
+                const next = input.nextElementSibling;
+                if (next && next.classList.contains('otp-digit')) {
+                    next.focus();
+                }
+            }
+        }
+        
+        function handleKeydown(e) {
+            const input = e.target;
+            
+            if (e.key === 'Backspace') {
+                if (input.value === '') {
+                    const prev = input.previousElementSibling;
+                    if (prev && prev.classList.contains('otp-digit')) {
+                        prev.focus();
+                        prev.value = '';
+                        e.preventDefault();
+                    }
+                }
+            } else if (e.key === 'ArrowLeft') {
+                const prev = input.previousElementSibling;
+                if (prev && prev.classList.contains('otp-digit')) {
+                    prev.focus();
+                    e.preventDefault();
+                }
+            } else if (e.key === 'ArrowRight') {
+                const next = input.nextElementSibling;
+                if (next && next.classList.contains('otp-digit')) {
+                    next.focus();
+                    e.preventDefault();
+                }
+            }
+        }
+        
+        function handlePaste(e) {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            const digits = text.replace(/\D/g, '').slice(0, 6).split('');
+            
+            const inputs = document.querySelectorAll('.otp-digit');
+            for (let i = 0; i < digits.length && i < inputs.length; i++) {
+                inputs[i].value = digits[i];
+            }
+            
+            const lastIndex = Math.min(digits.length, inputs.length - 1);
+            if (lastIndex >= 0 && inputs[lastIndex]) {
+                inputs[lastIndex].focus();
+            }
+        }
+        
+        function getOtpCode() {
+            let code = '';
+            const inputs = document.querySelectorAll('.otp-digit');
+            for (let i = 0; i < inputs.length; i++) {
+                const val = inputs[i].value;
+                if (!val || !/^\d$/.test(val)) {
+                    return null;
+                }
+                code += val;
+            }
+            return code;
+        }
+        
+        function resetOtpInputs() {
+            const inputs = document.querySelectorAll('.otp-digit');
+            inputs.forEach(input => input.value = '');
+            if (inputs[0]) inputs[0].focus();
+        }
+
+        // Gửi yêu cầu reset password
+        document.getElementById('forgotForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value.trim();
+            if (!email) {
+                showToast('Vui lòng nhập email', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('sendOtpBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    currentResetEmail = email;
+                    document.getElementById('resetEmailDisplay').textContent = email;
+                    resetOtpInputs();
+                    showCard(resetCard);
+                    showToast('✅ Mã OTP đã được gửi đến email của bạn!', 'success');
+                    startOtpTimer();
+                } else {
+                    showToast(data.detail || 'Email không tồn tại trong hệ thống', 'error');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showToast('Không thể kết nối đến server', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // Timer OTP
+        function startOtpTimer() {
+            if (otpTimer) clearInterval(otpTimer);
+            timeLeft = 300;
+            const timerText = document.getElementById('timerText');
+            const resendLink = document.getElementById('resendOtpLink');
+            
+            resendLink.classList.add('opacity-50');
+            resendLink.style.pointerEvents = 'none';
+            
+            otpTimer = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerText.innerHTML = `⏰ Mã OTP có hiệu lực trong ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(otpTimer);
+                    timerText.innerHTML = '⏰ Mã OTP đã hết hạn. Vui lòng gửi lại.';
+                    resendLink.classList.remove('opacity-50');
+                    resendLink.style.pointerEvents = 'auto';
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        // Gửi lại OTP
+        async function resendOtp() {
+            if (!currentResetEmail) return;
+            
+            const link = document.getElementById('resendOtpLink');
+            link.classList.add('opacity-50');
+            link.style.pointerEvents = 'none';
+            
+            showToast('Đang gửi lại mã OTP...', 'info');
+            
+            try {
+                const response = await fetch('/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentResetEmail })
+                });
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showToast('✅ Đã gửi lại mã OTP!', 'success');
+                    if (otpTimer) clearInterval(otpTimer);
+                    startOtpTimer();
+                    resetOtpInputs();
+                } else {
+                    showToast(data.detail || 'Gửi lại thất bại', 'error');
+                    link.classList.remove('opacity-50');
+                    link.style.pointerEvents = 'auto';
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối', 'error');
+                link.classList.remove('opacity-50');
+                link.style.pointerEvents = 'auto';
+            }
+        }
+        
+        document.getElementById('resendOtpLink').onclick = () => {
+            const link = document.getElementById('resendOtpLink');
+            if (!link.classList.contains('opacity-50')) {
+                resendOtp();
+            }
+        };
+
+        // Đặt lại mật khẩu
+        document.getElementById('resetPasswordBtn').addEventListener('click', async () => {
+            const otpCode = getOtpCode();
+            if (!otpCode) {
+                showToast('Vui lòng nhập đủ 6 số OTP', 'error');
+                return;
+            }
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+            
+            if (newPassword.length < 6) {
+                showToast('Mật khẩu phải có ít nhất 6 ký tự', 'error');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showToast('Mật khẩu xác nhận không khớp', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('resetPasswordBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: currentResetEmail,
+                        otp: otpCode,
+                        new_password: newPassword
+                    })
+                });
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showToast('✅ Đặt lại mật khẩu thành công! Vui lòng đăng nhập.', 'success');
+                    if (otpTimer) clearInterval(otpTimer);
+                    setTimeout(() => showCard(loginCard), 2000);
+                } else {
+                    showToast(data.detail || 'Đặt lại mật khẩu thất bại', 'error');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showToast('Lỗi kết nối server', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showToast('Vui lòng nhập đầy đủ thông tin', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang đăng nhập...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.status === 302 || response.ok) {
+                    showToast('Đăng nhập thành công!', 'success');
+                    setTimeout(() => window.location.href = '/', 500);
+                } else {
+                    const error = await response.json();
+                    showToast(error.detail || 'Sai tài khoản hoặc mật khẩu', 'error');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showToast('Không thể kết nối đến server', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+        
+        // Khởi tạo
+        initOtpInputs();
+        showMessageFromURL();  // Hiển thị thông báo từ URL
+        document.getElementById('username').focus();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Phê duyệt tài liệu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.2s ease;
+            margin: 0;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        body.light-mode {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1f2937;
+        }
+        
+        body.dark-mode {
+            background: transparent;
+            color: #f3f4f6;
+        }
+        
+        #star-canvas-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        
+        body.light-mode #star-canvas-background {
+            display: none;
+        }
+        
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        /* DARK MODE - Fix chữ trong khung trắng phải màu sáng để dễ nhìn */
+        body.dark-mode .bg-white,
+        body.dark-mode .bg-gray-50,
+        body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800,
+        body.dark-mode .text-gray-900 {
+            color: #f3f4f6 !important;
+        }
+
+        body.dark-mode .text-gray-500 {
+            color: #9ca3af !important;
+        }
+
+        body.dark-mode .border-gray-200,
+        body.dark-mode .border-gray-300 {
+            border-color: #334155 !important;
+        }
+
+        /* Sidebar */
+        .left-sidebar-dark {
+            background: #0a0c10;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+
+        body.dark-mode .left-sidebar-dark {
+            background: #030712;
+        }
+
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 4px 12px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+        }
+
+        .main-container {
+            margin-left: 280px;
+            transition: margin 0.3s ease;
+            width: auto;
+        }
+
+        /* Collapsible Group Styles */
+        .collapsible-group {
+            margin-bottom: 4px;
+        }
+
+        .nav-group-toggle {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+
+        .group-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible-group.collapsed .group-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-group.collapsed .nav-group-items {
+            display: none;
+        }
+
+        /* Nút 3 gạch - chỉ hiện trên mobile */
+        .sidebar-menu-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .sidebar-menu-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn {
+                display: block !important;
+            }
+            .left-sidebar-dark { 
+                transform: translateX(-100%);
+            }
+            .left-sidebar-dark.open { 
+                transform: translateX(0) !important;
+            }
+            .main-container { 
+                margin-left: 0; 
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn {
+                display: none !important;
+            }
+            .left-sidebar-dark {
+                transform: translateX(0) !important;
+            }
+            .main-container {
+                margin-left: 280px;
+            }
+        }
+
+        /* Responsive cho điện thoại */
+        @media (max-width: 768px) {
+            .p-4, .p-6 {
+                padding: 12px !important;
+            }
+            h1.text-xl {
+                font-size: 1.1rem !important;
+            }
+            .text-sm {
+                font-size: 0.75rem !important;
+            }
+            .text-xs {
+                font-size: 0.65rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 13px;
+            }
+            .notification-dropdown {
+                width: calc(100vw - 32px) !important;
+                left: 16px !important;
+                right: 16px !important;
+            }
+            .approval-card {
+                padding: 12px !important;
+            }
+            .action-buttons {
+                width: 100%;
+                margin-top: 8px;
+            }
+            .action-buttons button {
+                flex: 1;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card {
+            transition: all 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-approved { background: #d1fae5; color: #065f46; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        body.dark-mode .status-pending { background: #78350f; color: #fde68a; }
+        body.dark-mode .status-approved { background: #064e3b; color: #a7f3d0; }
+        body.dark-mode .status-rejected { background: #7f1d1d; color: #fecaca; }
+
+        /* Filter buttons */
+        .filter-btn {
+            transition: all 0.2s ease;
+        }
+        .filter-btn.active {
+            background: #8b5cf6 !important;
+            color: white !important;
+        }
+
+        /* Approval card */
+        .approval-card {
+            transition: all 0.2s ease;
+        }
+        .approval-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.5rem;
+            width: 380px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+        body.dark-mode .notification-dropdown {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+        body.dark-mode .notification-dropdown .text-gray-800,
+        body.dark-mode .notification-dropdown .text-gray-500,
+        body.dark-mode .notification-dropdown .text-gray-400 {
+            color: #f3f4f6 !important;
+        }
+        .notification-item {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
+        body.dark-mode .notification-item:hover {
+            background: #334155;
+        }
+        .notification-unread {
+            background: #faf5ff;
+        }
+        body.dark-mode .notification-unread {
+            background: #4c1d95;
+        }
+
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                position: fixed;
+                top: 55px;
+                right: 12px;
+                left: auto;
+                width: 65vw !important;
+                max-width: 320px;
+                min-width: 200px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+        }
+
+        /* Pagination */
+        .pagination-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .pagination-btn:hover:not(:disabled) { background: #e5e7eb; }
+        body.dark-mode .pagination-btn:hover:not(:disabled) { background: #334155; }
+        .pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination-active { background: #8b5cf6; color: white; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; border-radius: 16px; width: 100%; max-width: 500px; padding: 24px; margin: 16px;
+        }
+        body.dark-mode .modal-content { background: #1e293b; }
+        body.dark-mode .modal-content .text-gray-700,
+        body.dark-mode .modal-content .text-gray-800,
+        body.dark-mode .modal-content .text-gray-900 {
+            color: #f3f4f6 !important;
+        }
+        /* Fix chữ trong dark mode cho filter buttons */
+body.dark-mode .filter-btn {
+    color: #f3f4f6 !important;
+}
+
+body.dark-mode .filter-btn.bg-gray-200,
+body.dark-mode .filter-btn.bg-gray-300 {
+    background-color: #374151 !important;
+    color: #f3f4f6 !important;
+}
+
+body.dark-mode .filter-btn.active {
+    background-color: #8b5cf6 !important;
+    color: white !important;
+}
+
+/* Fix ô tìm kiếm trong dark mode */
+body.dark-mode #searchInput {
+    background-color: #1e293b !important;
+    color: #f3f4f6 !important;
+    border-color: #475569 !important;
+}
+
+body.dark-mode #searchInput::placeholder {
+    color: #9ca3af !important;
+}
+
+/* Fix ô tìm kiếm trong dark mode - ĐÃ SỬA */
+body.dark-mode #searchInput {
+    background-color: #1e293b !important;
+    color: #f3f4f6 !important;
+    border-color: #475569 !important;
+}
+
+body.dark-mode #searchInput::placeholder {
+    color: #9ca3af !important;
+}
+
+body.dark-mode #searchInput:focus {
+    outline: none !important;
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3) !important;
+}
+/* Force active button styles */
+.filter-btn.bg-purple-600,
+button.bg-purple-600 {
+    background-color: #8b5cf6 !important;
+    color: white !important;
+}
+
+.filter-btn.bg-gray-200,
+button.bg-gray-200 {
+    background-color: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+body.dark-mode .filter-btn.bg-gray-200,
+body.dark-mode button.bg-gray-200 {
+    background-color: #374151 !important;
+    color: #e5e7eb !important;
+}
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Giáo viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 1: QUẢN LÝ CHÍNH -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="manage">
+                <span>📋 QUẢN LÝ CHÍNH</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="manage">
+                <div class="nav-item" onclick="window.location.href='/'">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Trang chủ</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/classroom'">
+                    <i class="fas fa-chalkboard"></i>
+                    <span>Lớp học</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/assignments'">
+                    <i class="fas fa-tasks"></i>
+                    <span>Bài tập & Giao bài</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/documents'">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Kho tài liệu</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 2: QUẢN LÝ NGƯỜI DÙNG -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="users">
+                <span>👥 QUẢN LÝ NGƯỜI DÙNG</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="users">
+                <div class="nav-item" onclick="window.location.href='/students'">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Danh sách sinh viên</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/attendance'">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Điểm danh & Chuyên cần</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 3: PHÊ DUYỆT & ĐÁNH GIÁ -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="approval">
+                <span>✅ PHÊ DUYỆT & ĐÁNH GIÁ</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="approval">
+                <div class="nav-item active" onclick="window.location.href='/teacher/approvals'">
+                    <i class="fas fa-check-double"></i>
+                    <span>Phê duyệt tài liệu</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/grades'">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Bảng điểm & Xếp loại</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/analytics'">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Phân tích tiến độ</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 4: TƯƠNG TÁC & AI -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="interact">
+                <span>🤖 TƯƠNG TÁC & AI</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="interact">
+                <div class="nav-item" onclick="window.location.href='/forum'">
+                    <i class="fas fa-comments"></i>
+                    <span>Diễn đàn thảo luận</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/teacher/quiz'">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Quiz & Trò chơi học tập</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/suggest-documents'">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Gợi ý & Tải tài liệu</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nhóm 5: CÀI ĐẶT -->
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="settings">
+                <span>⚙️ CÀI ĐẶT</span>
+                <i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="settings">
+                <div class="nav-item" onclick="window.location.href='/settings'">
+                    <i class="fas fa-cog"></i>
+                    <span>Cài đặt chung</span>
+                </div>
+                <div class="nav-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                    <span id="theme-text-sidebar">Chế độ tối</span>
+                </div>
+                <div class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <!-- Header -->
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl transition-colors" id="header">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <h1 class="text-base sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                📄 Phê duyệt tài liệu
+                            </h1>
+                        </div>
+                        <div class="flex items-center space-x-2 sm:space-x-3">
+                            <!-- Notification Bell -->
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300 text-base sm:text-lg"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm text-gray-800 dark:text-white">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500 hover:text-purple-600">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y dark:divide-gray-700">
+                                        <div class="p-4 text-center text-gray-500 text-sm">
+                                            <i class="fas fa-spinner fa-spin mr-2"></i> Đang tải...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="loadApprovals()" class="bg-blue-500 hover:bg-blue-600 text-white px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm">
+                                <i class="fas fa-sync-alt"></i> Tải lại
+                            </button>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300 text-base sm:text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                <!-- Thống kê nhanh -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+                    <div class="stat-card bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl p-3 sm:p-4 text-white">
+                        <p class="text-xs sm:text-sm opacity-90">⏳ Chờ duyệt</p>
+                        <p id="pendingCount" class="text-xl sm:text-2xl font-bold">0</p>
+                    </div>
+                    <div class="stat-card bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-3 sm:p-4 text-white">
+                        <p class="text-xs sm:text-sm opacity-90">✅ Đã duyệt</p>
+                        <p id="approvedCount" class="text-xl sm:text-2xl font-bold">0</p>
+                    </div>
+                    <div class="stat-card bg-gradient-to-r from-red-500 to-red-600 rounded-xl p-3 sm:p-4 text-white">
+                        <p class="text-xs sm:text-sm opacity-90">❌ Đã từ chối</p>
+                        <p id="rejectedCount" class="text-xl sm:text-2xl font-bold">0</p>
+                    </div>
+                </div>
+
+                <!-- Bộ lọc và tìm kiếm -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-3 sm:p-4 mb-6">
+                    <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="filterApprovals('all')" id="filter-all" class="filter-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-purple-600 text-white active">Tất cả</button>
+                            <button onclick="filterApprovals('pending')" id="filter-pending" class="filter-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300">Chờ duyệt</button>
+                            <button onclick="filterApprovals('approved')" id="filter-approved" class="filter-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300">Đã duyệt</button>
+                            <button onclick="filterApprovals('rejected')" id="filter-rejected" class="filter-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300">Từ chối</button>
+                        </div>
+                        <div class="relative w-full sm:w-64">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                            <input type="text" id="searchInput" placeholder="Tìm theo tên, tài liệu..." 
+                                   class="w-full pl-10 pr-4 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600 text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danh sách phê duyệt -->
+                <div id="approvals-container" class="space-y-3 sm:space-y-4">
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>Đang tải...</p>
+                    </div>
+                </div>
+
+                <!-- Phân trang -->
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mt-6 px-2">
+                    <p id="paginationInfo" class="text-xs sm:text-sm text-gray-500">Hiển thị 0/0 yêu cầu</p>
+                    <div class="flex gap-2">
+                        <button id="prevPage" onclick="changePage(-1)" class="pagination-btn" disabled>
+                            <i class="fas fa-chevron-left"></i> Trước
+                        </button>
+                        <span id="pageNumbers" class="flex gap-1"></span>
+                        <button id="nextPage" onclick="changePage(1)" class="pagination-btn" disabled>
+                            Sau <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal phê duyệt -->
+    <div id="approvalModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4 dark:text-white">📝 Phê duyệt tài liệu</h3>
+            <div id="modalContent">
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-sm text-gray-500">Tài liệu</p>
+                        <p class="font-medium text-gray-800 dark:text-white" id="modalDocName">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Sinh viên</p>
+                        <p class="font-medium text-gray-800 dark:text-white" id="modalStudentName">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Chuyên ngành</p>
+                        <p class="font-medium text-gray-800 dark:text-white" id="modalMajor">-</p>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lý do (nếu từ chối):</label>
+                        <textarea id="rejectReason" rows="3" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600" placeholder="Nhập lý do từ chối..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 justify-end mt-6">
+                <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded-lg hover:bg-gray-400">Hủy</button>
+                <button onclick="submitApproval('rejected')" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Từ chối</button>
+                <button onclick="submitApproval('approved')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Phê duyệt</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== NỀN SAO ====================
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; starCtx.lineWidth = 2; 
+                    starCtx.beginPath(); starCtx.moveTo(m.x, m.y); starCtx.lineTo(m.x - m.len, m.y - m.len); starCtx.stroke(); 
+                    m.x += m.speed; m.y += m.speed; 
+                    if (m.x > starCanvas.width || m.y > starCanvas.height) meteorsArray.splice(i,1);
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { if (starCanvas && isStarSystemActive) { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; initStarsPro(); } }); 
+            setInterval(() => { if (isStarSystemActive) { let c = Math.floor(Math.random() * 2) + 3; for (let i = 0; i < c; i++) createMeteorPro(); } }, 1500); 
+            initStarsPro(); drawStarsPro(); 
+        }
+
+        let isDarkModeActive = false;
+        
+        function toggleTheme() { 
+            const body = document.body, starCanvasElem = document.getElementById('star-canvas-background'),
+                  themeIconSidebar = document.getElementById('theme-icon-sidebar'), themeTextSidebar = document.getElementById('theme-text-sidebar');
+            isDarkModeActive = !isDarkModeActive; 
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); body.classList.add('dark-mode'); 
+                if (themeIconSidebar) { themeIconSidebar.classList.remove('fa-moon'); themeIconSidebar.classList.add('fa-sun'); }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ sáng';
+                if (starCanvasElem) { starCanvasElem.style.display = 'block'; if (!starCtx) { isStarSystemActive = true; initStarfieldPro(); } else { isStarSystemActive = true; if (!starAnimationId) { function restartDraw() { if (starCtx && starCanvas && isStarSystemActive) drawStarsPro(); } restartDraw(); } } } 
+            } else { 
+                body.classList.remove('dark-mode'); body.classList.add('light-mode'); 
+                if (themeIconSidebar) { themeIconSidebar.classList.remove('fa-sun'); themeIconSidebar.classList.add('fa-moon'); }
+                if (themeTextSidebar) themeTextSidebar.textContent = 'Chế độ tối';
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; isStarSystemActive = false; if (starAnimationId) { cancelAnimationFrame(starAnimationId); starAnimationId = null; } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { setTimeout(() => { toggleTheme(); }, 20); } 
+        else { const canvasBg = document.getElementById('star-canvas-background'); if (canvasBg) canvasBg.style.display = 'none'; }
+
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') group.classList.add('collapsed');
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() { document.getElementById('leftSidebar').classList.toggle('open'); }
+        
+        async function logout() { 
+            if (confirm('Đăng xuất?')) { 
+                await fetch('/api/logout', { method: 'POST' }); 
+                window.location.href = '/login'; 
+            } 
+        }
+        
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        
+        function formatTime(timestamp) { 
+            if (!timestamp) return ''; 
+            const date = new Date(timestamp); 
+            const now = new Date(); 
+            const diff = Math.floor((now - date) / 1000); 
+            if (diff < 60) return 'Vừa xong'; 
+            if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`; 
+            if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`; 
+            if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`; 
+            return date.toLocaleDateString('vi-VN'); 
+        }
+        
+        function showToast(message, type = 'success') { 
+            const toast = document.createElement('div'); 
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'}`; 
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>${message}`; 
+            document.body.appendChild(toast); 
+            setTimeout(() => toast.remove(), 3000); 
+        }
+
+        // ==================== DỮ LIỆU PHÊ DUYỆT ====================
+        let allApprovals = [];
+        let filteredApprovals = [];
+        let currentFilter = 'all';
+        let currentPage = 1;
+        const rowsPerPage = 5;
+        let currentSearch = '';
+
+        async function loadApprovals() {
+            try {
+                const res = await fetch('/api/teacher/pending-approvals');
+                const data = await res.json();
+                if (data.success) {
+                    allApprovals = data.approvals;
+                    applyFilters();
+                    updateStats();
+                } else {
+                    showToast('Lỗi tải dữ liệu', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('Lỗi kết nối', 'error');
+            }
+        }
+
+        function updateStats() {
+            const pending = allApprovals.filter(a => a.status === 'pending').length;
+            const approved = allApprovals.filter(a => a.status === 'approved').length;
+            const rejected = allApprovals.filter(a => a.status === 'rejected').length;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('approvedCount').textContent = approved;
+            document.getElementById('rejectedCount').textContent = rejected;
+        }
+
+        function applyFilters() {
+            filteredApprovals = allApprovals.filter(a => {
+                const matchFilter = currentFilter === 'all' || a.status === currentFilter;
+                const matchSearch = !currentSearch || 
+                    a.student_name?.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                    a.document_name?.toLowerCase().includes(currentSearch.toLowerCase());
+                return matchFilter && matchSearch;
+            });
+            currentPage = 1;
+            renderApprovals();
+            updatePagination();
+        }
+
+        function filterApprovals(status) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-purple-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            });
+            const activeBtn = document.getElementById(`filter-${status}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                activeBtn.classList.add('bg-purple-600', 'text-white');
+            }
+            applyFilters();
+        }
+
+        function renderApprovals() {
+            const container = document.getElementById('approvals-container');
+            const start = (currentPage - 1) * rowsPerPage;
+            const pageApprovals = filteredApprovals.slice(start, start + rowsPerPage);
+            
+            if (pageApprovals.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-400">📭 Không có yêu cầu phê duyệt nào</div>';
+                return;
+            }
+            
+            container.innerHTML = pageApprovals.map(approval => {
+                let statusClass = '';
+                let statusText = '';
+                if (approval.status === 'pending') {
+                    statusClass = 'status-pending';
+                    statusText = '⏳ Chờ duyệt';
+                } else if (approval.status === 'approved') {
+                    statusClass = 'status-approved';
+                    statusText = '✅ Đã duyệt';
+                } else {
+                    statusClass = 'status-rejected';
+                    statusText = '❌ Đã từ chối';
+                }
+                
+                return `
+                    <div class="approval-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-3 sm:p-4">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2 mb-2">
+                                    <i class="fas fa-file-pdf text-red-500"></i>
+                                    <h3 class="font-semibold text-gray-800 dark:text-white text-sm sm:text-base truncate">${escapeHtml(approval.document_name)}</h3>
+                                    <span class="status-badge ${statusClass} text-xs">${statusText}</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-user text-gray-400 w-4"></i>
+                                        <span class="text-gray-500">Sinh viên:</span>
+                                        <span class="font-medium text-gray-800 dark:text-white truncate">${escapeHtml(approval.student_name)}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-graduation-cap text-gray-400 w-4"></i>
+                                        <span class="text-gray-500">Chuyên ngành:</span>
+                                        <span class="font-medium text-gray-800 dark:text-white">${escapeHtml(approval.major)}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-envelope text-gray-400 w-4"></i>
+                                        <span class="text-gray-500">Email:</span>
+                                        <span class="font-medium text-gray-800 dark:text-white truncate">${escapeHtml(approval.student_email)}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-calendar text-gray-400 w-4"></i>
+                                        <span class="text-gray-500">Ngày tải:</span>
+                                        <span class="font-medium text-gray-800 dark:text-white">${formatTime(approval.uploaded_at)}</span>
+                                    </div>
+                                </div>
+                                ${approval.teacher_note ? `<div class="mt-2 text-xs sm:text-sm"><span class="text-gray-500">📝 Ghi chú:</span> <span class="text-gray-700 dark:text-gray-300">${escapeHtml(approval.teacher_note)}</span></div>` : ''}
+                            </div>
+                            ${approval.status === 'pending' ? `
+                                <div class="action-buttons flex sm:flex-col lg:flex-row gap-2">
+                                    <button onclick="openApprovalModal(${approval.id}, '${escapeHtml(approval.document_name)}', '${escapeHtml(approval.student_name)}', '${escapeHtml(approval.major)}')" 
+                                            class="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs sm:text-sm hover:bg-blue-600 transition whitespace-nowrap">
+                                        <i class="fas fa-check-circle mr-1"></i> Xử lý
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredApprovals.length / rowsPerPage);
+            document.getElementById('paginationInfo').textContent = `Hiển thị ${filteredApprovals.length > 0 ? (currentPage-1)*rowsPerPage+1 : 0}-${Math.min(currentPage*rowsPerPage, filteredApprovals.length)}/${filteredApprovals.length} yêu cầu`;
+            document.getElementById('prevPage').disabled = currentPage <= 1;
+            document.getElementById('nextPage').disabled = currentPage >= totalPages;
+            let pageHtml = '';
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+            for (let i = startPage; i <= endPage; i++) {
+                pageHtml += `<button onclick="goToPage(${i})" class="pagination-btn ${i === currentPage ? 'pagination-active' : ''}">${i}</button>`;
+            }
+            document.getElementById('pageNumbers').innerHTML = pageHtml;
+        }
+
+        function goToPage(page) { currentPage = page; renderApprovals(); }
+        function changePage(delta) { goToPage(currentPage + delta); }
+
+        // ==================== MODAL PHÊ DUYỆT ====================
+        let currentApprovalId = null;
+        
+        function openApprovalModal(approvalId, docName, studentName, major) {
+            currentApprovalId = approvalId;
+            document.getElementById('modalDocName').textContent = docName;
+            document.getElementById('modalStudentName').textContent = studentName;
+            document.getElementById('modalMajor').textContent = major;
+            document.getElementById('rejectReason').value = '';
+            document.getElementById('approvalModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('approvalModal').style.display = 'none';
+            currentApprovalId = null;
+        }
+        
+        async function submitApproval(action) {
+            if (!currentApprovalId) return;
+            
+            const approval = allApprovals.find(a => a.id === currentApprovalId);
+            if (!approval) return;
+            
+            const formData = new FormData();
+            formData.append('approval_id', currentApprovalId);
+            formData.append('document_id', approval.document_id);
+            formData.append('action', action);
+            
+            if (action === 'rejected') {
+                const reason = document.getElementById('rejectReason').value;
+                if (!reason) {
+                    showToast('Vui lòng nhập lý do từ chối', 'error');
+                    return;
+                }
+                formData.append('teacher_note', reason);
+            }
+            
+            try {
+                const res = await fetch('/api/teacher/approve-document', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(action === 'approved' ? '✅ Đã phê duyệt tài liệu' : '❌ Đã từ chối tài liệu');
+                    closeModal();
+                    loadApprovals();
+                } else {
+                    showToast(data.message || 'Lỗi xử lý', 'error');
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối', 'error');
+            }
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    const container = document.getElementById('notifications-list');
+                    if (!data.notifications?.length) container.innerHTML = '<div class="p-4 text-center text-gray-500">Chưa có thông báo</div>';
+                    else container.innerHTML = data.notifications.map(n => `<div class="notification-item ${n.is_read ? '' : 'notification-unread'} p-3 transition" onclick="viewNotification(${n.id}, '${n.link || ''}')"><div class="flex gap-3"><div><i class="fas fa-bell text-purple-500"></i></div><div><p class="text-sm font-medium">${escapeHtml(n.title)}</p><p class="text-xs text-gray-500">${escapeHtml(n.content.substring(0, 80))}</p><p class="text-xs text-gray-400 mt-1">${formatTime(n.created_at)}</p></div></div></div>`).join('');
+                    document.getElementById('notification-badge').textContent = data.unread_count || '';
+                    document.getElementById('notification-badge').classList.toggle('hidden', !data.unread_count);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function toggleNotificationDropdown() { const d = document.getElementById('notification-dropdown'); d.classList.toggle('hidden'); if (!d.classList.contains('hidden')) loadNotifications(); }
+        async function viewNotification(id, link) { await fetch(`/api/notifications/mark-read/${id}`, { method: 'POST' }); loadNotifications(); if (link) window.location.href = link; }
+        async function markAllNotificationsRead() { await fetch('/api/notifications/mark-all-read', { method: 'POST' }); loadNotifications(); showToast('Đã đánh dấu tất cả thông báo', 'success'); }
+
+        // ==================== SỰ KIỆN ====================
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            currentSearch = e.target.value;
+            applyFilters();
+        });
+        
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.add('hidden');
+        });
+        
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar'); const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuBtn.contains(event.target)) sidebar.classList.remove('open');
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleGroups();
+            loadApprovals();
+            loadNotifications();
+            setInterval(loadNotifications, 30000);
+        });
+        
+        // Export functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.filterApprovals = filterApprovals;
+        window.openApprovalModal = openApprovalModal;
+        window.closeModal = closeModal;
+        window.submitApproval = submitApproval;
+        window.goToPage = goToPage;
+        window.changePage = changePage;
+        window.loadApprovals = loadApprovals;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+    </script>
+</body>
+</html>

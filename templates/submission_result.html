@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kết quả bài làm</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; }
+        .container { max-width: 800px; margin: auto; }
+        .result-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
+        .score { font-size: 48px; font-weight: bold; color: #27ae60; }
+        .question-review { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .correct { color: green; border-left: 4px solid green; }
+        .incorrect { color: red; border-left: 4px solid red; }
+        .btn-back { display: inline-block; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="result-card">
+            <h1>🎉 Kết quả bài làm</h1>
+            <p>Bài: {{ submission.assignment_title or submission.quiz_title }}</p>
+            <div class="score">{{ submission.score }}/10</div>
+            <p>Đúng {{ submission.correct_count }}/{{ submission.total_questions }} câu</p>
+            <p>Nộp lúc: {{ submission.submitted_at }}</p>
+            <a href="/student/assignments" class="btn-back">← Quay lại danh sách</a>
+        </div>
+    </div>
+</body>
+</html>

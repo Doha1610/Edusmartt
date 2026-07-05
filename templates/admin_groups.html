@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>EduSmart - Admin | Quản lý nhóm học tập</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; transition: background 0.2s ease; min-height: 100vh; }
+        body.light-mode { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); color: #1f2937; }
+        body.dark-mode { background: transparent; color: #f3f4f6; }
+        
+        #star-canvas-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
+            background: radial-gradient(ellipse at bottom, #0b0c2a 0%, #000 100%);
+        }
+        body.light-mode #star-canvas-background { display: none; }
+        .content-wrapper { position: relative; z-index: 10; width: 100%; }
+
+        body.dark-mode .bg-white, body.dark-mode .bg-gray-50, body.dark-mode .bg-gray-100 {
+            background-color: #1e293b !important; border-color: #334155 !important;
+        }
+        body.dark-mode .text-gray-600, body.dark-mode .text-gray-700, body.dark-mode .text-gray-800 {
+            color: #cbd5e1 !important;
+        }
+
+        .left-sidebar-dark {
+            background: #0a0c10; width: 280px; position: fixed; left: 0; top: 0; bottom: 0;
+            z-index: 1000; transition: transform 0.3s ease; border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+        }
+        body.dark-mode .left-sidebar-dark { background: #030712; }
+        .left-sidebar-dark::-webkit-scrollbar { width: 4px; }
+        .left-sidebar-dark::-webkit-scrollbar-track { background: #1f2937; }
+        .left-sidebar-dark::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 16px; margin: 4px 12px;
+            border-radius: 10px; transition: all 0.2s ease; color: #9ca3af; cursor: pointer;
+        }
+        .nav-item i { width: 22px; font-size: 1rem; }
+        .nav-item span { font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+
+        .nav-group-title {
+            padding: 16px 20px 6px 20px; font-size: 0.7rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px; color: #6b7280;
+        }
+        .main-container { margin-left: 280px; transition: margin 0.3s ease; width: auto; }
+
+        .collapsible-group { margin-bottom: 4px; }
+        .nav-group-toggle { display: flex !important; justify-content: space-between !important; align-items: center !important; cursor: pointer; }
+        .group-icon { font-size: 0.75rem; transition: transform 0.2s ease; }
+        .collapsible-group.collapsed .group-icon { transform: rotate(-90deg); }
+        .collapsible-group.collapsed .nav-group-items { display: none; }
+
+        .sidebar-menu-btn { cursor: pointer; padding: 8px; border-radius: 8px; transition: all 0.2s; display: none; }
+        .sidebar-menu-btn:hover { background: rgba(0,0,0,0.05); }
+        body.dark-mode .sidebar-menu-btn:hover { background: rgba(255,255,255,0.1); }
+
+        @media (max-width: 1024px) {
+            .sidebar-menu-btn { display: block !important; }
+            .left-sidebar-dark { transform: translateX(-100%); }
+            .left-sidebar-dark.open { transform: translateX(0) !important; }
+            .main-container { margin-left: 0; width: 100%; }
+        }
+        @media (min-width: 1025px) {
+            .sidebar-menu-btn { display: none !important; }
+            .left-sidebar-dark { transform: translateX(0) !important; }
+            .main-container { margin-left: 280px; }
+        }
+
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .group-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #8b5cf6;
+        }
+        .group-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+
+        .member-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 12px; color: white;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; border-radius: 16px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;
+        }
+        body.dark-mode .modal-content { background: #1e293b; }
+
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 500;
+        }
+        .badge-owner { background: #fef3c7; color: #92400e; }
+        .badge-member { background: #d1fae5; color: #065f46; }
+        body.dark-mode .badge-owner { background: #78350f; color: #fde68a; }
+        body.dark-mode .badge-member { background: #064e3b; color: #a7f3d0; }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 380px;
+            background: white; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 1000; max-height: 400px; overflow-y: auto; font-size: 13px;
+        }
+        body.dark-mode .notification-dropdown { background: #1e293b; border: 1px solid #334155; }
+        .notification-item { transition: all 0.2s; cursor: pointer; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+        .notification-item:hover { background: #f3f4f6; }
+        body.dark-mode .notification-item:hover { background: #334155; }
+        .notification-unread { background: #faf5ff; }
+        body.dark-mode .notification-unread { background: #4c1d95; }
+        /* ========== TẤT CẢ DROPDOWN CHUYÊN NGÀNH - CHỮ MÀU ĐEN ========== */
+
+/* Tất cả select và option */
+select,
+select option,
+#major-filter,
+#major-filter option,
+#group-major,
+#group-major option,
+#add-doc-major,
+#add-doc-major option,
+.filter-select,
+.filter-select option {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+
+/* Đảm bảo khi focus vẫn giữ màu đen */
+select:focus,
+select option:focus,
+#major-filter:focus,
+#group-major:focus,
+#add-doc-major:focus {
+    color: #000000 !important;
+    outline: none;
+    border-color: #8b5cf6;
+}
+
+/* Dark mode - vẫn giữ chữ đen nền trắng */
+body.dark-mode select,
+body.dark-mode select option,
+body.dark-mode #major-filter,
+body.dark-mode #major-filter option,
+body.dark-mode #group-major,
+body.dark-mode #group-major option,
+body.dark-mode #add-doc-major,
+body.dark-mode #add-doc-major option {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+
+/* Khi disabled hoặc readonly vẫn giữ */
+select:disabled,
+select:read-only {
+    color: #000000 !important;
+    background-color: #f3f4f6 !important;
+}
+    </style>
+</head>
+<body class="light-mode">
+
+    <canvas id="star-canvas-background"></canvas>
+
+    <!-- Sidebar -->
+    <div class="left-sidebar-dark" id="leftSidebar">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm">EduSmart</h1>
+                    <p class="text-gray-400 text-[10px]">Quản trị viên</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="overview">
+                <span>📊 TỔNG QUAN</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="overview">
+                <div class="nav-item" onclick="window.location.href='/'"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="users">
+                <span>👥 QUẢN LÝ & BÁO CÁO NGƯỜI DÙNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="users">
+                <div class="nav-item" onclick="window.location.href='/admin/users'"><i class="fas fa-users-cog"></i><span>Quản lý người dùng</span></div>
+                <div class="nav-item" onclick="window.location.href='/admin/teachers'"><i class="fas fa-chalkboard-user"></i><span>Quản lý giáo viên</span></div>
+                <div class="nav-item" onclick="window.location.href='/admin/students'"><i class="fas fa-user-graduate"></i><span>Quản lý sinh viên</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="content">
+                <span>📚 QUẢN LÝ NỘI DUNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="content">
+                <div class="nav-item" onclick="window.location.href='/admin/documents'"><i class="fas fa-folder-open"></i><span>Kho tài liệu</span></div>
+                <div class="nav-item" onclick="window.location.href='/admin/document-approvals'"><i class="fas fa-file-signature"></i><span>Phê duyệt tài liệu</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="learning">
+                <span>🏫 QUẢN LÝ HỌC TẬP</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="learning">
+                <div class="nav-item" onclick="window.location.href='/admin/classes'"><i class="fas fa-chalkboard"></i><span>Lớp học</span></div>
+                <div class="nav-item active" onclick="window.location.href='/admin/groups'"><i class="fas fa-users-viewfinder"></i><span>Nhóm học tập</span></div>
+            </div>
+        </div>
+        
+        <div class="collapsible-group">
+            <div class="nav-group-title nav-group-toggle" data-group="system">
+                <span>⚙️ CÀI ĐẶT HỆ THỐNG</span><i class="fas fa-chevron-down group-icon"></i>
+            </div>
+            <div class="nav-group-items" data-group="system">
+<div class="nav-item" onclick="window.location.href='/admin/settings'">
+    <i class="fas fa-cog"></i><span>Cài đặt chung</span>
+</div>                <div class="nav-item" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon-sidebar"></i><span id="theme-text-sidebar">Chế độ tối</span></div>
+                <div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <header class="bg-white shadow-lg sticky top-0 z-30 rounded-b-xl">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="sidebar-menu-btn" onclick="toggleSidebar()">
+                                <i class="fas fa-bars text-gray-700 dark:text-white text-xl"></i>
+                            </div>
+                            <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-users-viewfinder text-white text-lg"></i>
+                            </div>
+                            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                Quản lý nhóm học tập
+                            </h1>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="relative">
+                                <button id="notification-btn" onclick="toggleNotificationDropdown()" class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                    <i class="fas fa-bell text-gray-600 dark:text-gray-300"></i>
+                                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 hidden">0</span>
+                                </button>
+                                <div id="notification-dropdown" class="notification-dropdown hidden">
+                                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b p-3 flex justify-between items-center rounded-t-xl">
+                                        <h3 class="font-semibold text-sm">📢 Thông báo</h3>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-purple-500">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="notifications-list" class="divide-y"><div class="p-4 text-center">Đang tải...</div></div>
+                                </div>
+                            </div>
+                            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <i class="fas fa-moon text-gray-600 dark:text-yellow-300"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <!-- Thống kê nhanh -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-4 text-white">
+                        <p class="text-sm opacity-90">Tổng số nhóm</p>
+                        <p id="total-groups" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+                        <p class="text-sm opacity-90">Tổng thành viên</p>
+                        <p id="total-members" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-4 text-white">
+                        <p class="text-sm opacity-90">Nhóm mới nhất</p>
+                        <p id="newest-group" class="text-sm font-bold truncate">---</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-4 text-white cursor-pointer" onclick="openCreateGroupModal()">
+                        <p class="text-sm opacity-90"><i class="fas fa-plus mr-1"></i> Tạo nhóm mới</p>
+                        <p class="text-xl font-bold">+ Thêm</p>
+                    </div>
+                </div>
+
+                <!-- Bộ lọc -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1 relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="search-input" placeholder="🔍 Tìm kiếm theo tên nhóm, chuyên ngành, chủ đề..." 
+                                   class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600">
+                        </div>
+                        <select id="major-filter" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600">
+                            <option value="all">📁 Tất cả chuyên ngành</option>
+                        </select>
+                        <button onclick="refreshGroups()" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
+                            <i class="fas fa-sync-alt mr-1"></i> Làm mới
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Danh sách nhóm -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+                    <div class="px-4 py-3 border-b dark:border-gray-700">
+                        <h3 class="font-semibold"><i class="fas fa-users mr-2"></i>Danh sách nhóm học tập</h3>
+                    </div>
+                    <div id="groups-container" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="col-span-full text-center py-8">
+                            <i class="fas fa-spinner fa-spin text-3xl text-purple-500 mb-4"></i>
+                            <p class="text-gray-500">Đang tải danh sách nhóm...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal tạo nhóm mới -->
+    <div id="create-group-modal" class="modal-overlay">
+        <div class="modal-content p-6">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-plus-circle text-purple-500"></i> Tạo nhóm học tập mới
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Tên nhóm <span class="text-red-500">*</span></label>
+                    <input type="text" id="group-name" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="VD: Nhóm học CNTT K12">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Mô tả</label>
+                    <textarea id="group-description" rows="3" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Mô tả về nhóm học tập..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Chuyên ngành</label>
+                    <select id="group-major" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">-- Chọn chuyên ngành --</option>
+                        <option value="Công nghệ thông tin">💻 Công nghệ thông tin</option>
+                        <option value="Toán học">📐 Toán học</option>
+                        <option value="Kinh tế">📊 Kinh tế</option>
+                        <option value="Ngoại ngữ">🌍 Ngoại ngữ</option>
+                        <option value="Kỹ thuật phần mềm">⚙️ Kỹ thuật phần mềm</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Chủ đề/Môn học</label>
+                    <input type="text" id="group-subject" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="VD: Lập trình Python, Giải tích...">
+                </div>
+            </div>
+            <div class="flex gap-3 justify-end mt-6">
+                <button onclick="closeCreateGroupModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg">Hủy</button>
+                <button onclick="createGroup()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-check mr-1"></i> Tạo nhóm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal chi tiết nhóm -->
+    <div id="group-detail-modal" class="modal-overlay">
+        <div class="modal-content p-6 max-w-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fas fa-users text-purple-500"></i> <span id="detail-group-name"></span>
+                </h3>
+                <button onclick="closeGroupDetailModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="detail-content" class="space-y-4">
+                <div class="text-center py-8">Đang tải...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal xóa nhóm -->
+    <div id="delete-group-modal" class="modal-overlay">
+        <div class="modal-content p-6">
+            <h3 class="text-xl font-bold mb-4 text-red-600 flex items-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i> Xác nhận xóa nhóm
+            </h3>
+            <p>Bạn có chắc muốn xóa nhóm <strong id="delete-group-name"></strong>?</p>
+            <p class="text-sm text-red-500 mt-2">⚠️ Hành động này sẽ xóa tất cả thành viên và tin nhắn trong nhóm!</p>
+            <input type="hidden" id="delete-group-id">
+            <div class="flex gap-3 justify-end mt-6">
+                <button onclick="closeDeleteGroupModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg">Hủy</button>
+                <button onclick="confirmDeleteGroup()" class="px-4 py-2 bg-red-600 text-white rounded-lg">Xóa nhóm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Star background
+        let starAnimationId = null, starCtx = null, starCanvas = null, starsArray = [], meteorsArray = [], isStarSystemActive = false;
+        
+        function initStarfieldPro() { 
+            starCanvas = document.getElementById('star-canvas-background'); 
+            if (!starCanvas) return; 
+            starCtx = starCanvas.getContext('2d'); 
+            function initStarsPro() { 
+                starsArray = []; 
+                for (let i = 0; i < 1500; i++) 
+                    starsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height, r: Math.random() * 0.8, alpha: Math.random() * 0.5 + 0.5, speed: Math.random() * 0.3 }); 
+            } 
+            function createMeteorPro() { 
+                meteorsArray.push({ x: Math.random() * starCanvas.width, y: Math.random() * starCanvas.height / 2, len: Math.random() * 300 + 100, speed: Math.random() * 8 + 4, alpha: 1 }); 
+            } 
+            function drawStarsPro() { 
+                if (!starCtx || !starCanvas) return; 
+                starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height); 
+                for (let s of starsArray) { 
+                    starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); 
+                    starCtx.fillStyle = "rgba(255,255,255," + s.alpha + ")"; starCtx.fill(); 
+                    s.alpha += (Math.random() - 0.5) * 0.05; s.alpha = Math.max(0, Math.min(1, s.alpha)); 
+                    s.y += s.speed; if (s.y > starCanvas.height) { s.y = 0; s.x = Math.random() * starCanvas.width; } 
+                } 
+                for (let i = meteorsArray.length - 1; i >= 0; i--) { 
+                    let m = meteorsArray[i]; 
+                    let g = starCtx.createLinearGradient(m.x, m.y, m.x - m.len, m.y - m.len); 
+                    g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)"); 
+                    starCtx.strokeStyle = g; starCtx.lineWidth = 2; 
+                    starCtx.beginPath(); starCtx.moveTo(m.x, m.y); starCtx.lineTo(m.x - m.len, m.y - m.len); starCtx.stroke(); 
+                    m.x += m.speed; m.y += m.speed; 
+                } 
+                starAnimationId = requestAnimationFrame(drawStarsPro); 
+            } 
+            window.addEventListener('resize', () => { if (starCanvas && isStarSystemActive) { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; initStarsPro(); } }); 
+            setInterval(() => { if (isStarSystemActive) { let c = Math.floor(Math.random() * 2) + 3; for (let i = 0; i < c; i++) createMeteorPro(); } }, 1500); 
+            initStarsPro(); drawStarsPro(); 
+        }
+
+        let isDarkModeActive = false;
+        let groups = [];
+        let allGroups = [];
+
+        function toggleTheme() { 
+            const body = document.body, starCanvasElem = document.getElementById('star-canvas-background');
+            isDarkModeActive = !isDarkModeActive; 
+            if (isDarkModeActive) { 
+                body.classList.remove('light-mode'); body.classList.add('dark-mode'); 
+                if (starCanvasElem) { starCanvasElem.style.display = 'block'; if (!starCtx) { isStarSystemActive = true; initStarfieldPro(); } else { isStarSystemActive = true; } } 
+            } else { 
+                body.classList.remove('dark-mode'); body.classList.add('light-mode'); 
+                if (starCanvasElem) starCanvasElem.style.display = 'none'; isStarSystemActive = false; if (starAnimationId) { cancelAnimationFrame(starAnimationId); starAnimationId = null; } 
+            } 
+            localStorage.setItem('star_theme_mode', isDarkModeActive ? 'dark' : 'light'); 
+        }
+        
+        const savedStarTheme = localStorage.getItem('star_theme_mode'); 
+        if (savedStarTheme === 'dark') { setTimeout(() => { toggleTheme(); }, 20); } 
+        else { const canvasBg = document.getElementById('star-canvas-background'); if (canvasBg) canvasBg.style.display = 'none'; }
+
+        function initCollapsibleGroups() {
+            const groups = document.querySelectorAll('.collapsible-group');
+            groups.forEach(group => {
+                const toggle = group.querySelector('.nav-group-toggle');
+                const groupId = toggle?.getAttribute('data-group');
+                const savedState = localStorage.getItem(`sidebar_group_${groupId}`);
+                if (savedState === 'collapsed') group.classList.add('collapsed');
+                toggle?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    group.classList.toggle('collapsed');
+                    localStorage.setItem(`sidebar_group_${groupId}`, group.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                });
+            });
+        }
+
+        function toggleSidebar() { document.getElementById('leftSidebar').classList.toggle('open'); }
+        
+        async function logout() { if (confirm('Đăng xuất?')) { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; } }
+        
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 fade-in text-sm ${type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN');
+        }
+
+        // ==================== QUẢN LÝ NHÓM ====================
+        async function loadGroups() {
+            try {
+                const response = await fetch('/api/admin/groups');
+                const data = await response.json();
+                if (data.success) {
+                    allGroups = data.groups;
+                    groups = [...allGroups];
+                    updateStats();
+                    updateMajorFilter();
+                    renderGroups();
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showToast('Không thể tải danh sách nhóm', 'error');
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('total-groups').textContent = groups.length;
+            let totalMembers = 0;
+            groups.forEach(g => totalMembers += g.member_count || 0);
+            document.getElementById('total-members').textContent = totalMembers;
+            if (groups.length > 0) {
+                document.getElementById('newest-group').textContent = groups[0]?.name || '---';
+            }
+        }
+
+        function updateMajorFilter() {
+            const majors = [...new Set(groups.map(g => g.major).filter(m => m))];
+            const filterSelect = document.getElementById('major-filter');
+            filterSelect.innerHTML = '<option value="all">📁 Tất cả chuyên ngành</option>' + 
+                majors.map(major => `<option value="${major}">${major}</option>`).join('');
+        }
+
+        function filterGroups() {
+            const searchTerm = document.getElementById('search-input')?.value.toLowerCase() || '';
+            const majorFilter = document.getElementById('major-filter')?.value || 'all';
+            
+            groups = allGroups.filter(group => {
+                const matchSearch = group.name.toLowerCase().includes(searchTerm) ||
+                    (group.description || '').toLowerCase().includes(searchTerm) ||
+                    (group.major || '').toLowerCase().includes(searchTerm);
+                const matchMajor = majorFilter === 'all' || group.major === majorFilter;
+                return matchSearch && matchMajor;
+            });
+            renderGroups();
+        }
+
+        function renderGroups() {
+            const container = document.getElementById('groups-container');
+            if (groups.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-8"><i class="fas fa-users-slash text-4xl text-gray-300 mb-4"></i><p class="text-gray-500">Không có nhóm nào</p><button onclick="openCreateGroupModal()" class="mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg">+ Tạo nhóm mới</button></div>`;
+                return;
+            }
+            
+            container.innerHTML = groups.map(group => `
+                <div class="group-card bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-users text-purple-500 text-xl"></i>
+                            <h3 class="font-bold text-gray-800 dark:text-white">${escapeHtml(group.name)}</h3>
+                        </div>
+                        <span class="text-xs text-gray-400">${formatTime(group.created_at)}</span>
+                    </div>
+                    ${group.description ? `<p class="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">${escapeHtml(group.description)}</p>` : ''}
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        ${group.major ? `<span class="badge-owner badge">📚 ${escapeHtml(group.major)}</span>` : ''}
+                        ${group.subject ? `<span class="badge-member badge">📖 ${escapeHtml(group.subject)}</span>` : ''}
+                        <span class="badge bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"><i class="fas fa-user mr-1"></i> ${group.member_count || 0} thành viên</span>
+                    </div>
+                    <div class="flex gap-2 mt-3 pt-3 border-t dark:border-gray-700">
+                        <button onclick="viewGroupDetail(${group.id})" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded-lg text-xs">
+                            <i class="fas fa-eye mr-1"></i> Chi tiết
+                        </button>
+                        <button onclick="openDeleteGroupModal(${group.id}, '${escapeHtml(group.name)}')" class="flex-1 bg-red-500 hover:bg-red-600 text-white px-2 py-1.5 rounded-lg text-xs">
+                            <i class="fas fa-trash mr-1"></i> Xóa
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function refreshGroups() { loadGroups(); showToast('Đã làm mới danh sách', 'success'); }
+
+        // ==================== TẠO NHÓM ====================
+        function openCreateGroupModal() {
+            document.getElementById('group-name').value = '';
+            document.getElementById('group-description').value = '';
+            document.getElementById('group-major').value = '';
+            document.getElementById('group-subject').value = '';
+            document.getElementById('create-group-modal').style.display = 'flex';
+        }
+
+        function closeCreateGroupModal() {
+            document.getElementById('create-group-modal').style.display = 'none';
+        }
+
+        async function createGroup() {
+            const name = document.getElementById('group-name').value.trim();
+            const description = document.getElementById('group-description').value.trim();
+            const major = document.getElementById('group-major').value;
+            const subject = document.getElementById('group-subject').value.trim();
+            
+            if (!name) {
+                showToast('Vui lòng nhập tên nhóm', 'warning');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('description', description);
+            formData.append('major', major);
+            formData.append('subject', subject);
+            
+            try {
+                const response = await fetch('/api/groups/create', { method: 'POST', body: formData });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('✅ Đã tạo nhóm thành công!', 'success');
+                    closeCreateGroupModal();
+                    loadGroups();
+                } else {
+                    showToast(data.detail || 'Tạo nhóm thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối', 'error');
+            }
+        }
+
+        // ==================== CHI TIẾT NHÓM ====================
+        async function viewGroupDetail(groupId) {
+            try {
+                const response = await fetch(`/api/groups/${groupId}/members`);
+                const data = await response.json();
+                if (data.success) {
+                    const group = groups.find(g => g.id === groupId);
+                    document.getElementById('detail-group-name').textContent = group?.name || 'Nhóm học tập';
+                    
+                    const membersHtml = data.members.map(member => `
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <div class="member-avatar" style="background: ${getRandomColor(member.user_id)}">
+                                    ${member.fullname?.charAt(0).toUpperCase() || 'U'}
+                                </div>
+                                <div>
+                                    <p class="font-medium">${escapeHtml(member.fullname)}</p>
+                                    <p class="text-xs text-gray-500">${member.role === 'owner' ? 'Chủ nhóm' : 'Thành viên'}</p>
+                                </div>
+                            </div>
+                            <span class="badge ${member.role === 'owner' ? 'badge-owner' : 'badge-member'}">${member.role === 'owner' ? '👑 Chủ nhóm' : '👤 Thành viên'}</span>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('detail-content').innerHTML = `
+                        <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Mô tả</p>
+                            <p class="text-gray-800 dark:text-white">${escapeHtml(group?.description || 'Chưa có mô tả')}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                                <p class="text-xs text-gray-500">Chuyên ngành</p>
+                                <p class="font-medium">${escapeHtml(group?.major || 'Chưa phân loại')}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                                <p class="text-xs text-gray-500">Chủ đề</p>
+                                <p class="font-medium">${escapeHtml(group?.subject || 'Chưa có')}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                                <p class="text-xs text-gray-500">Ngày tạo</p>
+                                <p class="font-medium">${formatTime(group?.created_at)}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                                <p class="text-xs text-gray-500">Mã mời</p>
+                                <p class="font-medium font-mono">${escapeHtml(group?.invite_code || '---')}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-2 flex items-center gap-2"><i class="fas fa-users"></i> Thành viên (${data.members.length})</h4>
+                            <div class="space-y-2 max-h-96 overflow-y-auto">${membersHtml || '<p class="text-gray-500 text-center">Chưa có thành viên</p>'}</div>
+                        </div>
+                    `;
+                    document.getElementById('group-detail-modal').style.display = 'flex';
+                }
+            } catch (error) {
+                showToast('Lỗi tải chi tiết nhóm', 'error');
+            }
+        }
+
+        function getRandomColor(id) {
+            const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4'];
+            return colors[(id || 0) % colors.length];
+        }
+
+        function closeGroupDetailModal() {
+            document.getElementById('group-detail-modal').style.display = 'none';
+        }
+
+        // ==================== XÓA NHÓM ====================
+        let deleteGroupId = null;
+        let deleteGroupName = null;
+
+        function openDeleteGroupModal(groupId, groupName) {
+            deleteGroupId = groupId;
+            deleteGroupName = groupName;
+            document.getElementById('delete-group-name').textContent = groupName;
+            document.getElementById('delete-group-id').value = groupId;
+            document.getElementById('delete-group-modal').style.display = 'flex';
+        }
+
+        function closeDeleteGroupModal() {
+            document.getElementById('delete-group-modal').style.display = 'none';
+            deleteGroupId = null;
+        }
+
+        async function confirmDeleteGroup() {
+            if (!deleteGroupId) return;
+            if (!confirm(`Bạn có chắc muốn xóa nhóm "${deleteGroupName}"?`)) return;
+            
+            try {
+                const response = await fetch(`/api/groups/${deleteGroupId}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('✅ Đã xóa nhóm thành công', 'success');
+                    closeDeleteGroupModal();
+                    loadGroups();
+                } else {
+                    showToast(data.detail || 'Xóa thất bại', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi khi xóa nhóm', 'error');
+            }
+        }
+
+        // ==================== THÔNG BÁO ====================
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications?limit=10');
+                const data = await res.json();
+                if (data.success) {
+                    const container = document.getElementById('notifications-list');
+                    if (!data.notifications?.length) container.innerHTML = '<div class="p-4 text-center text-gray-500">Chưa có thông báo</div>';
+                    else container.innerHTML = data.notifications.map(n => `<div class="notification-item ${n.is_read ? '' : 'notification-unread'} p-3" onclick="viewNotification(${n.id}, '${n.link || ''}')"><div class="flex gap-3"><div><i class="fas fa-bell text-purple-500"></i></div><div><p class="text-sm font-medium">${escapeHtml(n.title)}</p><p class="text-xs text-gray-500">${escapeHtml(n.content.substring(0, 80))}</p><p class="text-xs text-gray-400 mt-1">${formatTime(n.created_at)}</p></div></div></div>`).join('');
+                    document.getElementById('notification-badge').textContent = data.unread_count || '';
+                    document.getElementById('notification-badge').classList.toggle('hidden', !data.unread_count);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function toggleNotificationDropdown() { const d = document.getElementById('notification-dropdown'); d.classList.toggle('hidden'); if (!d.classList.contains('hidden')) loadNotifications(); }
+        async function viewNotification(id, link) { await fetch(`/api/notifications/mark-read/${id}`, { method: 'POST' }); loadNotifications(); if (link) window.location.href = link; }
+        async function markAllNotificationsRead() { await fetch('/api/notifications/mark-all-read', { method: 'POST' }); loadNotifications(); showToast('Đã đánh dấu tất cả thông báo'); }
+
+        // Event listeners
+        document.getElementById('search-input')?.addEventListener('input', filterGroups);
+        document.getElementById('major-filter')?.addEventListener('change', filterGroups);
+        
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const btn = document.getElementById('notification-btn');
+            if (dropdown && !dropdown.classList.contains('hidden') && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.add('hidden');
+        });
+        
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('leftSidebar');
+            const menuBtn = document.querySelector('.sidebar-menu-btn');
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleGroups();
+            loadGroups();
+            loadNotifications();
+            setInterval(loadNotifications, 30000);
+        });
+
+        // Export functions
+        window.toggleSidebar = toggleSidebar;
+        window.toggleTheme = toggleTheme;
+        window.logout = logout;
+        window.refreshGroups = refreshGroups;
+        window.openCreateGroupModal = openCreateGroupModal;
+        window.closeCreateGroupModal = closeCreateGroupModal;
+        window.createGroup = createGroup;
+        window.viewGroupDetail = viewGroupDetail;
+        window.closeGroupDetailModal = closeGroupDetailModal;
+        window.openDeleteGroupModal = openDeleteGroupModal;
+        window.closeDeleteGroupModal = closeDeleteGroupModal;
+        window.confirmDeleteGroup = confirmDeleteGroup;
+        window.toggleNotificationDropdown = toggleNotificationDropdown;
+        window.viewNotification = viewNotification;
+        window.markAllNotificationsRead = markAllNotificationsRead;
+    </script>
+</body>
+</html>
