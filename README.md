@@ -1,0 +1,1 @@
+EduSmart is an AI-powered Learning Management System (LMS) that integrates RAG-based chatbot, automatic quiz and flashcard generation, gamification, and cloud storage to enhance online learning experiences.
